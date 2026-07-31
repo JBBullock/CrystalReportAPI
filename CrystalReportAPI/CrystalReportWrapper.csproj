@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Crystal Reports' .NET SDK ("SAP Crystal Reports, developer version for
+    Microsoft Visual Studio") only targets .NET Framework, not modern
+    cross-platform .NET. If you're on a recent SDK release that supports
+    .NET / .NET Core, change TargetFramework accordingly - otherwise keep
+    net48 as below.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CrystalReportWrapper</AssemblyName>
+    <!-- Publish as a single self-contained exe so the Python side doesn't
+         need a .NET SDK installed - only the CR runtime redistributable. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      These come from the Crystal Reports SDK install (typically under
+      C:\Program Files (x86)\SAP BusinessObjects\Crystal Reports for .NET
+      Framework 4.0\Common\SAP BusinessObjects Enterprise XI 4.0\win32_x86)
+      or via the CrystalDecisions NuGet packages if your license/version
+      publishes them there. Adjust HintPath to match your local install.
+    -->
+    <Reference Include="CrystalDecisions.CrystalReports.Engine">
+      <HintPath>..\lib\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+    </Reference>
+    <Reference Include="CrystalDecisions.Shared">
+      <HintPath>..\lib\CrystalDecisions.Shared.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
