@@ -90,7 +90,20 @@ namespace CrystalReportWrapper
                 // with a JSON error payload instead of an unhandled crash
                 // dump that Python would have to scrape from stderr.
                 result.Success = false;
-                result.Error = ex.Message;
+                // TEMPORARY: walk the full InnerException chain instead of
+                // just the outer message. ex.Message alone is too vague for
+                // exceptions like TypeInitializationException, where the
+                // real cause (missing COM registration, missing dependent
+                // DLL, licensing, etc.) is buried in an inner exception.
+                // Revert to `ex.Message` once the pipeline is working.
+                var messages = new System.Collections.Generic.List<string>();
+                Exception current = ex;
+                while (current != null)
+                {
+                    messages.Add($"{current.GetType().Name}: {current.Message}");
+                    current = current.InnerException;
+                }
+                result.Error = string.Join(" ---> ", messages);
             }
 
             // Always emit exactly one JSON line on stdout - this is the
@@ -199,7 +212,7 @@ namespace CrystalReportWrapper
             {
                 "PDF" => ExportFormatType.PortableDocFormat,
                 "EXCEL" or "XLSX" => ExportFormatType.ExcelWorkbook,
-                "CSV" => ExportFormatType.CommaSeparatedValues,
+                "CSV" => ExportFormatType.CharacterSeparatedValues,
                 "WORD" or "DOCX" => ExportFormatType.WordForWindows,
                 _ => throw new NotSupportedException($"Unsupported export format: {format}")
             };

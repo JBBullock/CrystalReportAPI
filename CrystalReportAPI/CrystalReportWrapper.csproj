@@ -1,38 +1,59 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <!--
-    Crystal Reports' .NET SDK ("SAP Crystal Reports, developer version for
-    Microsoft Visual Studio") only targets .NET Framework, not modern
-    cross-platform .NET. If you're on a recent SDK release that supports
-    .NET / .NET Core, change TargetFramework accordingly - otherwise keep
-    net48 as below.
-  -->
   <PropertyGroup>
+    <!-- Crystal Reports for .NET only ships assemblies for classic .NET Framework,
+         so this has to target net48, not net6.0/net8.0 etc. -->
     <OutputType>Exe</OutputType>
     <TargetFramework>net48</TargetFramework>
-    <Nullable>enable</Nullable>
     <AssemblyName>CrystalReportWrapper</AssemblyName>
-    <!-- Publish as a single self-contained exe so the Python side doesn't
-         need a .NET SDK installed - only the CR runtime redistributable. -->
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <RootNamespace>CrystalReportWrapper</RootNamespace>
+    <Nullable>disable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Note: PublishSingleFile / self-contained deployment is a modern .NET
+         (netcoreapp/net5+) feature and doesn't apply to net48. Classic
+         .NET Framework apps always run against Framework already installed
+         on the machine (which it will be here, since the CR runtime install
+         requires it too). So this publishes as a normal folder of files
+         instead of one bundled exe: CrystalReportWrapper.exe plus its
+         .dll dependencies sitting next to it. Python just needs the path to
+         the .exe; the rest of the folder needs to travel with it. -->
+    <!-- Crystal Reports' automation/engine COM layer is commonly registered
+         32-bit-only even when a "64-bit runtime" was installed, and this
+         specific CLSID class-not-registered error is the classic symptom
+         of a bitness mismatch between the app and that COM registration.
+         Building x86 instead of x64 is the standard fix. -->
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
     <!--
-      These come from the Crystal Reports SDK install (typically under
-      C:\Program Files (x86)\SAP BusinessObjects\Crystal Reports for .NET
-      Framework 4.0\Common\SAP BusinessObjects Enterprise XI 4.0\win32_x86)
-      or via the CrystalDecisions NuGet packages if your license/version
-      publishes them there. Adjust HintPath to match your local install.
+      These three assemblies are installed into the GAC (Global Assembly
+      Cache) by the SAP Crystal Reports for Visual Studio installer rather
+      than dropped as loose files, hence the GAC_MSIL path and the versioned/
+      public-key-token folder name. <Private>true</Private> tells MSBuild to
+      copy the DLL alongside CrystalReportWrapper.exe on publish, which is
+      required since GAC assemblies aren't otherwise available at runtime on
+      a machine that doesn't have the SDK/runtime installed.
     -->
     <Reference Include="CrystalDecisions.CrystalReports.Engine">
-      <HintPath>..\lib\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.CrystalReports.Engine\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
+      <Private>true</Private>
     </Reference>
     <Reference Include="CrystalDecisions.Shared">
-      <HintPath>..\lib\CrystalDecisions.Shared.dll</HintPath>
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.Shared\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.Shared.dll</HintPath>
+      <Private>true</Private>
     </Reference>
+    <Reference Include="CrystalDecisions.ReportSource">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportSource.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Minimal, dependency-free JSON writer so we don't need to fight NuGet
+         restore against an offline/locked-down build machine. -->
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
   </ItemGroup>
 
 </Project>
