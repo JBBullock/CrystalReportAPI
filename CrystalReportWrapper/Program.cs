@@ -67,6 +67,11 @@ namespace CrystalReportWrapper
                 var options = ParseArgs(args);
 
                 // --- 2. Load the report -----------------------------------
+                if (!File.Exists(options.ReportPath))
+                {
+                    throw new FileNotFoundException($"Report file not found: {options.ReportPath}");
+                }
+
                 using var report = new ReportDocument();
                 report.Load(options.ReportPath);
 
@@ -77,6 +82,15 @@ namespace CrystalReportWrapper
                 }
 
                 // --- 4. Export to the requested format ---------------------
+                // Ensure the destination folder exists; ExportToDisk throws
+                // DirectoryNotFoundException otherwise, which is an easy
+                // thing to hit on first run before any output folder exists.
+                string? outputDir = Path.GetDirectoryName(options.OutputPath);
+                if (!string.IsNullOrEmpty(outputDir))
+                {
+                    Directory.CreateDirectory(outputDir);
+                }
+
                 ExportReport(report, options.OutputPath, options.Format);
 
                 // --- 5. Report success back to Python ----------------------
@@ -164,42 +178,112 @@ namespace CrystalReportWrapper
         /// </summary>
         private static void ApplyParameters(ReportDocument report, string paramsJsonPath)
         {
+            if (!File.Exists(paramsJsonPath))
+            {
+                throw new FileNotFoundException($"Parameters file not found: {paramsJsonPath}");
+            }
+
             string json = File.ReadAllText(paramsJsonPath);
             using var doc = JsonDocument.Parse(json);
 
+            // ParameterFields is Crystal's collection of report-defined
+            // parameters (built at design time in the .rpt file). Build a
+            // case-insensitive name lookup up front so callers don't have
+            // to match the .rpt's exact parameter casing.
+            ParameterFieldDefinitions definitions = report.DataDefinition.ParameterFields;
+
             foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
             {
-                // ParameterFields is Crystal's collection of report-defined
-                // parameters (built at design time in the .rpt file).
-                ParameterFieldDefinition field = report.DataDefinition
-                    .ParameterFields[prop.Name];
+                ParameterFieldDefinition? field = null;
+                foreach (ParameterFieldDefinition candidate in definitions)
+                {
+                    if (string.Equals(candidate.Name, prop.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        field = candidate;
+                        break;
+                    }
+                }
+
+                if (field == null)
+                {
+                    throw new ArgumentException(
+                        $"Report has no parameter named '{prop.Name}'. " +
+                        $"Available parameters: {string.Join(", ", GetParameterNames(definitions))}");
+                }
 
                 // ApplyCurrentValues expects a ParameterValues collection,
                 // even for a single scalar value.
                 var values = new ParameterValues();
                 var discrete = new ParameterDiscreteValue
                 {
-                    Value = JsonElementToClrValue(prop.Value)
+                    Value = CoerceToParameterType(prop.Value, field)
                 };
                 values.Add(discrete);
                 field.ApplyCurrentValues(values);
             }
         }
 
-        /// <summary>
-        /// Converts a System.Text.Json element into a plain CLR value
-        /// (string/double/bool/DateTime) that Crystal's ParameterDiscreteValue
-        /// can consume. Crystal is picky about receiving the *actual* .NET
-        /// type that matches the parameter's declared type in the .rpt file.
-        /// </summary>
-        private static object JsonElementToClrValue(JsonElement element) => element.ValueKind switch
+        private static System.Collections.Generic.IEnumerable<string> GetParameterNames(
+            ParameterFieldDefinitions definitions)
         {
-            JsonValueKind.String => element.GetString()!,
-            JsonValueKind.Number => element.GetDouble(),
-            JsonValueKind.True => true,
-            JsonValueKind.False => false,
-            _ => element.ToString()
-        };
+            foreach (ParameterFieldDefinition d in definitions)
+            {
+                yield return d.Name;
+            }
+        }
+
+        /// <summary>
+        /// Converts a System.Text.Json element into the specific CLR type
+        /// Crystal expects for this parameter's declared type. Crystal is
+        /// strict here: e.g. a parameter declared as DateTime rejects a
+        /// plain string, and a Number-typed parameter expects a numeric
+        /// type, not always double. ParameterValueKind tells us which
+        /// conversion to apply.
+        /// </summary>
+        private static object CoerceToParameterType(JsonElement element, ParameterFieldDefinition field)
+        {
+            switch (field.ParameterValueKind)
+            {
+                case ParameterValueKind.NumberParameter:
+                    return element.ValueKind == JsonValueKind.Number
+                        ? element.GetDouble()
+                        : double.Parse(element.GetString() ?? "0");
+
+                case ParameterValueKind.CurrencyParameter:
+                    return element.ValueKind == JsonValueKind.Number
+                        ? (decimal)element.GetDouble()
+                        : decimal.Parse(element.GetString() ?? "0");
+
+                case ParameterValueKind.BooleanParameter:
+                    return element.ValueKind switch
+                    {
+                        JsonValueKind.True => true,
+                        JsonValueKind.False => false,
+                        JsonValueKind.String => bool.Parse(element.GetString()!),
+                        _ => throw new ArgumentException(
+                            $"Parameter '{field.Name}' expects a boolean value.")
+                    };
+
+                case ParameterValueKind.DateParameter:
+                case ParameterValueKind.DateTimeParameter:
+                    // Accept ISO-8601 strings from Python (e.g. "2026-01-15"
+                    // or "2026-01-15T00:00:00"); Crystal wants an actual
+                    // DateTime instance, not a string.
+                    string dateText = element.ValueKind == JsonValueKind.String
+                        ? element.GetString()!
+                        : element.ToString();
+                    return DateTime.Parse(dateText, System.Globalization.CultureInfo.InvariantCulture);
+
+                case ParameterValueKind.StringParameter:
+                default:
+                    // Fall back to string for text parameters and any kind
+                    // we haven't special-cased (e.g. TimeParameter is rare
+                    // enough not to be worth guessing at here).
+                    return element.ValueKind == JsonValueKind.String
+                        ? element.GetString()!
+                        : element.ToString();
+            }
+        }
 
         /// <summary>
         /// Exports the loaded report to disk. Crystal's export API is
