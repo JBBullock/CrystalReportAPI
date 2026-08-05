@@ -214,8 +214,9 @@ class CrystalReportsPipeline:
 # -----------------------------------------------------------------------
 if __name__ == "__main__":
     pipeline = CrystalReportsPipeline(
-        worker_exe=r"C:\tools\CrystalReportWrapper\CrystalReportWrapper.exe"
+        worker_exe=r"C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\worker_dist\CrystalReportWrapper.exe"
     )
+    print(Path.cwd())
 
     result = pipeline.generate_report(
         report_path=r"C:\reports\sales_summary.rpt",

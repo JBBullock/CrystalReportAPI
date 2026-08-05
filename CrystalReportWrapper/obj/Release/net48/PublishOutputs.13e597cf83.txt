@@ -1,0 +1,15 @@
+C:\worker_dist\CrystalReportWrapper.exe
+C:\worker_dist\CrystalReportWrapper.exe.config
+C:\worker_dist\CrystalReportWrapper.pdb
+C:\worker_dist\Microsoft.Bcl.AsyncInterfaces.dll
+C:\worker_dist\System.Buffers.dll
+C:\worker_dist\System.Memory.dll
+C:\worker_dist\System.Numerics.Vectors.dll
+C:\worker_dist\System.Runtime.CompilerServices.Unsafe.dll
+C:\worker_dist\System.Text.Encodings.Web.dll
+C:\worker_dist\System.Text.Json.dll
+C:\worker_dist\System.Threading.Tasks.Extensions.dll
+C:\worker_dist\System.ValueTuple.dll
+C:\worker_dist\CrystalDecisions.CrystalReports.Engine.dll
+C:\worker_dist\CrystalDecisions.ReportSource.dll
+C:\worker_dist\CrystalDecisions.Shared.dll
