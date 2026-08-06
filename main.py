@@ -216,7 +216,7 @@ if __name__ == "__main__":
     print(list(Path(__file__).parents))
     parent_folder_path = Path(__file__).parents[0]
     print("FOLDER PARENT=", parent_folder_path)
-    worker_path = parent_folder_path / "worker_dist" / "CrystalReportWrapper.exe"
+    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Release"/"net48" / "CrystalReportWrapper.exe"
     report_path = parent_folder_path / "reports" / "RegionCodes.rpt"
     out_path = parent_folder_path / "out" / "RegionCodeSummary.pdf"
     print(report_path)
