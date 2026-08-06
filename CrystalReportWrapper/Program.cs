@@ -197,7 +197,7 @@ namespace CrystalReportWrapper
                 ParameterFieldDefinition? field = null;
                 foreach (ParameterFieldDefinition candidate in definitions)
                 {
-                    if (string.Equals(candidate.Name, prop.Name, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(candidate.Name.TrimStart('?'), prop.Name, StringComparison.OrdinalIgnoreCase))
                     {
                         field = candidate;
                         break;

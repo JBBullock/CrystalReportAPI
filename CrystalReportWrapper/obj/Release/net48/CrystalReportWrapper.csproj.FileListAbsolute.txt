@@ -50,3 +50,16 @@ C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrappe
 C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\obj\Release\net48\CrystalR.6998ACD3.Up2Date
 C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\obj\Release\net48\CrystalReportWrapper.exe
 C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\obj\Release\net48\CrystalReportWrapper.pdb
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.CrystalReports.TemplateEngine.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.Enterprise.Viewing.ReportSource.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.ClientDoc.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.CommLayer.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.CommonControls.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.CommonObjectModel.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.CubeDefModel.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.DataDefModel.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.DataSetConversion.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.ObjectFactory.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.Prompting.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.ReportDefModel.dll
+C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\CrystalReportWrapper\bin\Release\net48\CrystalDecisions.ReportAppServer.XmlSerialize.dll

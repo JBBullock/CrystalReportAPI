@@ -46,12 +46,6 @@
           "framework": "net48",
           "targetAlias": "net48",
           "dependencies": {
-            "Microsoft.NETFramework.ReferenceAssemblies": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[1.0.3, )",
-              "autoReferenced": true
-            },
             "System.Text.Json": {
               "target": "Package",
               "version": "[8.0.5, )"

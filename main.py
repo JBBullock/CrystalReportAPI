@@ -213,16 +213,26 @@ class CrystalReportsPipeline:
 # Run directly with: python crystal_reports_pipeline.py
 # -----------------------------------------------------------------------
 if __name__ == "__main__":
+    print(list(Path(__file__).parents))
+    parent_folder_path = Path(__file__).parents[0]
+    print("FOLDER PARENT=", parent_folder_path)
+    worker_path = parent_folder_path / "worker_dist" / "CrystalReportWrapper.exe"
+    report_path = parent_folder_path / "reports" / "RegionCodes.rpt"
+    out_path = parent_folder_path / "out" / "RegionCodeSummary.pdf"
+    print(report_path)
+    print(out_path)
+    print(worker_path)
     pipeline = CrystalReportsPipeline(
-        worker_exe=r"C:\Users\jbullock\OneDrive - Optical Zonu\Desktop\RPTConvert\worker_dist\CrystalReportWrapper.exe"
+        worker_path
     )
-    print(Path.cwd())
+    
+    
 
     result = pipeline.generate_report(
-        report_path=r"C:\reports\sales_summary.rpt",
-        output_path=r"C:\out\sales_summary.pdf",
+        parent_folder_path / report_path,
+        parent_folder_path / out_path,
         export_format="PDF",
-        parameters={"Region": "West", "Year": 2026},
+        parameters={"RegionCode": "West", "DescText": "2026"},
     )
 
-    print(f"Report generated at: {result.output_path}")
+    # print(f"Report generated at: {result.output_path}")
