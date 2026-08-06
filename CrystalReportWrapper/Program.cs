@@ -186,16 +186,24 @@ namespace CrystalReportWrapper
             string json = File.ReadAllText(paramsJsonPath);
             using var doc = JsonDocument.Parse(json);
 
-            // ParameterFields is Crystal's collection of report-defined
-            // parameters (built at design time in the .rpt file). Build a
-            // case-insensitive name lookup up front so callers don't have
-            // to match the .rpt's exact parameter casing.
-            ParameterFieldDefinitions definitions = report.DataDefinition.ParameterFields;
+            // ParameterFields on the top-level ReportDocument only covers
+            // parameters defined on the MAIN report. Many .rpt files (this
+            // one included) define their parameters on a subreport instead,
+            // so a lookup that only checks report.DataDefinition.ParameterFields
+            // finds nothing and every parameter appears "unknown" even
+            // though the report does have them. Build one combined lookup
+            // across the main report and every subreport.
+            var allFields = new System.Collections.Generic.List<ParameterFieldDefinition>();
+            allFields.AddRange(EnumerateParameterFields(report.DataDefinition.ParameterFields));
+            foreach (ReportDocument subreport in report.Subreports)
+            {
+                allFields.AddRange(EnumerateParameterFields(subreport.DataDefinition.ParameterFields));
+            }
 
             foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
             {
                 ParameterFieldDefinition? field = null;
-                foreach (ParameterFieldDefinition candidate in definitions)
+                foreach (ParameterFieldDefinition candidate in allFields)
                 {
                     if (string.Equals(candidate.Name.TrimStart('?'), prop.Name, StringComparison.OrdinalIgnoreCase))
                     {
@@ -206,9 +214,10 @@ namespace CrystalReportWrapper
 
                 if (field == null)
                 {
+                    string available = string.Join(", ", allFields.ConvertAll(f => f.Name));
                     throw new ArgumentException(
                         $"Report has no parameter named '{prop.Name}'. " +
-                        $"Available parameters: {string.Join(", ", GetParameterNames(definitions))}");
+                        $"Available parameters: {available}");
                 }
 
                 // ApplyCurrentValues expects a ParameterValues collection,
@@ -223,12 +232,12 @@ namespace CrystalReportWrapper
             }
         }
 
-        private static System.Collections.Generic.IEnumerable<string> GetParameterNames(
+        private static System.Collections.Generic.IEnumerable<ParameterFieldDefinition> EnumerateParameterFields(
             ParameterFieldDefinitions definitions)
         {
             foreach (ParameterFieldDefinition d in definitions)
             {
-                yield return d.Name;
+                yield return d;
             }
         }
 
