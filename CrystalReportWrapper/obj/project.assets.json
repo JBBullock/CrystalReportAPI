@@ -21,6 +21,27 @@
           "buildTransitive/net462/_._": {}
         }
       },
+      "Npgsql/4.1.13": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "1.1.0",
+          "System.Memory": "4.5.3",
+          "System.Runtime.CompilerServices.Unsafe": "4.6.0",
+          "System.Text.Json": "4.6.0",
+          "System.Threading.Tasks.Extensions": "4.5.3",
+          "System.ValueTuple": "4.5.0"
+        },
+        "compile": {
+          "lib/net461/Npgsql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net461/Npgsql.dll": {
+            "related": ".xml"
+          }
+        }
+      },
       "System.Buffers/4.5.1": {
         "type": "package",
         "frameworkAssemblies": [
@@ -190,6 +211,27 @@
         },
         "build": {
           "buildTransitive/net462/_._": {}
+        }
+      },
+      "Npgsql/4.1.13": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl.AsyncInterfaces": "1.1.0",
+          "System.Memory": "4.5.3",
+          "System.Runtime.CompilerServices.Unsafe": "4.6.0",
+          "System.Text.Json": "4.6.0",
+          "System.Threading.Tasks.Extensions": "4.5.3",
+          "System.ValueTuple": "4.5.0"
+        },
+        "compile": {
+          "lib/net461/Npgsql.dll": {
+            "related": ".xml"
+          }
+        },
+        "runtime": {
+          "lib/net461/Npgsql.dll": {
+            "related": ".xml"
+          }
         }
       },
       "System.Buffers/4.5.1": {
@@ -367,6 +409,26 @@
         "microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
         "microsoft.bcl.asyncinterfaces.nuspec",
         "useSharedDesignerContext.txt"
+      ]
+    },
+    "Npgsql/4.1.13": {
+      "sha512": "p79cObfuRgS8KD5sFmQUqVlINEkJm39bCrzRclicZE1942mKcbLlc0NdoVKhBeZPv//prK/sVTUmRVxdnoPCoA==",
+      "type": "package",
+      "path": "npgsql/4.1.13",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "lib/net461/Npgsql.dll",
+        "lib/net461/Npgsql.xml",
+        "lib/netcoreapp3.0/Npgsql.dll",
+        "lib/netcoreapp3.0/Npgsql.xml",
+        "lib/netstandard2.0/Npgsql.dll",
+        "lib/netstandard2.0/Npgsql.xml",
+        "lib/netstandard2.1/Npgsql.dll",
+        "lib/netstandard2.1/Npgsql.xml",
+        "npgsql.4.1.13.nupkg.sha512",
+        "npgsql.nuspec",
+        "postgresql.png"
       ]
     },
     "System.Buffers/4.5.1": {
@@ -687,6 +749,7 @@
   },
   "projectFileDependencyGroups": {
     "net48": [
+      "Npgsql >= 4.1.13",
       "System.Text.Json >= 8.0.5"
     ]
   },
@@ -735,6 +798,10 @@
         "framework": "net48",
         "targetAlias": "net48",
         "dependencies": {
+          "Npgsql": {
+            "target": "Package",
+            "version": "[4.1.13, )"
+          },
           "System.Text.Json": {
             "target": "Package",
             "version": "[8.0.5, )"

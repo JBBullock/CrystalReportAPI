@@ -27,10 +27,12 @@
 // ============================================================================
 
 using System;
+using System.Data;
 using System.IO;
 using System.Text.Json;
 using CrystalDecisions.CrystalReports.Engine;
 using CrystalDecisions.Shared;
+using Npgsql;
 
 namespace CrystalReportWrapper
 {
@@ -48,6 +50,29 @@ namespace CrystalReportWrapper
 
     internal class Program
     {
+        // ====================================================================
+        // >>> DATABASE CONFIGURATION - EDIT THESE VALUES FOR YOUR POSTGRES <<<
+        // ====================================================================
+        // These are used to connect to Postgres directly from C# (via the
+        // Npgsql driver), fetch the report's data as a DataTable, and hand
+        // that table to Crystal Reports with SetDataSource(). Crystal never
+        // talks to the database itself this way - no ODBC driver required,
+        // which sidesteps the 32-bit/64-bit ODBC registration problems.
+        //
+        // Fill in your real values below:
+        private const string PgHost = "localhost";        // <-- Postgres server hostname or IP
+        private const string PgPort = "5432";              // <-- Postgres port (5432 is the default)
+        private const string PgDatabase = "your_database"; // <-- database name
+        private const string PgUser = "your_username";     // <-- database username
+        private const string PgPassword = "your_password"; // <-- database password
+
+        // The SQL query that produces the rows the report should display.
+        // Column names in this query's result set must match the field
+        // names the report expects from its data source (set up in the
+        // Crystal Designer under Database Expert -> ADO.NET (XML)).
+        private const string ReportQuery = "SELECT * FROM your_table;"; // <-- your query here
+        // ====================================================================
+
         /// <summary>
         /// Entry point. Expected usage:
         ///   CrystalReportWrapper.exe --report "C:\reports\sales.rpt"
@@ -74,6 +99,26 @@ namespace CrystalReportWrapper
 
                 using var report = new ReportDocument();
                 report.Load(options.ReportPath);
+
+                // --- 2b. Fetch data from Postgres and push it into the report ---
+                // This replaces Crystal's own database connection entirely -
+                // we run the query ourselves with Npgsql (a pure managed
+                // .NET driver, no ODBC/COM dependency) and hand Crystal a
+                // finished DataTable. The report's .rpt file must be
+                // designed against an ADO.NET (XML) data source with a
+                // matching schema for this to line up correctly.
+                DataTable reportData = FetchReportData();
+                report.SetDataSource(reportData);
+
+                // If the report has subreports that ALSO need data (as
+                // opposed to just parameters), apply the same table - or a
+                // different query's result, if each subreport needs its own
+                // data - to each one here. Uncomment and adjust as needed:
+                //
+                // foreach (ReportDocument subreport in report.Subreports)
+                // {
+                //     subreport.SetDataSource(reportData);
+                // }
 
                 // --- 3. Apply parameters (if any were supplied) -----------
                 if (!string.IsNullOrEmpty(options.ParamsJsonPath))
@@ -313,7 +358,34 @@ namespace CrystalReportWrapper
             report.ExportToDisk(exportType, outputPath);
         }
 
-        /// <summary>Parsed CLI arguments container.</summary>
+        /// <summary>
+        /// Connects to Postgres using the configuration constants at the top
+        /// of this file, runs ReportQuery, and returns the results as a
+        /// DataTable ready to hand to Crystal via ReportDocument.SetDataSource.
+        /// </summary>
+        private static DataTable FetchReportData()
+        {
+            // Builds a connection string from the constants above. Npgsql's
+            // connection string keys are: Host, Port, Database, Username,
+            // Password - see https://www.npgsql.org/doc/connection-string-parameters.html
+            // for additional options (SSL Mode, Timeout, etc.) if your setup
+            // needs them.
+            string connectionString =
+                $"Host={PgHost};Port={PgPort};Database={PgDatabase};" +
+                $"Username={PgUser};Password={PgPassword};";
+
+            using var connection = new NpgsqlConnection(connectionString);
+            connection.Open();
+
+            using var command = new NpgsqlCommand(ReportQuery, connection);
+            using var adapter = new NpgsqlDataAdapter(command);
+
+            var table = new DataTable();
+            adapter.Fill(table);
+            return table;
+        }
+
+
         private class CliOptions
         {
             public string ReportPath { get; set; } = string.Empty;

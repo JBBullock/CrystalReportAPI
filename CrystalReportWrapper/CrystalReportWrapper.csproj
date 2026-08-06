@@ -18,11 +18,16 @@
          instead of one bundled exe: CrystalReportWrapper.exe plus its
          .dll dependencies sitting next to it. Python just needs the path to
          the .exe; the rest of the folder needs to travel with it. -->
-    <!-- Crystal Reports' automation/engine COM layer is commonly registered
-         32-bit-only even when a "64-bit runtime" was installed, and this
-         specific CLSID class-not-registered error is the classic symptom
-         of a bitness mismatch between the app and that COM registration.
-         Building x86 instead of x64 is the standard fix. -->
+    <!-- NOTE: this app no longer connects to Postgres via ODBC (the 32-bit
+         ODBC driver was unreliable on this machine, and getting the 64-bit
+         Crystal COM runtime to register correctly ran into unrelated OS-level
+         issues). Instead, Postgres is queried directly in C# using Npgsql
+         (a pure managed .NET driver - see FetchReportData()), and the
+         resulting DataTable is handed to Crystal via SetDataSource(). That
+         removes any ODBC/driver-bitness dependency entirely, so this goes
+         back to x86, which is what the CR COM runtime has reliably
+         registered as on this machine throughout this whole debugging
+         process. -->
     <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
@@ -40,77 +45,78 @@
       <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.CrystalReports.Engine\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.CrystalReports.Engine.dll</HintPath>
       <Private>true</Private>
     </Reference>
-    <Reference Include="CrystalDecisions.Enterprise.Viewing.ReportSource">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.Enterprise.Viewing.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.Enterprise.Viewing.ReportSource.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.ClientDoc">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.ClientDoc\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ClientDoc.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.CommLayer\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommLayer.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
-   <Reference Include="CrystalDecisions.ReportAppServer.CommonObjectModel">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.CommonObjectModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommonObjectModel.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
-    <Reference Include="CrystalDecisions.ReportAppServer.CubeDefModel">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.CubeDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CubeDefModel.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
-    <Reference Include="CrystalDecisions.ReportAppServer.DataDefModel">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.DataDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.DataDefModel.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    
-    <Reference Include="CrystalDecisions.ReportAppServer.DataSetConversion">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.DataSetConversion\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.DataSetConversion.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
-    <Reference Include="CrystalDecisions.ReportAppServer.ObjectFactory">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.ObjectFactory\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ObjectFactory.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
-    <Reference Include="CrystalDecisions.ReportAppServer.Prompting">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.Prompting\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.Prompting.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-    
-    <Reference Include="CrystalDecisions.ReportAppServer.CommonControls">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.CommonControls\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommonControls.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-   
-   
-    <Reference Include="CrystalDecisions.CrystalReports.TemplateEngine">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.CrystalReports.TemplateEngine\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.CrystalReports.TemplateEngine.dll</HintPath>
-      <Private>true</Private>
-    </Reference> 
-
-  <Reference Include="CrystalDecisions.ReportSource">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportSource.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
-
     <Reference Include="CrystalDecisions.Shared">
       <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.Shared\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.Shared.dll</HintPath>
       <Private>true</Private>
     </Reference>
+    <Reference Include="CrystalDecisions.ReportSource">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportSource.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.CommLayer\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommLayer.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
 
+   <Reference Include="CrystalDecisions.ReportAppServer.DataDefModel">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.DataDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.DataDefModel.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="CrystalDecisions.ReportAppServer.ClientDoc">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.ClientDoc\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ClientDoc.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+
+    <Reference Include="CrystalDecisions.ReportAppServer.Controllers">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.Controllers\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.Controllers.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    
+    <Reference Include="CrystalDecisions.ReportAppServer.ObjectFactory">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.ObjectFactory\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ObjectFactory.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
     <Reference Include="CrystalDecisions.ReportAppServer.XmlSerialize">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.XmlSerialize\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.XmlSerialize.dll</HintPath>
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.XmlSerialize\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.XmlSerialize.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+
+    <Reference Include="CrystalDecisions.ReportAppServer.Prompting">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.Prompting\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.Prompting.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    
+    <Reference Include="CrystalDecisions.ReportAppServer.DataSetConversion">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.DataSetConversion\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.DataSetConversion.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+   
+    <Reference Include="CrystalDecisions.Enterprise.Viewing.ReportSource">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.Enterprise.Viewing.ReportSource\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.Enterprise.Viewing.ReportSource.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+    <Reference Include="CrystalDecisions.CrystalReports.TemplateEngine">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.CrystalReports.TemplateEngine\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.CrystalReports.TemplateEngine.dll</HintPath>
+      <Private>true</Private>
+    </Reference> 
+
+  <Reference Include="CrystalDecisions.ReportAppServer.CommonControls">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.CommonControls\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommonControls.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+
+    <Reference Include="CrystalDecisions.ReportAppServer.CommonObjectModel">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.CommonObjectModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CommonObjectModel.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+
+    <Reference Include="CrystalDecisions.ReportAppServer.CubeDefModel">
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.CubeDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.CubeDefModel.dll</HintPath>
       <Private>true</Private>
     </Reference>
 
     <Reference Include="CrystalDecisions.ReportAppServer.ReportDefModel">
-      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_MSIL\CrystalDecisions.ReportAppServer.ReportDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ReportDefModel.dll</HintPath>
+      <HintPath>C:\Windows\Microsoft.NET\assembly\GAC_64\CrystalDecisions.ReportAppServer.ReportDefModel\v4.0_13.0.4000.0__692fbea5521e1304\CrystalDecisions.ReportAppServer.ReportDefModel.dll</HintPath>
       <Private>true</Private>
     </Reference>
 
@@ -121,6 +127,10 @@
     <!-- Minimal, dependency-free JSON writer so we don't need to fight NuGet
          restore against an offline/locked-down build machine. -->
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+
+    <!-- Pure managed .NET Postgres driver - no ODBC driver install needed,
+         works fine in this x86 process without any bitness concerns. -->
+    <PackageReference Include="Npgsql" Version="4.1.13" />
   </ItemGroup>
 
 </Project>

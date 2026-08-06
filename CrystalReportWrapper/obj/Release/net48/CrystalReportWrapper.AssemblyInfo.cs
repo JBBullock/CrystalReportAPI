@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("CrystalReportWrapper")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3c802637bfd16c268e90a7ff9d8d4d14ddb1d488")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+f9010b7a9d8bdde92e6a650371c7cc16efc397b5")]
 [assembly: System.Reflection.AssemblyProductAttribute("CrystalReportWrapper")]
 [assembly: System.Reflection.AssemblyTitleAttribute("CrystalReportWrapper")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,10 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "hiI4ykpYtyA=",
+  "dgSpecHash": "kT1AF83P2Ww=",
   "success": true,
   "projectFilePath": "C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\CrystalReportWrapper.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\jbullock\\.nuget\\packages\\microsoft.bcl.asyncinterfaces\\8.0.0\\microsoft.bcl.asyncinterfaces.8.0.0.nupkg.sha512",
+    "C:\\Users\\jbullock\\.nuget\\packages\\npgsql\\4.1.13\\npgsql.4.1.13.nupkg.sha512",
     "C:\\Users\\jbullock\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
     "C:\\Users\\jbullock\\.nuget\\packages\\system.memory\\4.5.5\\system.memory.4.5.5.nupkg.sha512",
     "C:\\Users\\jbullock\\.nuget\\packages\\system.numerics.vectors\\4.5.0\\system.numerics.vectors.4.5.0.nupkg.sha512",
