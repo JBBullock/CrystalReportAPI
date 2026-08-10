@@ -61,16 +61,16 @@ namespace CrystalReportWrapper
         //
         // Fill in your real values below:
         private const string PgHost = "localhost";        // <-- Postgres server hostname or IP
-        private const string PgPort = "5432";              // <-- Postgres port (5432 is the default)
-        private const string PgDatabase = "your_database"; // <-- database name
-        private const string PgUser = "your_username";     // <-- database username
-        private const string PgPassword = "your_password"; // <-- database password
+        private const string PgPort = "5234";              // <-- Postgres port (5432 is the default)
+        private const string PgDatabase = "postgres"; // <-- database name
+        private const string PgUser = "postgres";     // <-- database username
+        private const string PgPassword = "engineer123"; // <-- database password
 
         // The SQL query that produces the rows the report should display.
         // Column names in this query's result set must match the field
         // names the report expects from its data source (set up in the
         // Crystal Designer under Database Expert -> ADO.NET (XML)).
-        private const string ReportQuery = "SELECT * FROM your_table;"; // <-- your query here
+        private const string ReportQuery = "SELECT * FROM 'regioncodes';"; // <-- your query here
         // ====================================================================
 
         /// <summary>
