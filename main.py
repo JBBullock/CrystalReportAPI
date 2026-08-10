@@ -152,6 +152,57 @@ class CrystalReportsPipeline:
             if params_file and os.path.exists(params_file):
                 os.remove(params_file)
 
+    def inspect_report(self, report_path: str) -> dict:
+        """
+        Runs the worker in --inspect mode: loads report_path but never
+        touches Postgres or exports anything. Returns the parsed JSON
+        manifest describing the report's tables (name, location, and
+        each field's name/type), formula field text (so UFL-dependent
+        formulas like MFGFunctionsTranslationTranslate are visible),
+        and parameters - for the main report and every subreport.
+
+        Use this to build/verify a mock table's schema against what a
+        legacy report actually expects, instead of discovering column
+        name/case mismatches one export failure at a time.
+
+        Raises:
+            CrystalReportError: if the worker itself failed (e.g. bad
+                report path, corrupt .rpt). Note this is independent of
+                whether the report could actually be *exported* -
+                --inspect never attempts data binding/export.
+        """
+        command = [self.worker_exe, "--report", str(report_path), "--inspect"]
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        return self._parse_json_line(completed.stdout, completed.stderr)
+
+    def _parse_json_line(self, stdout: str, stderr: str) -> dict:
+        """Shared helper: takes the last non-empty stdout line, parses it
+        as JSON, and raises CrystalReportError on any failure signal.
+        """
+        lines = [line for line in stdout.strip().splitlines() if line.strip()]
+        if not lines:
+            raise CrystalReportError(
+                f"Worker produced no output. stderr: {stderr.strip()}"
+            )
+
+        try:
+            payload = json.loads(lines[-1])
+        except json.JSONDecodeError as exc:
+            raise CrystalReportError(
+                f"Could not parse worker output as JSON: {lines[-1]!r}. "
+                f"stderr: {stderr.strip()}"
+            ) from exc
+
+        if not payload.get("success", False):
+            raise CrystalReportError(payload.get("error") or "Unknown Crystal Reports worker error")
+
+        return payload
+
     def _write_params_file(self, parameters: dict) -> str:
         """Writes report parameters to a temp JSON file and returns its path."""
         fd, path = tempfile.mkstemp(suffix=".json", prefix="crystal_params_")
@@ -228,13 +279,14 @@ if __name__ == "__main__":
     pipeline = CrystalReportsPipeline(
         worker_path
     )
-    
+    manifest = pipeline.inspect_report(report_path)
+    print(json.dumps(manifest, indent=2))
     # parameters={"RegionCode": "West", "DescText": "2026"}
 
-    result = pipeline.generate_report(
-        report_path,
-        out_path,
-        export_format="PDF"
-    )
+    # result = pipeline.generate_report(
+    #     report_path,
+    #     out_path,
+    #     export_format="PDF"
+    # )
 
     # print(f"Report generated at: {result.output_path}")

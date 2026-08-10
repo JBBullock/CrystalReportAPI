@@ -61,6 +61,60 @@ namespace CrystalReportWrapper
         public string? Error { get; set; }
     }
 
+    // ------------------------------------------------------------------
+    // --inspect mode result types. These describe what a .rpt actually
+    // expects from its data source (table names, field names/types,
+    // formula text, parameters) so mismatches like column-name casing
+    // or missing UFL functions can be diagnosed by reading a JSON
+    // manifest instead of trial-and-error against export errors.
+    // ------------------------------------------------------------------
+    internal class FieldInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ValueType { get; set; } = string.Empty;
+    }
+
+    internal class TableInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Location { get; set; } = string.Empty;
+        public System.Collections.Generic.List<FieldInfo> Fields { get; set; } = new();
+    }
+
+    internal class FormulaInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        // Raw Crystal formula syntax text. Grep this for custom/UFL
+        // function calls (e.g. "MFGFunctionsTranslationTranslate") that
+        // won't exist on every machine the worker runs on.
+        public string Text { get; set; } = string.Empty;
+    }
+
+    internal class ParameterInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ValueKind { get; set; } = string.Empty;
+    }
+
+    internal class SubreportInfo
+    {
+        public string Name { get; set; } = string.Empty;
+        public System.Collections.Generic.List<TableInfo> Tables { get; set; } = new();
+        public System.Collections.Generic.List<FormulaInfo> Formulas { get; set; } = new();
+        public System.Collections.Generic.List<ParameterInfo> Parameters { get; set; } = new();
+    }
+
+    internal class InspectResult
+    {
+        public bool Success { get; set; }
+        public string ReportPath { get; set; } = string.Empty;
+        public System.Collections.Generic.List<TableInfo> Tables { get; set; } = new();
+        public System.Collections.Generic.List<FormulaInfo> Formulas { get; set; } = new();
+        public System.Collections.Generic.List<ParameterInfo> Parameters { get; set; } = new();
+        public System.Collections.Generic.List<SubreportInfo> Subreports { get; set; } = new();
+        public string? Error { get; set; }
+    }
+
     internal class Program
     {
         // ====================================================================
@@ -92,24 +146,47 @@ namespace CrystalReportWrapper
         ///                             --output "C:\out\sales.pdf"
         ///                             --format PDF
         ///                             [--params "C:\out\params.json"]
+        ///
+        ///   CrystalReportWrapper.exe --report "C:\reports\sales.rpt" --inspect
+        ///     (dumps the report's expected tables/fields/formulas/parameters
+        ///      as JSON instead of exporting - no --output/--format needed)
+        ///
         /// Exit code 0 = success, 1 = failure (mirrors the JSON "Success" flag
         /// so Python can also branch on subprocess return code alone).
         /// </summary>
         private static int Main(string[] args)
-        { 
+        {
             Console.WriteLine("Report Loaded Successfully");
+            Console.WriteLine("====Main=====");
+            Console.WriteLine($"Argument Count: {args.Length}");
 
+            CliOptions options;
+            try
+            {
+                options = ParseArgs(args);
+            }
+            catch (Exception ex)
+            {
+                EmitExportError(ex);
+                return 1;
+            }
+
+            return options.Inspect ? RunInspect(options) : RunExportPipeline(options);
+        }
+
+        /// <summary>
+        /// Original export flow: load report, fetch Postgres data, bind it,
+        /// apply parameters, export to disk. Unchanged in behavior from
+        /// before --inspect was added - just pulled out of Main so Main can
+        /// dispatch between this and RunInspect.
+        /// </summary>
+        private static int RunExportPipeline(CliOptions options)
+        {
             var result = new ExportResult();
 
             try
             {
-                Console.WriteLine("====Main=====");
-                Console.WriteLine($"Argument Count: {args.Length}");
-                // --- 1. Parse arguments -----------------------------------
-                var options = ParseArgs(args);
-                
-
-                // --- 2. Load the report -----------------------------------
+                // --- 1. Load the report -----------------------------------
                 if (!File.Exists(options.ReportPath))
                 {
                     throw new FileNotFoundException($"Report file not found: {options.ReportPath}");
@@ -119,7 +196,7 @@ namespace CrystalReportWrapper
                 Console.WriteLine($"Report Path of Crystal Report RPT: {options.ReportPath}");
                 report.Load(options.ReportPath);
 
-                // --- 2b. Fetch data from Postgres and push it into the report ---
+                // --- 1b. Fetch data from Postgres and push it into the report ---
                 // This replaces Crystal's own database connection entirely -
                 // we run the query ourselves with Npgsql (a pure managed
                 // .NET driver, no ODBC/COM dependency) and hand Crystal a
@@ -147,13 +224,13 @@ namespace CrystalReportWrapper
                 //     subreport.SetDataSource(reportData);
                 // }
 
-                // --- 3. Apply parameters (if any were supplied) -----------
+                // --- 2. Apply parameters (if any were supplied) -----------
                 if (!string.IsNullOrEmpty(options.ParamsJsonPath))
                 {
                     ApplyParameters(report, options.ParamsJsonPath);
                 }
 
-                // --- 4. Export to the requested format ---------------------
+                // --- 3. Export to the requested format ---------------------
                 // Ensure the destination folder exists; ExportToDisk throws
                 // DirectoryNotFoundException otherwise, which is an easy
                 // thing to hit on first run before any output folder exists.
@@ -165,7 +242,7 @@ namespace CrystalReportWrapper
 
                 ExportReport(report, options.OutputPath, options.Format);
 
-                // --- 5. Report success back to Python ----------------------
+                // --- 4. Report success back to Python ----------------------
                 result.Success = true;
                 result.OutputPath = options.OutputPath;
             }
@@ -182,27 +259,153 @@ namespace CrystalReportWrapper
                 // real cause (missing COM registration, missing dependent
                 // DLL, licensing, etc.) is buried in an inner exception.
                 // Revert to `ex.Message` once the pipeline is working.
-                var messages = new System.Collections.Generic.List<string>();
-                Exception current = ex;
-                while (current != null)
-                {
-                    messages.Add($"{current.GetType().Name}: {current.Message}");
-                    current = current.InnerException;
-                }
-                result.Error = string.Join(" ---> ", messages);
+                result.Error = FlattenExceptionChain(ex);
             }
 
             // Always emit exactly one JSON line on stdout - this is the
             // single point of contact between C# and Python. camelCase
             // property naming matches typical JSON/Python conventions
             // (Success -> "success", OutputPath -> "outputPath").
+            WriteJsonLine(result);
+
+            return result.Success ? 0 : 1;
+        }
+
+        /// <summary>
+        /// --inspect mode: loads the report but never touches Postgres or
+        /// exports anything. Walks report.Database.Tables (and every
+        /// subreport's tables), DataDefinition.FormulaFields, and
+        /// DataDefinition.ParameterFields, and prints the whole thing as one
+        /// JSON line - the same "one JSON line on stdout" contract as the
+        /// export path, just a different payload shape.
+        ///
+        /// Point of this: instead of discovering a report's expected schema
+        /// by iterating on export errors (wrong column name/case, wrong
+        /// table count, formula calling a missing UFL, etc.), run this once
+        /// per .rpt and get the actual contract the report was designed
+        /// against, so mock/replacement tables can be built to match it.
+        /// </summary>
+        private static int RunInspect(CliOptions options)
+        {
+            var result = new InspectResult { ReportPath = options.ReportPath };
+
+            try
+            {
+                if (!File.Exists(options.ReportPath))
+                {
+                    throw new FileNotFoundException($"Report file not found: {options.ReportPath}");
+                }
+
+                using var report = new ReportDocument();
+                report.Load(options.ReportPath);
+
+                result.Tables = InspectTables(report.Database.Tables);
+                result.Formulas = InspectFormulas(report.DataDefinition.FormulaFields);
+                result.Parameters = InspectParameters(
+                    EnumerateParameterFields(report.DataDefinition.ParameterFields));
+
+                foreach (ReportDocument subreport in report.Subreports)
+                {
+                    result.Subreports.Add(new SubreportInfo
+                    {
+                        Name = subreport.Name,
+                        Tables = InspectTables(subreport.Database.Tables),
+                        Formulas = InspectFormulas(subreport.DataDefinition.FormulaFields),
+                        Parameters = InspectParameters(
+                            EnumerateParameterFields(subreport.DataDefinition.ParameterFields))
+                    });
+                }
+
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = FlattenExceptionChain(ex);
+            }
+
+            WriteJsonLine(result);
+            return result.Success ? 0 : 1;
+        }
+
+        private static System.Collections.Generic.List<TableInfo> InspectTables(
+            CrystalDecisions.CrystalReports.Engine.Tables tables)
+        {
+            var list = new System.Collections.Generic.List<TableInfo>();
+            foreach (CrystalDecisions.CrystalReports.Engine.Table table in tables)
+            {
+                var info = new TableInfo
+                {
+                    Name = table.Name,
+                    Location = table.Location
+                };
+
+                foreach (CrystalDecisions.CrystalReports.Engine.FieldDefinition field in table.Fields)
+                {
+                    info.Fields.Add(new FieldInfo
+                    {
+                        Name = field.Name,
+                        ValueType = field.ValueType.ToString()
+                    });
+                }
+
+                list.Add(info);
+            }
+            return list;
+        }
+
+        private static System.Collections.Generic.List<FormulaInfo> InspectFormulas(
+            FormulaFieldDefinitions formulas)
+        {
+            var list = new System.Collections.Generic.List<FormulaInfo>();
+            foreach (FormulaFieldDefinition f in formulas)
+            {
+                list.Add(new FormulaInfo { Name = f.Name, Text = f.Text });
+            }
+            return list;
+        }
+
+        private static System.Collections.Generic.List<ParameterInfo> InspectParameters(
+            System.Collections.Generic.IEnumerable<ParameterFieldDefinition> fields)
+        {
+            var list = new System.Collections.Generic.List<ParameterInfo>();
+            foreach (ParameterFieldDefinition p in fields)
+            {
+                list.Add(new ParameterInfo { Name = p.Name, ValueKind = p.ParameterValueKind.ToString() });
+            }
+            return list;
+        }
+
+        /// <summary>
+        /// Walks ex.InnerException down to the root cause and joins every
+        /// level into one readable string, since the top-level message
+        /// alone is often too vague (e.g. TypeInitializationException).
+        /// </summary>
+        private static string FlattenExceptionChain(Exception ex)
+        {
+            var messages = new System.Collections.Generic.List<string>();
+            Exception? current = ex;
+            while (current != null)
+            {
+                messages.Add($"{current.GetType().Name}: {current.Message}");
+                current = current.InnerException;
+            }
+            return string.Join(" ---> ", messages);
+        }
+
+        private static void EmitExportError(Exception ex)
+        {
+            var result = new ExportResult { Success = false, Error = FlattenExceptionChain(ex) };
+            WriteJsonLine(result);
+        }
+
+        private static void WriteJsonLine<T>(T payload)
+        {
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             };
-            Console.WriteLine(JsonSerializer.Serialize(result, jsonOptions));
-
-            return result.Success ? 0 : 1;
+            Console.WriteLine(JsonSerializer.Serialize(payload, jsonOptions));
         }
 
         /// <summary>
@@ -231,10 +434,19 @@ namespace CrystalReportWrapper
                     case "--params":
                         options.ParamsJsonPath = args[++i];
                         break;
+                    case "--inspect":
+                        // Flag, not a key/value pair - takes no argument.
+                        options.Inspect = true;
+                        break;
                 }
             }
 
-            if (string.IsNullOrEmpty(options.ReportPath) || string.IsNullOrEmpty(options.OutputPath))
+            if (string.IsNullOrEmpty(options.ReportPath))
+            {
+                throw new ArgumentException("--report is a required argument.");
+            }
+
+            if (!options.Inspect && string.IsNullOrEmpty(options.OutputPath))
             {
                 throw new ArgumentException("--report and --output are required arguments.");
             }
@@ -423,6 +635,7 @@ namespace CrystalReportWrapper
             public string OutputPath { get; set; } = string.Empty;
             public string Format { get; set; } = "PDF";
             public string? ParamsJsonPath { get; set; }
+            public bool Inspect { get; set; } = false;
         }
     }
 }
