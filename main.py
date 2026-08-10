@@ -128,19 +128,24 @@ class CrystalReportsPipeline:
             # A file (rather than an inline --params '{"a": 1}' arg) sidesteps
             # shell-quoting headaches with special characters/unicode values.
             if parameters:
+                print("Parameters are True")
                 params_file = self._write_params_file(parameters)
 
             # Step 2: build and run the subprocess command.
+            # print("OUTPUT PATH", out_path)
             command = self._build_command(report_path, output_path, export_format, params_file)
+            # print("Command sent to sub process", command)
             completed = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
                 timeout=self.timeout_seconds,
             )
+            print(completed.stdout)
+            # print(completed.stderr)
 
             # Step 3: parse the single JSON line the worker printed.
-            return self._parse_worker_output(completed.stdout, completed.stderr)
+            # return self._parse_worker_output(completed.stdout, completed.stderr)
 
         finally:
             # Step 4: always clean up the temp params file, success or failure.
@@ -213,26 +218,23 @@ class CrystalReportsPipeline:
 # Run directly with: python crystal_reports_pipeline.py
 # -----------------------------------------------------------------------
 if __name__ == "__main__":
-    print(list(Path(__file__).parents))
     parent_folder_path = Path(__file__).parents[0]
-    print("FOLDER PARENT=", parent_folder_path)
-    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Release"/"net48" / "CrystalReportWrapper.exe"
-    report_path = parent_folder_path / "reports" / "RegionCodes.rpt"
-    out_path = parent_folder_path / "out" / "RegionCodeSummary.pdf"
-    print(report_path)
-    print(out_path)
-    print(worker_path)
+
+    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Debug"/"net48" / "CrystalReportWrapper.exe"
+    # worker_path = Path("C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\bin\\Debug\\net48\\CrystalReportWrapper.exe").as_posix()
+    report_path = parent_folder_path / "CrystalReportWrapper" / "2016-RegionCodes.rpt"
+    out_path = parent_folder_path / "out" / "output.json"
+    
     pipeline = CrystalReportsPipeline(
         worker_path
     )
     
-    
+    # parameters={"RegionCode": "West", "DescText": "2026"}
 
     result = pipeline.generate_report(
-        parent_folder_path / report_path,
-        parent_folder_path / out_path,
-        export_format="PDF",
-        parameters={"RegionCode": "West", "DescText": "2026"},
+        report_path,
+        out_path,
+        export_format="PDF"
     )
 
     # print(f"Report generated at: {result.output_path}")

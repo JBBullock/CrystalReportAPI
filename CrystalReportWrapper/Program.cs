@@ -29,11 +29,24 @@
 using System;
 using System.Data;
 using System.IO;
+using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using CrystalDecisions.CrystalReports.Engine;
 using CrystalDecisions.Shared;
 using Npgsql;
+// Diagnostics on the C# Program, Loading, and DLL's
+/*ReportDocument report = new ReportDocument();
+report.Load(@".\RegionCodes.rpt");
+// Quick Diagnostics on the RPT File
 
+Console.WriteLine($"Database Table Count: {report.Database.Tables.Count}");
+Console.WriteLine($"Formulas: {report.DataDefinition.FormulaFields.Count}");
+foreach (CrystalDecisions.CrystalReports.Engine.Table table in report.Database.Tables){
+    Console.WriteLine($"Table: {table.Name}");
+    Console.WriteLine($"Location: {table.Location}");
+   
+    Console.WriteLine("---------------------------------------");
+}*/
 namespace CrystalReportWrapper
 {
     /// <summary>
@@ -60,7 +73,7 @@ namespace CrystalReportWrapper
         // which sidesteps the 32-bit/64-bit ODBC registration problems.
         //
         // Fill in your real values below:
-        private const string PgHost = "localhost";        // <-- Postgres server hostname or IP
+        private const string PgHost = "127.0.0.1";        // <-- Postgres server hostname or IP
         private const string PgPort = "5234";              // <-- Postgres port (5432 is the default)
         private const string PgDatabase = "postgres"; // <-- database name
         private const string PgUser = "postgres";     // <-- database username
@@ -70,7 +83,7 @@ namespace CrystalReportWrapper
         // Column names in this query's result set must match the field
         // names the report expects from its data source (set up in the
         // Crystal Designer under Database Expert -> ADO.NET (XML)).
-        private const string ReportQuery = "SELECT * FROM 'regioncodes';"; // <-- your query here
+        private const string ReportQuery = @"SELECT regioncode AS ""RegionCode"", desctext as ""RegionName""  FROM regioncodes;"; // <-- your query here
         // ====================================================================
 
         /// <summary>
@@ -83,13 +96,18 @@ namespace CrystalReportWrapper
         /// so Python can also branch on subprocess return code alone).
         /// </summary>
         private static int Main(string[] args)
-        {
+        { 
+            Console.WriteLine("Report Loaded Successfully");
+
             var result = new ExportResult();
 
             try
             {
+                Console.WriteLine("====Main=====");
+                Console.WriteLine($"Argument Count: {args.Length}");
                 // --- 1. Parse arguments -----------------------------------
                 var options = ParseArgs(args);
+                
 
                 // --- 2. Load the report -----------------------------------
                 if (!File.Exists(options.ReportPath))
@@ -98,6 +116,7 @@ namespace CrystalReportWrapper
                 }
 
                 using var report = new ReportDocument();
+                Console.WriteLine($"Report Path of Crystal Report RPT: {options.ReportPath}");
                 report.Load(options.ReportPath);
 
                 // --- 2b. Fetch data from Postgres and push it into the report ---
@@ -108,7 +127,15 @@ namespace CrystalReportWrapper
                 // designed against an ADO.NET (XML) data source with a
                 // matching schema for this to line up correctly.
                 DataTable reportData = FetchReportData();
-                report.SetDataSource(reportData);
+                report.Database.Tables[0].SetDataSource(reportData);
+                Console.WriteLine($"Table Count: {report.Database.Tables.Count}");
+                foreach (CrystalDecisions.CrystalReports.Engine.Table t in report.Database.Tables)
+                {
+                    Console.WriteLine($"Table: {t.Name}");
+                    foreach (var col in reportData.Columns)
+                        Console.WriteLine($"  expects binding to: {t.Name}");
+                }
+                //Console.WriteLine($"Database Source: {report.Database.Tables}");
 
                 // If the report has subreports that ALSO need data (as
                 // opposed to just parameters), apply the same table - or a
@@ -189,6 +216,7 @@ namespace CrystalReportWrapper
 
             for (int i = 0; i < args.Length; i++)
             {
+                Console.WriteLine($"args[{i}] = {args[i]}");
                 switch (args[i])
                 {
                     case "--report":
@@ -365,6 +393,7 @@ namespace CrystalReportWrapper
         /// </summary>
         private static DataTable FetchReportData()
         {
+            Console.WriteLine($"Hitting Fetch Report Data Func");
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
             // Password - see https://www.npgsql.org/doc/connection-string-parameters.html
@@ -382,6 +411,8 @@ namespace CrystalReportWrapper
 
             var table = new DataTable();
             adapter.Fill(table);
+            
+            Console.WriteLine($"Rows: {table.Rows.Count}");
             return table;
         }
 
