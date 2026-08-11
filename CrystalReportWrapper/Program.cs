@@ -79,6 +79,16 @@ namespace CrystalReportWrapper
         public string Name { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
         public System.Collections.Generic.List<FieldInfo> Fields { get; set; } = new();
+
+        // Location is just a display label (e.g. "RegionCodes") - it does
+        // NOT tell you which server/DSN/driver the table actually logs
+        // into. That lives on Table.LogOnInfo.ConnectionInfo. We surface
+        // it as a flat string dictionary (rather than modeling every
+        // possible ConnectionInfo/Attributes shape) because the set of
+        // keys differs by connection type (ODBC vs OLE DB vs ADO.NET) -
+        // dumping whatever is actually present is more useful here than a
+        // rigid schema.
+        public System.Collections.Generic.Dictionary<string, string> Connection { get; set; } = new();
     }
 
     internal class FormulaInfo
@@ -137,7 +147,16 @@ namespace CrystalReportWrapper
         // Column names in this query's result set must match the field
         // names the report expects from its data source (set up in the
         // Crystal Designer under Database Expert -> ADO.NET (XML)).
-        private const string ReportQuery = @"SELECT regioncode AS ""RegionCode"", desctext as ""RegionName""  FROM regioncodes;"; // <-- your query here
+        // Column aliases must match the report's field names exactly
+        // (case-sensitive) - confirmed via --inspect: the report expects
+        // "RegionCode" and "DescText", not "RegionName".
+        private const string ReportQuery = @"SELECT regioncode AS ""RegionCode"", desctext AS ""DescText""  FROM regioncodes;"; // <-- your query here
+
+        // Matches the table's Location ("RegionCodes") from --inspect.
+        // Used as the DataTable's TableName below so Crystal's DataSet
+        // binding matches it to the right report table by name rather
+        // than relying on there only ever being one table.
+        private const string ReportTableName = "RegionCodes";
         // ====================================================================
 
         /// <summary>
@@ -204,7 +223,22 @@ namespace CrystalReportWrapper
                 // designed against an ADO.NET (XML) data source with a
                 // matching schema for this to line up correctly.
                 DataTable reportData = FetchReportData();
-                report.Database.Tables[0].SetDataSource(reportData);
+                reportData.TableName = ReportTableName;
+
+                // Passing the bare DataTable to SetDataSource (even at
+                // the ReportDocument level) doesn't fully take this table
+                // off the .ttx codepath - Crystal can still fall back to
+                // the table's original field-definition driver
+                // (crdb_fielddef.dll) during export/render, and that
+                // driver has no 64-bit build, which is what "Failed to
+                // load database information" actually means here even
+                // though SetDataSource itself doesn't throw. Wrapping the
+                // DataTable in a DataSet routes Crystal through its
+                // ADO.NET provider (crdb_adoplus.dll) end-to-end instead,
+                // which is 64-bit and never touches the dead .ttx path.
+                var reportDataSet = new DataSet();
+                reportDataSet.Tables.Add(reportData);
+                report.SetDataSource(reportDataSet);
                 Console.WriteLine($"Table Count: {report.Database.Tables.Count}");
                 foreach (CrystalDecisions.CrystalReports.Engine.Table t in report.Database.Tables)
                 {
@@ -349,9 +383,60 @@ namespace CrystalReportWrapper
                     });
                 }
 
+                // ConnectionInfo is what actually decides which server/
+                // database/driver Crystal tries to log into - this is
+                // where "TTX" (or whatever the original data source is
+                // called) shows up concretely, as opposed to Location
+                // which is just the bare table name.
+                ConnectionInfo connInfo = table.LogOnInfo.ConnectionInfo;
+                info.Connection["ServerName"] = connInfo.ServerName ?? string.Empty;
+                info.Connection["DatabaseName"] = connInfo.DatabaseName ?? string.Empty;
+                info.Connection["UserID"] = connInfo.UserID ?? string.Empty;
+                info.Connection["Type"] = connInfo.Type.ToString();
+                info.Connection["IntegratedSecurity"] = connInfo.IntegratedSecurity.ToString();
+
+                // Attributes is a free-form property bag; for ODBC/OLE DB
+                // tables this is typically where the DSN name, provider,
+                // and driver DLL actually live (e.g. "Data Source",
+                // "Database DLL", "QE_ServerDescription"). Dump every
+                // entry rather than guessing which keys exist.
+                CollectConnectionAttributes(info.Connection, connInfo.Attributes, "Attr:");
+
                 list.Add(info);
             }
             return list;
+        }
+        /// <summary>
+        /// ConnectionInfo.Attributes is a DbConnectionAttributes - a thin
+        /// wrapper, not itself a list. The actual entries live one level
+        /// down, in DbConnectionAttributes.Collection, which is a
+        /// NameValuePairs2 of NameValuePair2 (Name/Value) items accessed
+        /// by Count + a 0-based indexer (not foreach - neither type
+        /// exposes GetEnumerator, which is why a plain foreach over
+        /// either one fails to compile). Some OLE DB connections nest a
+        /// second DbConnectionAttributes inside a pair's Value for
+        /// provider-specific settings, so this recurses into those and
+        /// flattens them as "prefix.innerName" keys instead of printing
+        /// an opaque object reference.
+        /// </summary>
+        private static void CollectConnectionAttributes(
+            System.Collections.Generic.Dictionary<string, string> target,
+            DbConnectionAttributes attributes,
+            string prefix)
+        {
+            NameValuePairs2 pairs = attributes.Collection;
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                var pair = (NameValuePair2)pairs[i];
+                if (pair.Value is DbConnectionAttributes nested)
+                {
+                    CollectConnectionAttributes(target, nested, $"{prefix}{pair.Name}.");
+                }
+                else
+                {
+                    target[$"{prefix}{pair.Name}"] = pair.Value?.ToString() ?? string.Empty;
+                }
+            }
         }
 
         private static System.Collections.Generic.List<FormulaInfo> InspectFormulas(
@@ -605,7 +690,7 @@ namespace CrystalReportWrapper
         /// </summary>
         private static DataTable FetchReportData()
         {
-            Console.WriteLine($"Hitting Fetch Report Data Func");
+            
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
             // Password - see https://www.npgsql.org/doc/connection-string-parameters.html

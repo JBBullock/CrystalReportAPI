@@ -24,11 +24,18 @@
          issues). Instead, Postgres is queried directly in C# using Npgsql
          (a pure managed .NET driver - see FetchReportData()), and the
          resulting DataTable is handed to Crystal via SetDataSource(). That
-         removes any ODBC/driver-bitness dependency entirely, so this goes
-         back to x86, which is what the CR COM runtime has reliably
-         registered as on this machine throughout this whole debugging
-         process. -->
-    <PlatformTarget>x64</PlatformTarget>
+         removes any ODBC/driver-bitness dependency, but does NOT remove
+         the Crystal-side bitness dependency: this report's table is bound
+         to a .ttx (field-definitions-only) source, and Crystal has never
+         shipped a 64-bit driver for that (crdb_fielddef.dll). Even though
+         SetDataSource() succeeds under x64, ExportToDisk() still touches
+         the table's original recorded connection during formatting and
+         fails with "Failed to load database information" there. x86 is
+         what the CR COM runtime has reliably registered as on this
+         machine throughout this whole debugging process - this was
+         previously flipped to x64 (probably while chasing the unrelated
+         ODBC bitness issue above) without updating this comment. -->
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -48,15 +55,28 @@
     <Reference Include="CrystalDecisions.Shared,Version=13.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=MSIL">
       <HintPath>.\bin\Debug\net48\CrystalDecisions.Shared.dll</HintPath>
       <Private>true</Private>
-    
+
     </Reference>
-    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer, Version=13.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=x64">
+
+    <!-- CrystalDecisions.CrystalReports.Engine's ReportDocument pulls this
+         in internally at runtime (it bridges to the native Report
+         Application Server components) even though nothing in Program.cs
+         references the CrystalDecisions.ReportAppServer namespace
+         directly - that's why removing this reference outright wasn't
+         enough; the DLL still needs to be present and architecture-
+         matched. processorArchitecture is x86 here (not x64) to match
+         both the swapped-in 32-bit HintPath DLL and the rest of this
+         project's PlatformTarget=x86. This also requires the 32-bit "SAP
+         Crystal Reports runtime engine for .NET Framework" (CRRuntime_32bit,
+         same 13.0.4000 version) to be installed on this machine alongside
+         the existing 64-bit one, so there's an actual native runtime for
+         this DLL to bridge to - without it this fails with
+         BadImageFormatException on "CommLayer ... or one of its
+         dependencies" even when CommLayer.dll itself is correctly x86. -->
+    <Reference Include="CrystalDecisions.ReportAppServer.CommLayer, Version=13.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304, processorArchitecture=x86">
       <HintPath>.\bin\Debug\net48\CrystalDecisions.ReportAppServer.CommLayer.dll</HintPath>
       <Private>true</Private>
     </Reference>
-
-    
-
 
   </ItemGroup>
 

@@ -145,7 +145,7 @@ class CrystalReportsPipeline:
             # print(completed.stderr)
 
             # Step 3: parse the single JSON line the worker printed.
-            # return self._parse_worker_output(completed.stdout, completed.stderr)
+            return self._parse_worker_output(completed.stdout, completed.stderr)
 
         finally:
             # Step 4: always clean up the temp params file, success or failure.
@@ -281,12 +281,15 @@ if __name__ == "__main__":
     )
     manifest = pipeline.inspect_report(report_path)
     print(json.dumps(manifest, indent=2))
-    # parameters={"RegionCode": "West", "DescText": "2026"}
 
-    # result = pipeline.generate_report(
-    #     report_path,
-    #     out_path,
-    #     export_format="PDF"
-    # )
+    # out_path was "output.json" with export_format="PDF" - mismatched
+    # extension, fixed to match the actual export format below.
+    out_path = parent_folder_path / "out" / "output.pdf"
 
-    # print(f"Report generated at: {result.output_path}")
+    result = pipeline.generate_report(
+        report_path,
+        out_path,
+        export_format="PDF"
+    )
+
+    print(f"Report generated at: {result.output_path}")
