@@ -144,30 +144,41 @@ namespace CrystalReportWrapper
         private const string PgUser = "postgres";     // <-- database username
         private const string PgPassword = "engineer123"; // <-- database password
 
-        // MULTI-TABLE DATA SOURCE
-        // -----------------------
-        // The single-table case (RegionCodes) used one hardcoded query and
-        // one hardcoded table name. A report bound to several tables needs
-        // one query PER TABLE, because Crystal's ADO.NET (XML) binding
-        // matches each DataTable in the DataSet to a report Table by NAME,
-        // not position - so every table the report expects needs its own
-        // entry here with the exact Location string --inspect reports.
+        // TABLE QUERY CATALOG
+        // -------------------
+        // This is NOT "the tables for the current report" - it's every
+        // table this worker knows how to fetch, across ALL reports you'll
+        // ever run through it. A given .rpt only pulls the subset it
+        // actually references (see RunExportPipeline, which reads
+        // report.Database.Tables and looks up just those names here) - so
+        // adding support for a new report is usually a zero-code-change
+        // operation as long as it only touches tables already cataloged.
+        // Only a genuinely new table needs a new entry, and that entry is
+        // then reused by every future report that also touches it. This is
+        // what avoids needing a separate .cs file (or even a recompile)
+        // per report.
         //
-        // Confirmed via --inspect against Backlog_RFoF_WO.rpt: this report
+        // Case-insensitive lookup (OrdinalIgnoreCase) - Table.Name from a
+        // loaded .rpt should match Location exactly, but this avoids a
+        // silent "no matching table" over a stray casing difference.
+        //
+        // Confirmed via --inspect against Backlog_RFoF_WO.rpt: that report
         // expects SODetail, SOHeader, PartMaster, and Customers - NOT
-        // WOHeader, despite "WO" in the filename. WOHeader must belong to a
+        // WOHeader, despite "WO" in the filename. WOHeader belongs to a
         // different .rpt (WorkOrderTraveler.rpt is the likely candidate) -
-        // inspect that one separately and give it its own TableQueries set
-        // rather than assuming all 5 tables ever load together.
+        // once you --inspect that one, add a WOHeader entry here (once)
+        // and both reports work off the same catalog.
         //
         // Column aliases below match --inspect's field list per table
-        // exactly (case-sensitive), same rule as RegionCode/DescText.
-        // Postgres table/column names are assumed lowercase-of-the-Access-
-        // name (confirmed pattern from RegionCodes: "RegionCodes" ->
-        // regioncodes, "RegionCode" -> regioncode) - verify against your
-        // actual Postgres schema and adjust the left-hand side (before AS)
-        // if your migration used different casing/naming.
-        private static readonly Dictionary<string, string> TableQueries = new()
+        // exactly (case-sensitive on the DataTable/Crystal side, even
+        // though the dictionary key lookup itself is case-insensitive),
+        // same rule as RegionCode/DescText. Postgres table/column names are
+        // assumed lowercase-of-the-Access-name (confirmed pattern from
+        // RegionCodes: "RegionCodes" -> regioncodes, "RegionCode" ->
+        // regioncode) - verify against your actual Postgres schema and
+        // adjust the left-hand side (before AS) if your migration used
+        // different casing/naming.
+        private static readonly Dictionary<string, string> TableQueryCatalog = new(StringComparer.OrdinalIgnoreCase)
         {
             ["SOHeader"] = @"
                 SELECT
@@ -317,6 +328,80 @@ namespace CrystalReportWrapper
                     cost AS ""Cost"",
                     partmaster_pkey AS ""PartMaster_PKey""
                 FROM partmaster;",
+
+            // Confirmed via --inspect against WorkOrderTraveler.rpt. NOTE:
+            // this table's original source is a DIFFERENT Access file
+            // (Pen.mdb) than SOHeader/SODetail/Customers/PartMaster above
+            // (which come from OpticalZonuMRP.mdb) - confirm your Postgres
+            // migration actually includes this data under a "woheader"
+            // table before relying on this query; it may not have been
+            // migrated yet if the migration only covered OpticalZonuMRP.mdb.
+            ["WOHeader"] = @"
+                SELECT
+                    wonumber AS ""WONumber"",
+                    startdate AS ""StartDate"",
+                    requireddate AS ""RequiredDate"",
+                    wopriority AS ""WOPriority"",
+                    quantitycompleted AS ""QuantityCompleted"",
+                    quantityreleased AS ""QuantityReleased"",
+                    quantityrequired AS ""QuantityRequired"",
+                    quantitytostart AS ""QuantityToStart"",
+                    partnumber AS ""PartNumber"",
+                    workorderuom AS ""WorkOrderUOM"",
+                    closedflag AS ""ClosedFlag"",
+                    enteredby AS ""EnteredBy"",
+                    releaseddate AS ""ReleasedDate"",
+                    jobnumber AS ""JobNumber"",
+                    notes AS ""Notes"",
+                    userdefined AS ""UserDefined"",
+                    woheader_pkey AS ""WOHeader_PKey""
+                FROM woheader;",
+
+            // WorkOrderTraveler_TTX is INTENTIONALLY NOT in this catalog
+            // yet. Its --inspect connection info (Database DLL:
+            // crdb_fielddef.dll, QE_DatabaseType: "Field Definitions Only")
+            // means it isn't a plain table - Crystal only has a cached
+            // snapshot of its column shapes, the live connection is gone.
+            // Its fields (PartMaster_DescText, WorkCenterName,
+            // OperationCodes_DescText, and a suspicious "Isnull_Notes"
+            // column) strongly suggest it was originally a hand-written SQL
+            // Command joining a WO routing/operations table with
+            // PartMaster, WorkCenters, and OperationCodes - not something
+            // safe to guess at. Check Database Expert in the Crystal
+            // Designer for a Command object and its stored SQL text before
+            // adding an entry here.
+        };
+
+        // RELATION CATALOG
+        // ----------------
+        // Same "write once, reuse across every report" idea as the table
+        // catalog above, but for joins. A pair of tables either relates the
+        // same way in every report that uses both of them, or it doesn't
+        // relate at all - so these are keyed on the TABLE PAIR, not on any
+        // particular report. BuildReportDataSet adds a relation only when
+        // both of its tables are actually present for the current report,
+        // so a report using just SOHeader+Customers gets that one relation
+        // and skips the other two automatically - no per-report relation
+        // list to maintain.
+        //
+        // First three confirmed against the actual Crystal-generated SQL
+        // for a report using these tables (its "EXTERNAL JOIN" lines are
+        // Crystal's own client-side correlation syntax for Access/DAO
+        // reports that don't do real cross-table SQL joins - same thing
+        // DataRelation does here). The fourth (WOHeader-SODetail) came from
+        // that same query and was new information - in this database, work
+        // orders link to sales-order lines by matching PartNumber, not by
+        // any order number. Not yet confirmed for every report that uses
+        // both tables, but table relationships are a property of the
+        // database, not any one report, so it's cataloged here rather than
+        // re-derived per report. Verify in the Crystal designer if a
+        // report's linked/grouped sections render empty or duplicated.
+        private static readonly List<(string ParentTable, string ParentColumn, string ChildTable, string ChildColumn)> RelationCatalog = new()
+        {
+            ("SOHeader", "SONumber", "SODetail", "SONumber"),
+            ("Customers", "CustomerID", "SOHeader", "CustomerID"),
+            ("PartMaster", "PartNumber", "SODetail", "PartNumber"),
+            ("WOHeader", "PartNumber", "SODetail", "PartNumber"),
         };
         // ====================================================================
 
@@ -396,7 +481,20 @@ namespace CrystalReportWrapper
                 // DataTable in one DataSet routes Crystal through its
                 // ADO.NET provider (crdb_adoplus.dll) end-to-end instead,
                 // which is 64-bit and never touches the dead .ttx path.
-                DataSet reportDataSet = BuildReportDataSet();
+                //
+                // Which tables to fetch is NOT hardcoded per report - the
+                // .rpt itself already says what it needs, right here in
+                // report.Database.Tables, now that it's loaded. This is
+                // what makes one exe/one Program.cs work across every
+                // report: each report just asks for whatever subset of the
+                // TableQueryCatalog it happens to use.
+                var requiredTables = new List<string>();
+                foreach (CrystalDecisions.CrystalReports.Engine.Table t in report.Database.Tables)
+                {
+                    requiredTables.Add(t.Name);
+                }
+
+                DataSet reportDataSet = BuildReportDataSet(requiredTables);
                 report.SetDataSource(reportDataSet);
 
                 Console.WriteLine($"Table Count (report expects): {report.Database.Tables.Count}");
@@ -412,7 +510,7 @@ namespace CrystalReportWrapper
                     // is a much faster diagnosis than an opaque export
                     // failure later.
                     bool matched = reportDataSet.Tables.Contains(t.Name);
-                    Console.WriteLine($"Table: {t.Name} - {(matched ? "matched in data source" : "NO MATCHING TABLE IN DATA SOURCE (check TableQueries key spelling/casing)")}");
+                    Console.WriteLine($"Table: {t.Name} - {(matched ? "matched in data source" : "NO MATCHING TABLE IN DATA SOURCE (check TableQueryCatalog key spelling/casing)")}");
                 }
 
                 // If the report has subreports that ALSO need data (as
@@ -851,13 +949,19 @@ namespace CrystalReportWrapper
         }
 
         /// <summary>
-        /// Connects to Postgres once and runs every query in TableQueries,
-        /// returning all results as named DataTables inside a single
-        /// DataSet ready to hand to Crystal via ReportDocument.SetDataSource.
-        /// Replaces the old single-table FetchReportData() - same idea,
-        /// just looped over N tables instead of hardcoded to one.
+        /// Connects to Postgres once and runs the query for each table in
+        /// requiredTableNames (looked up from TableQueryCatalog), returning
+        /// all results as named DataTables inside a single DataSet ready to
+        /// hand to Crystal via ReportDocument.SetDataSource. Then adds
+        /// whichever RelationCatalog entries apply given the tables that
+        /// actually ended up present.
+        ///
+        /// requiredTableNames is driven by the loaded report itself
+        /// (report.Database.Tables), not hardcoded - this is what lets the
+        /// same catalog + this one method serve every report, instead of
+        /// needing per-report code.
         /// </summary>
-        private static DataSet BuildReportDataSet()
+        private static DataSet BuildReportDataSet(IEnumerable<string> requiredTableNames)
         {
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
@@ -873,10 +977,20 @@ namespace CrystalReportWrapper
             using var connection = new NpgsqlConnection(connectionString);
             connection.Open();
 
-            foreach (KeyValuePair<string, string> entry in TableQueries)
+            foreach (string tableName in requiredTableNames)
             {
-                string tableName = entry.Key;
-                string query = entry.Value;
+                if (!TableQueryCatalog.TryGetValue(tableName, out string? query))
+                {
+                    // Fail loudly and specifically instead of silently
+                    // exporting a report with a missing table (which would
+                    // otherwise surface later as a vague Crystal binding
+                    // error). This is the "you need one new catalog entry"
+                    // signal - not a "write a new Program.cs" signal.
+                    throw new InvalidOperationException(
+                        $"Report requires table '{tableName}', which has no entry in " +
+                        $"TableQueryCatalog. Add a query for it there (once) - every " +
+                        $"other report that also uses '{tableName}' will reuse the same entry.");
+                }
 
                 using var command = new NpgsqlCommand(query, connection);
                 using var adapter = new NpgsqlDataAdapter(command);
@@ -902,24 +1016,27 @@ namespace CrystalReportWrapper
             // .rpt's actual Links tab. Verify in the Crystal designer if
             // sections render empty or duplicated.
             //
+            // Only added when BOTH sides of a RelationCatalog entry are
+            // present in THIS report's DataSet - a report that only uses
+            // SOHeader+Customers skips the other two relations automatically.
+            //
             // createConstraints: false - real MDB-sourced data is exactly
             // the kind of thing that violates strict FK/unique constraints
             // (blank PartNumbers, a SODetail line whose part got deleted
             // from PartMaster, etc.). true would throw a ConstraintException
             // on the first bad row instead of just leaving that row
             // unmatched, which is what Crystal will silently do anyway.
-            dataSet.Relations.Add("SOHeaderToSODetail",
-                dataSet.Tables["SOHeader"].Columns["SONumber"],
-                dataSet.Tables["SODetail"].Columns["SONumber"],
-                false);
-            dataSet.Relations.Add("CustomersToSOHeader",
-                dataSet.Tables["Customers"].Columns["CustomerID"],
-                dataSet.Tables["SOHeader"].Columns["CustomerID"],
-                false);
-            dataSet.Relations.Add("PartMasterToSODetail",
-                dataSet.Tables["PartMaster"].Columns["PartNumber"],
-                dataSet.Tables["SODetail"].Columns["PartNumber"],
-                false);
+            foreach (var rel in RelationCatalog)
+            {
+                if (dataSet.Tables.Contains(rel.ParentTable) && dataSet.Tables.Contains(rel.ChildTable))
+                {
+                    dataSet.Relations.Add(
+                        $"{rel.ParentTable}To{rel.ChildTable}",
+                        dataSet.Tables[rel.ParentTable].Columns[rel.ParentColumn],
+                        dataSet.Tables[rel.ChildTable].Columns[rel.ChildColumn],
+                        false);
+                }
+            }
 
             return dataSet;
         }
