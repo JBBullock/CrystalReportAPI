@@ -27,6 +27,7 @@
 // ============================================================================
 
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Runtime.ExceptionServices;
@@ -143,20 +144,180 @@ namespace CrystalReportWrapper
         private const string PgUser = "postgres";     // <-- database username
         private const string PgPassword = "engineer123"; // <-- database password
 
-        // The SQL query that produces the rows the report should display.
-        // Column names in this query's result set must match the field
-        // names the report expects from its data source (set up in the
-        // Crystal Designer under Database Expert -> ADO.NET (XML)).
-        // Column aliases must match the report's field names exactly
-        // (case-sensitive) - confirmed via --inspect: the report expects
-        // "RegionCode" and "DescText", not "RegionName".
-        private const string ReportQuery = @"SELECT regioncode AS ""RegionCode"", desctext AS ""DescText""  FROM regioncodes;"; // <-- your query here
+        // MULTI-TABLE DATA SOURCE
+        // -----------------------
+        // The single-table case (RegionCodes) used one hardcoded query and
+        // one hardcoded table name. A report bound to several tables needs
+        // one query PER TABLE, because Crystal's ADO.NET (XML) binding
+        // matches each DataTable in the DataSet to a report Table by NAME,
+        // not position - so every table the report expects needs its own
+        // entry here with the exact Location string --inspect reports.
+        //
+        // Confirmed via --inspect against Backlog_RFoF_WO.rpt: this report
+        // expects SODetail, SOHeader, PartMaster, and Customers - NOT
+        // WOHeader, despite "WO" in the filename. WOHeader must belong to a
+        // different .rpt (WorkOrderTraveler.rpt is the likely candidate) -
+        // inspect that one separately and give it its own TableQueries set
+        // rather than assuming all 5 tables ever load together.
+        //
+        // Column aliases below match --inspect's field list per table
+        // exactly (case-sensitive), same rule as RegionCode/DescText.
+        // Postgres table/column names are assumed lowercase-of-the-Access-
+        // name (confirmed pattern from RegionCodes: "RegionCodes" ->
+        // regioncodes, "RegionCode" -> regioncode) - verify against your
+        // actual Postgres schema and adjust the left-hand side (before AS)
+        // if your migration used different casing/naming.
+        private static readonly Dictionary<string, string> TableQueries = new()
+        {
+            ["SOHeader"] = @"
+                SELECT
+                    sonumber AS ""SONumber"",
+                    orderdate AS ""OrderDate"",
+                    customerid AS ""CustomerID"",
+                    salesperson AS ""SalesPerson"",
+                    termscode AS ""TermsCode"",
+                    shipviacode AS ""ShipViaCode"",
+                    fobcode AS ""FOBCode"",
+                    requireddate AS ""RequiredDate"",
+                    enteredby AS ""EnteredBy"",
+                    notes AS ""Notes"",
+                    billtoaddress AS ""BillToAddress"",
+                    shiptoaddress AS ""ShipToAddress"",
+                    orderedby AS ""OrderedBy"",
+                    customerpo AS ""CustomerPO"",
+                    pricecode AS ""PriceCode"",
+                    shipholdflag AS ""ShipHoldFlag"",
+                    closedflag AS ""ClosedFlag"",
+                    departmentcode AS ""DepartmentCode"",
+                    currencycode AS ""CurrencyCode"",
+                    currencyrate AS ""CurrencyRate"",
+                    jobnumber AS ""JobNumber"",
+                    regioncode AS ""RegionCode"",
+                    attention AS ""Attention"",
+                    quotenumber AS ""QuoteNumber"",
+                    ordertype AS ""OrderType"",
+                    userdefined AS ""UserDefined"",
+                    soheader_pkey AS ""SOHeader_PKey"",
+                    billtocontact AS ""BillToContact"",
+                    shiptocontact AS ""ShipToContact""
+                FROM soheader;",
 
-        // Matches the table's Location ("RegionCodes") from --inspect.
-        // Used as the DataTable's TableName below so Crystal's DataSet
-        // binding matches it to the right report table by name rather
-        // than relying on there only ever being one table.
-        private const string ReportTableName = "RegionCodes";
+            ["SODetail"] = @"
+                SELECT
+                    sonumber AS ""SONumber"",
+                    soline AS ""SOLine"",
+                    customerline AS ""CustomerLine"",
+                    taxableflag AS ""TaxableFlag"",
+                    partnumber AS ""PartNumber"",
+                    partxreference AS ""PartXReference"",
+                    quantityordered AS ""QuantityOrdered"",
+                    actualshipdate AS ""ActualShipDate"",
+                    quantityshipped AS ""QuantityShipped"",
+                    quantityreturned AS ""QuantityReturned"",
+                    scheduledshipdate AS ""ScheduledShipDate"",
+                    customerprice AS ""CustomerPrice"",
+                    salesuom AS ""SalesUOM"",
+                    notes AS ""Notes"",
+                    taxcode AS ""TaxCode"",
+                    taxflag2 AS ""TaxFlag2"",
+                    taxflag3 AS ""TaxFlag3"",
+                    taxcode2 AS ""TaxCode2"",
+                    taxcode3 AS ""TaxCode3"",
+                    closedflag AS ""ClosedFlag"",
+                    productclass AS ""ProductClass"",
+                    userdefined1 AS ""UserDefined1"",
+                    userdefined AS ""UserDefined"",
+                    sodetail_pkey AS ""SODetail_PKey""
+                FROM sodetail;",
+
+            ["Customers"] = @"
+                SELECT
+                    customerid AS ""CustomerID"",
+                    customername AS ""CustomerName"",
+                    pricecode AS ""PriceCode"",
+                    regioncode AS ""RegionCode"",
+                    shipholdflag AS ""ShipHoldFlag"",
+                    termscode AS ""TermsCode"",
+                    shipviacode AS ""ShipViaCode"",
+                    fobcode AS ""FOBCode"",
+                    currencycode AS ""CurrencyCode"",
+                    vatregnumber AS ""VATRegNumber"",
+                    vatbranchid AS ""VATBranchID"",
+                    dateadded AS ""DateAdded"",
+                    notes AS ""Notes"",
+                    activeflag AS ""ActiveFlag"",
+                    creditlimit AS ""CreditLimit"",
+                    pricedisctype AS ""PriceDiscType"",
+                    customerdisclevel AS ""CustomerDiscLevel"",
+                    userdefined1 AS ""UserDefined1"",
+                    salespersonid AS ""SalespersonID"",
+                    customers_pkey AS ""Customers_PKey""
+                FROM customers;",
+
+            ["PartMaster"] = @"
+                SELECT
+                    partnumber AS ""PartNumber"",
+                    revision AS ""Revision"",
+                    desctext AS ""DescText"",
+                    stockuom AS ""StockUOM"",
+                    densitycode AS ""DensityCode"",
+                    bomlevel AS ""BOMLevel"",
+                    graphicpath AS ""GraphicPath"",
+                    dimension AS ""Dimension"",
+                    weight AS ""Weight"",
+                    userdefined1 AS ""UserDefined1"",
+                    enteredby AS ""EnteredBy"",
+                    dateadded AS ""DateAdded"",
+                    engnotes AS ""EngNotes"",
+                    isc AS ""ISC"",
+                    omc AS ""OMC"",
+                    departmentcode AS ""DepartmentCode"",
+                    stockroomcode AS ""StockroomCode"",
+                    locationcode AS ""LocationCode"",
+                    uompurchase AS ""UOMPurchase"",
+                    leadtime AS ""LeadTime"",
+                    ordermultiple AS ""OrderMultiple"",
+                    yieldfactor AS ""YieldFactor"",
+                    safetystock AS ""SafetyStock"",
+                    orderquantity AS ""OrderQuantity"",
+                    defaultpocost AS ""DefaultPOCost"",
+                    listprice AS ""ListPrice"",
+                    suocode AS ""SUOCode"",
+                    commoditycode AS ""CommodityCode"",
+                    icncode AS ""ICNCode"",
+                    productclass AS ""ProductClass"",
+                    productpricecode AS ""ProductPriceCode"",
+                    specialstorage AS ""SpecialStorage"",
+                    shelflife AS ""ShelfLife"",
+                    standardhours AS ""StandardHours"",
+                    partcommflag AS ""PartCommFlag"",
+                    partcommrate AS ""PartCommRate"",
+                    taxableflag AS ""TaxableFlag"",
+                    taxcode AS ""TaxCode"",
+                    userdefined2 AS ""UserDefined2"",
+                    lastxactiondate AS ""LastXactionDate"",
+                    ytdusage AS ""YTDUsage"",
+                    abccode AS ""ABCCode"",
+                    abcdollarusage AS ""ABCDollarUsage"",
+                    abcpartpercent AS ""ABCPartPercent"",
+                    abcdollarpercent AS ""ABCDollarPercent"",
+                    lastcountdate AS ""LastCountDate"",
+                    generatetagflag AS ""GenerateTagFlag"",
+                    stdmaterialcost AS ""STDMaterialCost"",
+                    stdburdencost AS ""STDBurdenCost"",
+                    stdlaborcost AS ""STDLaborCost"",
+                    stdsetupcost AS ""STDSetUpCost"",
+                    stdsubcontcost AS ""STDSubContCost"",
+                    costrevisiondate AS ""CostRevisionDate"",
+                    materialcost AS ""MaterialCost"",
+                    laborcost AS ""LaborCost"",
+                    burdencost AS ""BurdenCost"",
+                    setupcost AS ""SetUpCost"",
+                    subcontcost AS ""SubContCost"",
+                    cost AS ""Cost"",
+                    partmaster_pkey AS ""PartMaster_PKey""
+                FROM partmaster;",
+        };
         // ====================================================================
 
         /// <summary>
@@ -219,34 +380,40 @@ namespace CrystalReportWrapper
                 // This replaces Crystal's own database connection entirely -
                 // we run the query ourselves with Npgsql (a pure managed
                 // .NET driver, no ODBC/COM dependency) and hand Crystal a
-                // finished DataTable. The report's .rpt file must be
+                // finished DataTable (or, for multi-table reports, several
+                // DataTables in one DataSet). The report's .rpt file must be
                 // designed against an ADO.NET (XML) data source with a
                 // matching schema for this to line up correctly.
-                DataTable reportData = FetchReportData();
-                reportData.TableName = ReportTableName;
-
-                // Passing the bare DataTable to SetDataSource (even at
-                // the ReportDocument level) doesn't fully take this table
-                // off the .ttx codepath - Crystal can still fall back to
-                // the table's original field-definition driver
-                // (crdb_fielddef.dll) during export/render, and that
-                // driver has no 64-bit build, which is what "Failed to
-                // load database information" actually means here even
-                // though SetDataSource itself doesn't throw. Wrapping the
-                // DataTable in a DataSet routes Crystal through its
+                //
+                // Passing a bare DataTable to SetDataSource (even at the
+                // ReportDocument level) doesn't fully take it off the .ttx
+                // codepath - Crystal can still fall back to the table's
+                // original field-definition driver (crdb_fielddef.dll)
+                // during export/render, and that driver has no 64-bit
+                // build, which is what "Failed to load database
+                // information" actually means here even though
+                // SetDataSource itself doesn't throw. Wrapping every
+                // DataTable in one DataSet routes Crystal through its
                 // ADO.NET provider (crdb_adoplus.dll) end-to-end instead,
                 // which is 64-bit and never touches the dead .ttx path.
-                var reportDataSet = new DataSet();
-                reportDataSet.Tables.Add(reportData);
+                DataSet reportDataSet = BuildReportDataSet();
                 report.SetDataSource(reportDataSet);
-                Console.WriteLine($"Table Count: {report.Database.Tables.Count}");
+
+                Console.WriteLine($"Table Count (report expects): {report.Database.Tables.Count}");
+                Console.WriteLine($"Table Count (data source provides): {reportDataSet.Tables.Count}");
                 foreach (CrystalDecisions.CrystalReports.Engine.Table t in report.Database.Tables)
                 {
-                    Console.WriteLine($"Table: {t.Name}");
-                    foreach (var col in reportData.Columns)
-                        Console.WriteLine($"  expects binding to: {t.Name}");
+                    // This is the multi-table version of the diagnostic
+                    // that used to just print every column name against
+                    // the single table - now it flags, per table the
+                    // report actually expects, whether our DataSet
+                    // supplied a same-named DataTable at all. A report
+                    // expecting 5 tables but only getting 3 matches here
+                    // is a much faster diagnosis than an opaque export
+                    // failure later.
+                    bool matched = reportDataSet.Tables.Contains(t.Name);
+                    Console.WriteLine($"Table: {t.Name} - {(matched ? "matched in data source" : "NO MATCHING TABLE IN DATA SOURCE (check TableQueries key spelling/casing)")}");
                 }
-                //Console.WriteLine($"Database Source: {report.Database.Tables}");
 
                 // If the report has subreports that ALSO need data (as
                 // opposed to just parameters), apply the same table - or a
@@ -684,13 +851,14 @@ namespace CrystalReportWrapper
         }
 
         /// <summary>
-        /// Connects to Postgres using the configuration constants at the top
-        /// of this file, runs ReportQuery, and returns the results as a
-        /// DataTable ready to hand to Crystal via ReportDocument.SetDataSource.
+        /// Connects to Postgres once and runs every query in TableQueries,
+        /// returning all results as named DataTables inside a single
+        /// DataSet ready to hand to Crystal via ReportDocument.SetDataSource.
+        /// Replaces the old single-table FetchReportData() - same idea,
+        /// just looped over N tables instead of hardcoded to one.
         /// </summary>
-        private static DataTable FetchReportData()
+        private static DataSet BuildReportDataSet()
         {
-            
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
             // Password - see https://www.npgsql.org/doc/connection-string-parameters.html
@@ -700,17 +868,60 @@ namespace CrystalReportWrapper
                 $"Host={PgHost};Port={PgPort};Database={PgDatabase};" +
                 $"Username={PgUser};Password={PgPassword};";
 
+            var dataSet = new DataSet();
+
             using var connection = new NpgsqlConnection(connectionString);
             connection.Open();
 
-            using var command = new NpgsqlCommand(ReportQuery, connection);
-            using var adapter = new NpgsqlDataAdapter(command);
+            foreach (KeyValuePair<string, string> entry in TableQueries)
+            {
+                string tableName = entry.Key;
+                string query = entry.Value;
 
-            var table = new DataTable();
-            adapter.Fill(table);
-            
-            Console.WriteLine($"Rows: {table.Rows.Count}");
-            return table;
+                using var command = new NpgsqlCommand(query, connection);
+                using var adapter = new NpgsqlDataAdapter(command);
+
+                // TableName set here (not after Fill) - DataSet.Tables.Add
+                // uses this to key the table by name, which is what
+                // Crystal's ADO.NET binding matches against report.Database
+                // .Tables[i].Name.
+                var table = new DataTable(tableName);
+                adapter.Fill(table);
+
+                Console.WriteLine($"Rows for '{tableName}': {table.Rows.Count}");
+                dataSet.Tables.Add(table);
+            }
+
+            // Report links: --inspect doesn't surface the Database Expert
+            // Links tab directly, but the report's real (non-LANG) formulas
+            // reference these table pairs together (e.g. "Sample" reads
+            // both SOHeader.CustomerPO and SODetail.QuantityReturned;
+            // "BoMvalidate" reads PartMaster.Cost/UserDefined1 against
+            // SODetail rows), and the shared columns are all StringField on
+            // both sides - so these are inferred, not confirmed from the
+            // .rpt's actual Links tab. Verify in the Crystal designer if
+            // sections render empty or duplicated.
+            //
+            // createConstraints: false - real MDB-sourced data is exactly
+            // the kind of thing that violates strict FK/unique constraints
+            // (blank PartNumbers, a SODetail line whose part got deleted
+            // from PartMaster, etc.). true would throw a ConstraintException
+            // on the first bad row instead of just leaving that row
+            // unmatched, which is what Crystal will silently do anyway.
+            dataSet.Relations.Add("SOHeaderToSODetail",
+                dataSet.Tables["SOHeader"].Columns["SONumber"],
+                dataSet.Tables["SODetail"].Columns["SONumber"],
+                false);
+            dataSet.Relations.Add("CustomersToSOHeader",
+                dataSet.Tables["Customers"].Columns["CustomerID"],
+                dataSet.Tables["SOHeader"].Columns["CustomerID"],
+                false);
+            dataSet.Relations.Add("PartMasterToSODetail",
+                dataSet.Tables["PartMaster"].Columns["PartNumber"],
+                dataSet.Tables["SODetail"].Columns["PartNumber"],
+                false);
+
+            return dataSet;
         }
 
 

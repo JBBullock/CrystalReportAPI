@@ -289,7 +289,8 @@ if __name__ == "__main__":
     result = pipeline.generate_report(
         report_path,
         out_path,
-        export_format="PDF"
+        export_format="PDF",
+        params={"Month_req": "March", "Month_ordered": "August", "Year_ordered": 2026}
     )
 
     print(f"Report generated at: {result.output_path}")
