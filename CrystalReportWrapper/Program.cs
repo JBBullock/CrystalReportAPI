@@ -358,6 +358,638 @@ namespace CrystalReportWrapper
                     woheader_pkey AS ""WOHeader_PKey""
                 FROM woheader;",
 
+            // ---- Legacy _TTX staging tables -----------------------------
+            // These table names (TermsCodes_TTX, CommodityCodes_TTX, etc.)
+            // come from report.Database.Tables on the real .rpt files, not
+            // from any Postgres naming choice - see tables_summary.json
+            // (generate_reports_manifest.py) for the full inventory and
+            // _is_legacy_staging_table's detection of the pattern. Each one
+            // below maps to a real, already-migrated Postgres table; the AS
+            // aliases are Crystal's own field names for that _TTX table,
+            // confirmed via --inspect against the actual .rpt - NOT derived
+            // from the live column names, which is why some don't match
+            // 1:1 (e.g. suocode's Crystal field is "SUOCode", not
+            // "SystemUsedOnCode"). Table names themselves came from
+            // menu_config.py's TABLE_MAP, columns from its COLUMN_MAP -
+            // both hand-confirmed against real ZMRP source, not guessed.
+            ["TermsCodes_TTX"] = @"
+                SELECT
+                    termscode AS ""TermsCode"",
+                    desctext AS ""DescText""
+                FROM termscodes;",
+
+            ["ShipViaCodes_TTX"] = @"
+                SELECT
+                    shipviacode AS ""ShipViaCode"",
+                    desctext AS ""DescText""
+                FROM shipviacodes;",
+
+            ["FOBCodes_TTX"] = @"
+                SELECT
+                    fobcode AS ""FOBCode"",
+                    desctext AS ""DescText""
+                FROM fobcodes;",
+
+            // COLUMN_MAP has no "Customer Discount Levels" entry to confirm
+            // this against - column names assumed from the same code/
+            // desctext shape every other 2-field code table here uses.
+            // Verify against the real customerdisclevel schema.
+            ["CustomerDiscLevel_TTX"] = @"
+                SELECT
+                    customerdisclevel AS ""CustomerDiscLevel"",
+                    desctext AS ""DescText""
+                FROM customerdisclevel;",
+
+            ["ECNClassCodes_TTX"] = @"
+                SELECT
+                    ecnclasscode AS ""ECNClassCode"",
+                    desctext AS ""DescText""
+                FROM ecnclasscodes;",
+
+            ["RegionCodes_TTX"] = @"
+                SELECT
+                    regioncode AS ""RegionCode"",
+                    desctext AS ""DescText""
+                FROM regioncodes;",
+
+            // TABLE_MAP: ("Codes", "System Used On Codes") -> "suocodes" -
+            // NOT "systemusedoncodes" despite the _TTX table's own name.
+            ["SystemUsedOnCodes_TTX"] = @"
+                SELECT
+                    suocode AS ""SUOCode"",
+                    desctext AS ""DescText""
+                FROM suocodes;",
+
+            // COLUMN_MAP only listed "operationcode" for this submenu
+            // (ZMRP's own grid apparently doesn't display a description
+            // column) - --inspect against OperationCodes.rpt confirmed 2
+            // fields, so desctext is assumed present following every
+            // sibling code table's shape. Confirm if this comes back empty.
+            ["OperationCodes_TTX"] = @"
+                SELECT
+                    operationcode AS ""OperationCode"",
+                    desctext AS ""DescText""
+                FROM operationcodes;",
+
+            ["PriceDiscountCodes_TTX"] = @"
+                SELECT
+                    pricecode AS ""PriceCode"",
+                    discountpercentage AS ""DiscountPercentage"",
+                    desctext AS ""DescText""
+                FROM pricediscountcodes;",
+
+            // TABLE_MAP: ("Codes", "Product Revenue Class") ->
+            // "productclasscodes" - NOT "productrevenuecodes" despite the
+            // _TTX table's own name.
+            ["ProductRevenueCodes_TTX"] = @"
+                SELECT
+                    productclass AS ""ProductClass"",
+                    revenueaccount AS ""RevenueAccount"",
+                    expenseaccount AS ""ExpenseAccount"",
+                    desctext AS ""DescText""
+                FROM productclasscodes;",
+
+            // TABLE_MAP: ("Codes", "Product Discount Codes") ->
+            // "productdisccodes" - NOT "productdiscountcodes" despite the
+            // _TTX table's own name.
+            ["ProductDiscountCodes_TTX"] = @"
+                SELECT
+                    productpricecode AS ""ProductPriceCode"",
+                    desctext AS ""DescText""
+                FROM productdisccodes;",
+
+            ["TaxCodes_TTX"] = @"
+                SELECT
+                    taxcode AS ""TaxCode"",
+                    taxrate AS ""TaxRate"",
+                    desctext AS ""DescText"",
+                    liabilityaccount AS ""LiabilityAccount""
+                FROM taxcodes;",
+
+            ["CurrencyCodes_TTX"] = @"
+                SELECT
+                    currencycode AS ""CurrencyCode"",
+                    exchangerate AS ""ExchangeRate"",
+                    desctext AS ""DescText"",
+                    eurorate AS ""EURORate"",
+                    emumember AS ""EMUMember"",
+                    currencysymbol AS ""CurrencySymbol""
+                FROM currencycodes;",
+
+            ["DensityCodes_TTX"] = @"
+                SELECT
+                    densitycode AS ""DensityCode"",
+                    lengthfactor AS ""LengthFactor"",
+                    weightfactor AS ""WeightFactor"",
+                    volumefactor AS ""VolumeFactor"",
+                    areafactor AS ""AreaFactor"",
+                    desctext AS ""DescText""
+                FROM densitycodes;",
+
+            ["DepartmentCodes_TTX"] = @"
+                SELECT
+                    departmentcode AS ""DepartmentCode"",
+                    desctext AS ""DescText"",
+                    accountnumber AS ""AccountNumber"",
+                    nettableflag AS ""NettableFlag"",
+                    inventoryflag AS ""InventoryFlag""
+                FROM departmentcodes;",
+
+            // CONFIRMED against the real pg_dumpall schema: uomcodes has
+            // exactly 4 columns (uomcode, desctext, uomtype,
+            // conversionfactor, plus its pkey) - no isbaseuom column
+            // exists anywhere. IsBaseUOM is a NULL placeholder, not a
+            // guess dressed up as one - if the report needs a real value
+            // here, it's most likely conversionfactor = 1 (base unit
+            // converts 1:1 to itself), but that's an inference about
+            // business meaning, not a schema fact, so it isn't applied
+            // silently. Confirm the intended rule before uncommenting.
+            ["UOMCodes_TTX"] = @"
+                SELECT
+                    uomcode AS ""UOMCode"",
+                    desctext AS ""DescText"",
+                    uomtype AS ""UOMType"",
+                    conversionfactor AS ""ConversionFactor"",
+                    NULL::smallint AS ""IsBaseUOM""
+                    -- conversionfactor = 1 AS ""IsBaseUOM"" -- candidate, unconfirmed.
+                    -- Typed ::smallint (not ::boolean) because UOMCodes.TTX
+                    -- (TemplateTTX/) declares this field type ""short"" -
+                    -- Crystal expects a numeric column here, not a boolean
+                    -- one, even though the field is used as a flag.
+                FROM uomcodes;",
+
+            // Joins departmentcodes (for the DepartmentCode display columns
+            // COLUMN_MAP shows on this submenu) and employees (LastName/
+            // FirstName/MiddleInitial - column names inferred from
+            // EmployeeInformationList_TTX/EmployeeListReport_TTX's own
+            // field lists, not independently confirmed against the real
+            // employees schema - check before relying on this join).
+            ["CommodityCodes_TTX"] = @"
+                SELECT
+                    cc.commoditycode AS ""CommodityCode"",
+                    cc.employeeid AS ""EmployeeID"",
+                    cc.desctext AS ""CommodityCodes_DescText"",
+                    cc.departmentcode AS ""DepartmentCode"",
+                    e.lastname AS ""LastName"",
+                    e.firstname AS ""FirstName"",
+                    e.middleinitial AS ""MiddleInitial"",
+                    dc.desctext AS ""DepartmentCodes_DescText""
+                FROM commoditycodes cc
+                LEFT JOIN employees e ON e.employeeid = cc.employeeid
+                LEFT JOIN departmentcodes dc ON dc.departmentcode = cc.departmentcode;",
+
+            // stocklocations' own column names aren't independently
+            // confirmed (no COLUMN_MAP entry maps to this table - TABLE_MAP's
+            // ("Inventory", "Locations") actually points at departmentcodes
+            // instead) - departmentcode/locationcode/desctext assumed from
+            // the StockLocations_DescText join alias --inspect returned,
+            // plus the shape every other code table here follows. Verify
+            // before relying on this.
+            ["StockroomLocations_TTX"] = @"
+                SELECT
+                    sl.departmentcode AS ""DepartmentCode"",
+                    sl.locationcode AS ""LocationCode"",
+                    sl.desctext AS ""StockLocations_DescText"",
+                    dc.desctext AS ""DepartmentCodes_DescText"",
+                    dc.accountnumber AS ""AccountNumber"",
+                    dc.nettableflag AS ""NettableFlag"",
+                    dc.inventoryflag AS ""InventoryFlag""
+                FROM stocklocations sl
+                LEFT JOIN departmentcodes dc ON dc.departmentcode = sl.departmentcode;",
+
+            // SalesOrder_TTX - one row per SO line, denormalized by the
+            // legacy Alliance reporting engine from ~11 real tables. Every
+            // join below is confirmed against the real pg_dumpall schema
+            // (zonu_pg_dumpall_08_03_2026.sql), not guessed:
+            //   - soheader.shiptoaddress/billtoaddress are varchar(6)
+            //     CODES, not address blobs - they're customeraddress.
+            //     addressid, joined together with soheader.customerid
+            //     (customeraddress is keyed on (customerid, addressid),
+            //     confirmed from its CREATE TABLE).
+            //   - soheader.salesperson is an employeeid FK -> employees,
+            //     which is where Acknowledgement_TTX/SalesOrder_TTX's
+            //     "LastName" field comes from (there is no lastname
+            //     anywhere on soheader itself).
+            //   - taxcodes is joined three times (aliased tx1/tx2/tx3) -
+            //     sodetail carries three independent tax codes
+            //     (taxcode/taxcode2/taxcode3), each needing its own rate.
+            //
+            // The following fields are NOT raw columns anywhere in the
+            // schema and are marked INFERRED below rather than treated as
+            // fact - they're a reconstruction of plausible order-line math
+            // (qty * price, extended by currency rate, taxed by rate where
+            // the matching Taxable*Flag is true), not confirmed against
+            // the legacy system's actual output:
+            //   ConvertListPrice, AfterExchangePrice, LineAmount,
+            //   LineSubtotal, BaseTaxAmount, Tax2Amount, Tax3Amount,
+            //   LineTotal, CustomerDiscount.
+            // Before trusting a rendered SalesOrder PDF's totals, pick one
+            // real, already-invoiced SONumber and diff this report's
+            // output against whatever the legacy system produced for the
+            // same order - these formulas are a starting point, not a
+            // verified match.
+            ["SalesOrder_TTX"] = @"
+                SELECT
+                    sd.sonumber AS ""SONumber"",
+                    sd.soline AS ""SOLine"",
+                    sh.requireddate AS ""RequiredDate"",
+                    sh.customerid AS ""CustomerID"",
+                    sh.orderedby AS ""OrderedBy"",
+                    emp.lastname AS ""LastName"",
+                    sh.orderdate AS ""OrderDate"",
+                    sh.currencycode AS ""CurrencyCode"",
+                    sh.currencyrate AS ""CurrencyRate"",
+                    sh.customerpo AS ""CustomerPO"",
+                    sd.customerline AS ""CustomerLine"",
+                    sd.taxableflag AS ""TaxableFlag"",
+                    sd.taxcode AS ""TaxCode"",
+                    sd.taxflag2 AS ""TaxFlag2"",
+                    sd.taxcode2 AS ""TaxCode2"",
+                    sd.taxflag3 AS ""TaxFlag3"",
+                    sd.taxcode3 AS ""TaxCode3"",
+                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.quantityordered AS ""QuantityOrdered"",
+                    sd.salesuom AS ""SalesUOM"",
+                    sd.customerprice AS ""CustomerPrice"",
+                    sd.partxreference AS ""PartXReference"",
+                    sd.partnumber AS ""PartNumber"",
+                    pm.revision AS ""Revision"",
+                    pm.desctext AS ""PartMaster_DescText"",
+                    pm.stockuom AS ""StockUOM"",
+                    pm.listprice AS ""ListPrice"",
+                    pm.densitycode AS ""DensityCode"",
+                    tc.desctext AS ""TermsCodes_DescText"",
+                    svc.desctext AS ""ShipViaCodes_DescText"",
+                    fc.desctext AS ""FOBCodes_DescText"",
+                    sh.pricecode AS ""PriceCode"",
+                    c.customerdisclevel AS ""CustomerDiscLevel"",
+                    c.customername AS ""CustomerName"",
+                    c.pricedisctype AS ""PriceDiscType"",
+                    tx1.taxrate AS ""BaseTaxRate"",
+                    tx2.taxrate AS ""TaxRate2"",
+                    tx3.taxrate AS ""TaxRate3"",
+                    shipaddr.addressline1 AS ""ShipToAddress_AddressLine1"",
+                    shipaddr.addressline2 AS ""ShipToAddress_AddressLine2"",
+                    shipaddr.addressline3 AS ""ShipToAddress_AddressLine3"",
+                    shipaddr.addressline4 AS ""ShipToAddress_AddressLine4"",
+                    shipaddr.city AS ""ShipToAddress_City"",
+                    shipaddr.state AS ""ShipToAddress_State"",
+                    shipaddr.zipcode AS ""ShipToAddress_ZIPCode"",
+                    shipaddr.country AS ""ShipToAddress_Country"",
+                    shipaddr.postal AS ""ShipToAddress_Postal"",
+                    billaddr.addressline1 AS ""BillToAddress_AddressLine1"",
+                    billaddr.addressline2 AS ""BillToAddress_AddressLine2"",
+                    billaddr.addressline3 AS ""BillToAddress_AddressLine3"",
+                    billaddr.addressline4 AS ""BillToAddress_AddressLine4"",
+                    billaddr.city AS ""BillToAddress_City"",
+                    billaddr.state AS ""BillToAddress_State"",
+                    billaddr.zipcode AS ""BillToAddress_ZIPCode"",
+                    billaddr.country AS ""BillToAddress_Country"",
+                    billaddr.postal AS ""BillToAddress_Postal"",
+                    cc.currencysymbol AS ""CurrencySymbol"",
+                    sd.notes AS ""SODetail_Notes"",
+                    NULL AS ""CustomerDiscount"", -- INFERRED: no numeric discount column on customerdisclevel; may belong on pricediscountcodes via sh.pricecode instead - unconfirmed, not guessed
+                    cdl.desctext AS ""CustomerDiscLevel_DescText"",
+                    (CASE WHEN sd.taxableflag THEN 'Yes' ELSE 'No' END) AS ""Taxable"", -- INFERRED text rendering of TaxableFlag
+                    (pm.listprice * COALESCE(sh.currencyrate, 1)) AS ""ConvertListPrice"", -- INFERRED
+                    (sd.customerprice * COALESCE(sh.currencyrate, 1)) AS ""AfterExchangePrice"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineAmount"", -- INFERRED
+                    (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END) AS ""BaseTaxAmount"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineSubtotal"", -- INFERRED: assumed equal to LineAmount, unconfirmed distinction
+                    (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END) AS ""Tax2Amount"", -- INFERRED
+                    (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END) AS ""Tax3Amount"", -- INFERRED
+                    (
+                        (sd.quantityordered * sd.customerprice)
+                        + (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END)
+                    ) AS ""LineTotal"", -- INFERRED: LineAmount + all three tax amounts
+                    sh.notes AS ""SOHeader_Notes"",
+                    (CASE WHEN sd.notes IS NULL THEN 1 ELSE 0 END) AS ""SODetail_IsnullNotes"",
+                    (CASE WHEN sh.notes IS NULL THEN 1 ELSE 0 END) AS ""SOHeader_IsnullNotes""
+                FROM sodetail sd
+                JOIN soheader sh ON sh.sonumber = sd.sonumber
+                LEFT JOIN customers c ON c.customerid = sh.customerid
+                LEFT JOIN partmaster pm ON pm.partnumber = sd.partnumber
+                LEFT JOIN termscodes tc ON tc.termscode = sh.termscode
+                LEFT JOIN shipviacodes svc ON svc.shipviacode = sh.shipviacode
+                LEFT JOIN fobcodes fc ON fc.fobcode = sh.fobcode
+                LEFT JOIN customerdisclevel cdl ON cdl.customerdisclevel = c.customerdisclevel
+                LEFT JOIN taxcodes tx1 ON tx1.taxcode = sd.taxcode
+                LEFT JOIN taxcodes tx2 ON tx2.taxcode = sd.taxcode2
+                LEFT JOIN taxcodes tx3 ON tx3.taxcode = sd.taxcode3
+                LEFT JOIN currencycodes cc ON cc.currencycode = sh.currencycode
+                LEFT JOIN employees emp ON emp.employeeid = sh.salesperson
+                LEFT JOIN customeraddress shipaddr ON shipaddr.customerid = sh.customerid AND shipaddr.addressid = sh.shiptoaddress
+                LEFT JOIN customeraddress billaddr ON billaddr.customerid = sh.customerid AND billaddr.addressid = sh.billtoaddress;",
+
+            // PartList_TTX - all 10 fields (per report_registry.json's
+            // "tables" entry for "partlist", which now embeds the same
+            // field data generate_reports_manifest.py's --inspect pass
+            // captures) map onto partmaster directly, confirmed against
+            // the real pg_dumpall schema - no joins needed, single table.
+            ["PartList_TTX"] = @"
+                SELECT
+                    partnumber AS ""PartNumber"",
+                    revision AS ""Revision"",
+                    desctext AS ""DescText"",
+                    stockuom AS ""StockUOM"",
+                    densitycode AS ""DensityCode"",
+                    isc AS ""ISC"",
+                    omc AS ""OMC"",
+                    icncode AS ""ICNCode"",
+                    departmentcode AS ""DepartmentCode"",
+                    stockroomcode AS ""StockroomCode""
+                FROM partmaster;",
+
+            // Acknowledgement_TTX / Quotation_TTX - matched against
+            // TemplateTTX/Acknowledgement.TTX and Quotation.TTX: both are
+            // field-for-field identical to SalesOrder.TTX (same 72 fields,
+            // same names/types) - Acknowledgement, Quotation, and
+            // SalesOrder are the same underlying SO-line report shape
+            // rendered at three different points in the order lifecycle.
+            // Reusing SalesOrder_TTX's query verbatim rather than
+            // duplicating it - same caveats apply (see the INFERRED note
+            // above SalesOrder_TTX for the ~9 computed money fields).
+            ["Acknowledgement_TTX"] = @"
+                SELECT
+                    sd.sonumber AS ""SONumber"",
+                    sd.soline AS ""SOLine"",
+                    sh.requireddate AS ""RequiredDate"",
+                    sh.customerid AS ""CustomerID"",
+                    sh.orderedby AS ""OrderedBy"",
+                    emp.lastname AS ""LastName"",
+                    sh.orderdate AS ""OrderDate"",
+                    sh.currencycode AS ""CurrencyCode"",
+                    sh.currencyrate AS ""CurrencyRate"",
+                    sh.customerpo AS ""CustomerPO"",
+                    sd.customerline AS ""CustomerLine"",
+                    sd.taxableflag AS ""TaxableFlag"",
+                    sd.taxcode AS ""TaxCode"",
+                    sd.taxflag2 AS ""TaxFlag2"",
+                    sd.taxcode2 AS ""TaxCode2"",
+                    sd.taxflag3 AS ""TaxFlag3"",
+                    sd.taxcode3 AS ""TaxCode3"",
+                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.quantityordered AS ""QuantityOrdered"",
+                    sd.salesuom AS ""SalesUOM"",
+                    sd.customerprice AS ""CustomerPrice"",
+                    sd.partxreference AS ""PartXReference"",
+                    sd.partnumber AS ""PartNumber"",
+                    pm.revision AS ""Revision"",
+                    pm.desctext AS ""PartMaster_DescText"",
+                    pm.stockuom AS ""StockUOM"",
+                    pm.listprice AS ""ListPrice"",
+                    pm.densitycode AS ""DensityCode"",
+                    tc.desctext AS ""TermsCodes_DescText"",
+                    svc.desctext AS ""ShipViaCodes_DescText"",
+                    fc.desctext AS ""FOBCodes_DescText"",
+                    sh.pricecode AS ""PriceCode"",
+                    c.customerdisclevel AS ""CustomerDiscLevel"",
+                    c.customername AS ""CustomerName"",
+                    c.pricedisctype AS ""PriceDiscType"",
+                    tx1.taxrate AS ""BaseTaxRate"",
+                    tx2.taxrate AS ""TaxRate2"",
+                    tx3.taxrate AS ""TaxRate3"",
+                    shipaddr.addressline1 AS ""ShipToAddress_AddressLine1"",
+                    shipaddr.addressline2 AS ""ShipToAddress_AddressLine2"",
+                    shipaddr.addressline3 AS ""ShipToAddress_AddressLine3"",
+                    shipaddr.addressline4 AS ""ShipToAddress_AddressLine4"",
+                    shipaddr.city AS ""ShipToAddress_City"",
+                    shipaddr.state AS ""ShipToAddress_State"",
+                    shipaddr.zipcode AS ""ShipToAddress_ZIPCode"",
+                    shipaddr.country AS ""ShipToAddress_Country"",
+                    shipaddr.postal AS ""ShipToAddress_Postal"",
+                    billaddr.addressline1 AS ""BillToAddress_AddressLine1"",
+                    billaddr.addressline2 AS ""BillToAddress_AddressLine2"",
+                    billaddr.addressline3 AS ""BillToAddress_AddressLine3"",
+                    billaddr.addressline4 AS ""BillToAddress_AddressLine4"",
+                    billaddr.city AS ""BillToAddress_City"",
+                    billaddr.state AS ""BillToAddress_State"",
+                    billaddr.zipcode AS ""BillToAddress_ZIPCode"",
+                    billaddr.country AS ""BillToAddress_Country"",
+                    billaddr.postal AS ""BillToAddress_Postal"",
+                    cc.currencysymbol AS ""CurrencySymbol"",
+                    sd.notes AS ""SODetail_Notes"",
+                    NULL AS ""CustomerDiscount"", -- INFERRED: no numeric discount column on customerdisclevel; may belong on pricediscountcodes via sh.pricecode instead - unconfirmed, not guessed
+                    cdl.desctext AS ""CustomerDiscLevel_DescText"",
+                    (CASE WHEN sd.taxableflag THEN 'Yes' ELSE 'No' END) AS ""Taxable"", -- INFERRED text rendering of TaxableFlag
+                    (pm.listprice * COALESCE(sh.currencyrate, 1)) AS ""ConvertListPrice"", -- INFERRED
+                    (sd.customerprice * COALESCE(sh.currencyrate, 1)) AS ""AfterExchangePrice"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineAmount"", -- INFERRED
+                    (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END) AS ""BaseTaxAmount"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineSubtotal"", -- INFERRED: assumed equal to LineAmount, unconfirmed distinction
+                    (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END) AS ""Tax2Amount"", -- INFERRED
+                    (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END) AS ""Tax3Amount"", -- INFERRED
+                    (
+                        (sd.quantityordered * sd.customerprice)
+                        + (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END)
+                    ) AS ""LineTotal"", -- INFERRED: LineAmount + all three tax amounts
+                    sh.notes AS ""SOHeader_Notes"",
+                    (CASE WHEN sd.notes IS NULL THEN 1 ELSE 0 END) AS ""SODetail_IsnullNotes"",
+                    (CASE WHEN sh.notes IS NULL THEN 1 ELSE 0 END) AS ""SOHeader_IsnullNotes""
+                FROM sodetail sd
+                JOIN soheader sh ON sh.sonumber = sd.sonumber
+                LEFT JOIN customers c ON c.customerid = sh.customerid
+                LEFT JOIN partmaster pm ON pm.partnumber = sd.partnumber
+                LEFT JOIN termscodes tc ON tc.termscode = sh.termscode
+                LEFT JOIN shipviacodes svc ON svc.shipviacode = sh.shipviacode
+                LEFT JOIN fobcodes fc ON fc.fobcode = sh.fobcode
+                LEFT JOIN customerdisclevel cdl ON cdl.customerdisclevel = c.customerdisclevel
+                LEFT JOIN taxcodes tx1 ON tx1.taxcode = sd.taxcode
+                LEFT JOIN taxcodes tx2 ON tx2.taxcode = sd.taxcode2
+                LEFT JOIN taxcodes tx3 ON tx3.taxcode = sd.taxcode3
+                LEFT JOIN currencycodes cc ON cc.currencycode = sh.currencycode
+                LEFT JOIN employees emp ON emp.employeeid = sh.salesperson
+                LEFT JOIN customeraddress shipaddr ON shipaddr.customerid = sh.customerid AND shipaddr.addressid = sh.shiptoaddress
+                LEFT JOIN customeraddress billaddr ON billaddr.customerid = sh.customerid AND billaddr.addressid = sh.billtoaddress;",
+
+            ["Quotation_TTX"] = @"
+                SELECT
+                    sd.sonumber AS ""SONumber"",
+                    sd.soline AS ""SOLine"",
+                    sh.requireddate AS ""RequiredDate"",
+                    sh.customerid AS ""CustomerID"",
+                    sh.orderedby AS ""OrderedBy"",
+                    emp.lastname AS ""LastName"",
+                    sh.orderdate AS ""OrderDate"",
+                    sh.currencycode AS ""CurrencyCode"",
+                    sh.currencyrate AS ""CurrencyRate"",
+                    sh.customerpo AS ""CustomerPO"",
+                    sd.customerline AS ""CustomerLine"",
+                    sd.taxableflag AS ""TaxableFlag"",
+                    sd.taxcode AS ""TaxCode"",
+                    sd.taxflag2 AS ""TaxFlag2"",
+                    sd.taxcode2 AS ""TaxCode2"",
+                    sd.taxflag3 AS ""TaxFlag3"",
+                    sd.taxcode3 AS ""TaxCode3"",
+                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.quantityordered AS ""QuantityOrdered"",
+                    sd.salesuom AS ""SalesUOM"",
+                    sd.customerprice AS ""CustomerPrice"",
+                    sd.partxreference AS ""PartXReference"",
+                    sd.partnumber AS ""PartNumber"",
+                    pm.revision AS ""Revision"",
+                    pm.desctext AS ""PartMaster_DescText"",
+                    pm.stockuom AS ""StockUOM"",
+                    pm.listprice AS ""ListPrice"",
+                    pm.densitycode AS ""DensityCode"",
+                    tc.desctext AS ""TermsCodes_DescText"",
+                    svc.desctext AS ""ShipViaCodes_DescText"",
+                    fc.desctext AS ""FOBCodes_DescText"",
+                    sh.pricecode AS ""PriceCode"",
+                    c.customerdisclevel AS ""CustomerDiscLevel"",
+                    c.customername AS ""CustomerName"",
+                    c.pricedisctype AS ""PriceDiscType"",
+                    tx1.taxrate AS ""BaseTaxRate"",
+                    tx2.taxrate AS ""TaxRate2"",
+                    tx3.taxrate AS ""TaxRate3"",
+                    shipaddr.addressline1 AS ""ShipToAddress_AddressLine1"",
+                    shipaddr.addressline2 AS ""ShipToAddress_AddressLine2"",
+                    shipaddr.addressline3 AS ""ShipToAddress_AddressLine3"",
+                    shipaddr.addressline4 AS ""ShipToAddress_AddressLine4"",
+                    shipaddr.city AS ""ShipToAddress_City"",
+                    shipaddr.state AS ""ShipToAddress_State"",
+                    shipaddr.zipcode AS ""ShipToAddress_ZIPCode"",
+                    shipaddr.country AS ""ShipToAddress_Country"",
+                    shipaddr.postal AS ""ShipToAddress_Postal"",
+                    billaddr.addressline1 AS ""BillToAddress_AddressLine1"",
+                    billaddr.addressline2 AS ""BillToAddress_AddressLine2"",
+                    billaddr.addressline3 AS ""BillToAddress_AddressLine3"",
+                    billaddr.addressline4 AS ""BillToAddress_AddressLine4"",
+                    billaddr.city AS ""BillToAddress_City"",
+                    billaddr.state AS ""BillToAddress_State"",
+                    billaddr.zipcode AS ""BillToAddress_ZIPCode"",
+                    billaddr.country AS ""BillToAddress_Country"",
+                    billaddr.postal AS ""BillToAddress_Postal"",
+                    cc.currencysymbol AS ""CurrencySymbol"",
+                    sd.notes AS ""SODetail_Notes"",
+                    NULL AS ""CustomerDiscount"", -- INFERRED: no numeric discount column on customerdisclevel; may belong on pricediscountcodes via sh.pricecode instead - unconfirmed, not guessed
+                    cdl.desctext AS ""CustomerDiscLevel_DescText"",
+                    (CASE WHEN sd.taxableflag THEN 'Yes' ELSE 'No' END) AS ""Taxable"", -- INFERRED text rendering of TaxableFlag
+                    (pm.listprice * COALESCE(sh.currencyrate, 1)) AS ""ConvertListPrice"", -- INFERRED
+                    (sd.customerprice * COALESCE(sh.currencyrate, 1)) AS ""AfterExchangePrice"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineAmount"", -- INFERRED
+                    (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END) AS ""BaseTaxAmount"", -- INFERRED
+                    (sd.quantityordered * sd.customerprice) AS ""LineSubtotal"", -- INFERRED: assumed equal to LineAmount, unconfirmed distinction
+                    (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END) AS ""Tax2Amount"", -- INFERRED
+                    (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END) AS ""Tax3Amount"", -- INFERRED
+                    (
+                        (sd.quantityordered * sd.customerprice)
+                        + (CASE WHEN sd.taxableflag THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag2 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END)
+                        + (CASE WHEN sd.taxflag3 THEN (sd.quantityordered * sd.customerprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END)
+                    ) AS ""LineTotal"", -- INFERRED: LineAmount + all three tax amounts
+                    sh.notes AS ""SOHeader_Notes"",
+                    (CASE WHEN sd.notes IS NULL THEN 1 ELSE 0 END) AS ""SODetail_IsnullNotes"",
+                    (CASE WHEN sh.notes IS NULL THEN 1 ELSE 0 END) AS ""SOHeader_IsnullNotes""
+                FROM sodetail sd
+                JOIN soheader sh ON sh.sonumber = sd.sonumber
+                LEFT JOIN customers c ON c.customerid = sh.customerid
+                LEFT JOIN partmaster pm ON pm.partnumber = sd.partnumber
+                LEFT JOIN termscodes tc ON tc.termscode = sh.termscode
+                LEFT JOIN shipviacodes svc ON svc.shipviacode = sh.shipviacode
+                LEFT JOIN fobcodes fc ON fc.fobcode = sh.fobcode
+                LEFT JOIN customerdisclevel cdl ON cdl.customerdisclevel = c.customerdisclevel
+                LEFT JOIN taxcodes tx1 ON tx1.taxcode = sd.taxcode
+                LEFT JOIN taxcodes tx2 ON tx2.taxcode = sd.taxcode2
+                LEFT JOIN taxcodes tx3 ON tx3.taxcode = sd.taxcode3
+                LEFT JOIN currencycodes cc ON cc.currencycode = sh.currencycode
+                LEFT JOIN employees emp ON emp.employeeid = sh.salesperson
+                LEFT JOIN customeraddress shipaddr ON shipaddr.customerid = sh.customerid AND shipaddr.addressid = sh.shiptoaddress
+                LEFT JOIN customeraddress billaddr ON billaddr.customerid = sh.customerid AND billaddr.addressid = sh.billtoaddress;",
+
+            // EngineeringPartMaster_TTX - all 7 fields are a direct subset
+            // of partmaster, confirmed against the real pg_dumpall schema.
+            ["EngineeringPartMaster_TTX"] = @"
+                SELECT
+                    partnumber AS ""PartNumber"",
+                    desctext AS ""DescText"",
+                    revision AS ""Revision"",
+                    dimension AS ""Dimension"",
+                    weight AS ""Weight"",
+                    densitycode AS ""DensityCode"",
+                    stockuom AS ""StockUOM""
+                FROM partmaster;",
+
+            // IntrastatCodes_TTX - resolves the ambiguity flagged earlier
+            // this session (""is this the same table as ICN Codes?""):
+            // TABLE_MAP[(""Codes"",""ICN Codes"")] = ""icncodes"" in ZMRP's
+            // menu_config.py, and TemplateTTX/IntrastatCodes.TTX's 2 fields
+            // (ICNCode, DescText) match icncodes' real columns exactly
+            // (confirmed via pg_dumpall) - it IS the same table, just a
+            // differently-named legacy report over it. Not a guess.
+            ["IntrastatCodes_TTX"] = @"
+                SELECT
+                    icncode AS ""ICNCode"",
+                    desctext AS ""DescText""
+                FROM icncodes;",
+
+            // IntrastatRates_TTX - confirmed against pg_dumpall's
+            // intrastatrates table (PK icncode+regioncode, per PK_MAP).
+            ["IntrastatRates_TTX"] = @"
+                SELECT
+                    icncode AS ""ICNCode"",
+                    regioncode AS ""RegionCode"",
+                    taxcode AS ""TaxCode""
+                FROM intrastatrates;",
+
+            // HolidayList_TTX - TemplateTTX/HolidayList.TTX's 3 fields
+            // (DescText, StartDate, EndDate) match the real ""calendar""
+            // table's columns exactly (PK_MAP['calendar'] = 'desctext';
+            // pg_dumpall's column comments literally describe it as
+            // ""Description/start/end date of holiday or shutdown"") - not
+            // an obvious name match from the report name alone, confirmed
+            // via PK_MAP + pg_dumpall rather than guessed.
+            ["HolidayList_TTX"] = @"
+                SELECT
+                    desctext AS ""DescText"",
+                    startdate AS ""StartDate"",
+                    enddate AS ""EndDate""
+                FROM calendar;",
+
+            // EngineeringChangeNotice_TTX / ECNSummary_TTX - matched
+            // against TemplateTTX/EngineeringChangeNotice.TTX and
+            // ECNSummary.TTX: identical field sets (field order differs
+            // slightly between the two .TTX files, which doesn't matter -
+            // Crystal binds by column name, not position). ecnheader and
+            // ecnparts confirmed against the real pg_dumpall schema;
+            // ecnclasscodes is the same lookup table already cataloged
+            // above as ECNClassCodes_TTX.
+            ["EngineeringChangeNotice_TTX"] = @"
+                SELECT
+                    eh.ecnnumber AS ""ECNNumber"",
+                    eh.ecnclasscode AS ""ECNClassCode"",
+                    eh.ecndate AS ""ECNDate"",
+                    ep.partnumber AS ""PartNumber"",
+                    ep.desctext AS ""ECNParts_DescText"",
+                    pm.desctext AS ""PartMaster_DescText"",
+                    ecc.desctext AS ""ECNClassCodes_DescText"",
+                    eh.notes AS ""Notes"",
+                    (CASE WHEN eh.notes IS NULL THEN 1 ELSE 0 END) AS ""Isnull_Notes""
+                FROM ecnheader eh
+                JOIN ecnparts ep ON ep.ecnnumber = eh.ecnnumber
+                LEFT JOIN partmaster pm ON pm.partnumber = ep.partnumber
+                LEFT JOIN ecnclasscodes ecc ON ecc.ecnclasscode = eh.ecnclasscode;",
+
+            ["ECNSummary_TTX"] = @"
+                SELECT
+                    eh.ecnnumber AS ""ECNNumber"",
+                    eh.ecnclasscode AS ""ECNClassCode"",
+                    eh.ecndate AS ""ECNDate"",
+                    ep.partnumber AS ""PartNumber"",
+                    ep.desctext AS ""ECNParts_DescText"",
+                    pm.desctext AS ""PartMaster_DescText"",
+                    ecc.desctext AS ""ECNClassCodes_DescText"",
+                    eh.notes AS ""Notes"",
+                    (CASE WHEN eh.notes IS NULL THEN 1 ELSE 0 END) AS ""Isnull_Notes""
+                FROM ecnheader eh
+                JOIN ecnparts ep ON ep.ecnnumber = eh.ecnnumber
+                LEFT JOIN partmaster pm ON pm.partnumber = ep.partnumber
+                LEFT JOIN ecnclasscodes ecc ON ecc.ecnclasscode = eh.ecnclasscode;",
+
             // WorkOrderTraveler_TTX is INTENTIONALLY NOT in this catalog
             // yet. Its --inspect connection info (Database DLL:
             // crdb_fielddef.dll, QE_DatabaseType: "Field Definitions Only")
@@ -475,13 +1107,31 @@ namespace CrystalReportWrapper
                 // ReportDocument level) doesn't fully take it off the .ttx
                 // codepath - Crystal can still fall back to the table's
                 // original field-definition driver (crdb_fielddef.dll)
-                // during export/render, and that driver has no 64-bit
-                // build, which is what "Failed to load database
-                // information" actually means here even though
+                // during export/render, which is what "Failed to load
+                // database information" actually means here even though
                 // SetDataSource itself doesn't throw. Wrapping every
                 // DataTable in one DataSet routes Crystal through its
                 // ADO.NET provider (crdb_adoplus.dll) end-to-end instead,
-                // which is 64-bit and never touches the dead .ttx path.
+                // which never touches the dead .ttx path.
+                //
+                // CORRECTION: this comment used to explain the fallback as
+                // a 64-bit/32-bit bitness gap ("crdb_fielddef.dll has no
+                // 64-bit build"). That was leftover text from when this
+                // project's PlatformTarget was briefly x64 (see the
+                // CrystalReportWrapper.csproj PlatformTarget comment for
+                // that history) and was never corrected after it moved
+                // back to x86 - misleading, since bitness can't be the
+                // mechanism in an x86-only process that only ever loads
+                // x86 builds of both DLLs. The actual reason DataSet/
+                // SetDataSource routing is still needed here is unrelated
+                // to bitness: a bare DataTable can leave Crystal still
+                // referencing the report's originally-recorded .ttx
+                // connection at export time instead of fully rebinding to
+                // the supplied data; wrapping every table in one
+                // same-named DataSet forces the ADO.NET (XML) provider
+                // path end-to-end regardless of process bitness. This
+                // whole worker builds and runs as x86 only - see
+                // CrystalReportWrapper.csproj's PlatformTarget.
                 //
                 // Which tables to fetch is NOT hardcoded per report - the
                 // .rpt itself already says what it needs, right here in
