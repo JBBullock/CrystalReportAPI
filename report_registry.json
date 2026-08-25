@@ -1,0 +1,3161 @@
+[
+  {
+    "id": "acknowledgement",
+    "file": "Acknowledgement.rpt",
+    "display_name": "Acknowledgement",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyPhone",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyPhone",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyFAX",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyFAX",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyEmail",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyEmail",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "Acknowledgement_TTX",
+        "location": "Acknowledgement",
+        "field_count": 72,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "billofmaterials",
+    "file": "BillOfMaterials.rpt",
+    "display_name": "BillOfMaterials",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "BillOfMaterials_TTX",
+        "location": "BillOfMaterials",
+        "field_count": 21,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "bomwithreferences",
+    "file": "BOMWithReferences.rpt",
+    "display_name": "BOMWithReferences",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "BOMWithReferences_TTX",
+        "location": "BOMWithReferences",
+        "field_count": 18,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "commoditycodes",
+    "file": "CommodityCodes.rpt",
+    "display_name": "CommodityCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "CommodityCodes_TTX",
+        "location": "CommodityCodes",
+        "field_count": 8,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "creditmemo",
+    "file": "CreditMemo.rpt",
+    "display_name": "CreditMemo",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "CreditMemo_TTX",
+        "location": "CreditMemo",
+        "field_count": 44,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "creditmemotransaction",
+    "file": "CreditMemoTransaction.rpt",
+    "display_name": "CreditMemoTransaction",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "CreditMemoTransaction_TTX",
+        "location": "CreditMemoTransaction",
+        "field_count": 39,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "currencycodes",
+    "file": "CurrencyCodes.rpt",
+    "display_name": "CurrencyCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "CurrencyCodes_TTX",
+        "location": "CurrencyCodes",
+        "field_count": 6,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "customercontactlist",
+    "file": "CustomerContactList.rpt",
+    "display_name": "CustomerContactList",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "CustomerContactList_TTX",
+        "location": "CustomerContactList",
+        "field_count": 19,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "customerdisclevel",
+    "file": "CustomerDiscLevel.rpt",
+    "display_name": "CustomerDiscLevel",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "CustomerDiscLevel_TTX",
+        "location": "CustomerDiscLevel",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "customerlisting",
+    "file": "CustomerListing.rpt",
+    "display_name": "CustomerListing",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "CustomerListing_TTX",
+        "location": "CustomerListing",
+        "field_count": 35,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "densitycodes",
+    "file": "DensityCodes.rpt",
+    "display_name": "DensityCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "DensityCodes_TTX",
+        "location": "DensityCodes",
+        "field_count": 6,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "departmentcodes",
+    "file": "DepartmentCodes.rpt",
+    "display_name": "DepartmentCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "DepartmentCodes_TTX",
+        "location": "DepartmentCodes",
+        "field_count": 5,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "ecnclasscodes",
+    "file": "ECNClassCodes.rpt",
+    "display_name": "ECNClassCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "ECNClassCodes_TTX",
+        "location": "ECNClassCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "ecnsummary",
+    "file": "ECNSummary.rpt",
+    "display_name": "ECNSummary",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "ECNSummary_TTX",
+        "location": "ECNSummary",
+        "field_count": 9,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "employeeinformationlist",
+    "file": "EmployeeInformationList.rpt",
+    "display_name": "EmployeeInformationList",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "EmployeeInformationList_TTX",
+        "location": "EmployeeInformationList",
+        "field_count": 21,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "employeelist",
+    "file": "EmployeeList.rpt",
+    "display_name": "EmployeeList",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "EmployeeListReport_TTX",
+        "location": "EmployeeList",
+        "field_count": 7,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "engineeringchangenotice",
+    "file": "EngineeringChangeNotice.rpt",
+    "display_name": "EngineeringChangeNotice",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "EngineeringChangeNotice_TTX",
+        "location": "EngineeringChangeNotice",
+        "field_count": 9,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "engineeringpartmaster",
+    "file": "EngineeringPartMaster.rpt",
+    "display_name": "EngineeringPartMaster",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "EngineeringPartMaster_TTX",
+        "location": "EngineeringPartMaster",
+        "field_count": 7,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "exception",
+    "file": "Exception.rpt",
+    "display_name": "Exception",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ExceptionReport_TTX",
+        "location": "Exception",
+        "field_count": 29,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "fobcodes",
+    "file": "FOBCodes.rpt",
+    "display_name": "FOBCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "FOBCodes_TTX",
+        "location": "FOBCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "forecast",
+    "file": "Forecast.rpt",
+    "display_name": "Forecast",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ForecastReport_TTX",
+        "location": "Forecast",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "holidaylist",
+    "file": "HolidayList.rpt",
+    "display_name": "HolidayList",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "Holiday List_TTX",
+        "location": "HolidayList",
+        "field_count": 3,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "indentedbom",
+    "file": "IndentedBOM.rpt",
+    "display_name": "IndentedBOM",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyPhone",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyPhone",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyEmail",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyEmail",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyFAX",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyFAX",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "IndentedBOM_TTX",
+        "location": "IndentedBOM",
+        "field_count": 18,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "indentedstdcostedbom",
+    "file": "IndentedSTDCostedBOM.rpt",
+    "display_name": "IndentedSTDCostedBOM",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "IndentedStdCostBOM_TTX",
+        "location": "IndentedSTDCostedBOM",
+        "field_count": 32,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "intrastatcodes",
+    "file": "IntrastatCodes.rpt",
+    "display_name": "IntrastatCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "IntrastatCodes_TTX",
+        "location": "IntrastatCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "intrastatrates",
+    "file": "IntrastatRates.rpt",
+    "display_name": "IntrastatRates",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "IntrastatRates_TTX",
+        "location": "IntrastatRates",
+        "field_count": 3,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "intrastatreporting",
+    "file": "IntrastatReporting.rpt",
+    "display_name": "IntrastatReporting",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "IntrastatReporting_TTX",
+        "location": "IntrastatReporting",
+        "field_count": 11,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "inventorypartcost",
+    "file": "InventoryPartCost.rpt",
+    "display_name": "InventoryPartCost",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "InventoryPartCost_TTX",
+        "location": "InventoryPartCost",
+        "field_count": 21,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "inventoryvariance",
+    "file": "InventoryVariance.rpt",
+    "display_name": "InventoryVariance",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "InventoryVarianceReport_TTX",
+        "location": "InventoryVariance",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "invoice",
+    "file": "Invoice.rpt",
+    "display_name": "Invoice",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "InvoiceReport_TTX",
+        "location": "Invoice",
+        "field_count": 62,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "invoicetransaction",
+    "file": "InvoiceTransaction.rpt",
+    "display_name": "InvoiceTransaction",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "InvoiceTransaction_TTX",
+        "location": "InvoiceTransaction",
+        "field_count": 53,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "jobsummary",
+    "file": "JobSummary.rpt",
+    "display_name": "JobSummary",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "JobSummary",
+        "location": "JobSummary",
+        "field_count": 25,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "labordistrbyemployee",
+    "file": "LaborDistrByEmployee.rpt",
+    "display_name": "LaborDistrByEmployee",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "LaborDistrByEmployee_TTX",
+        "location": "LaborDistrByEmployee",
+        "field_count": 16,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "labordistrbywo",
+    "file": "LaborDistrByWO.rpt",
+    "display_name": "LaborDistrByWO",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "LaborDistrByWO_TTX",
+        "location": "LaborDistrByWO",
+        "field_count": 19,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "laborrouter",
+    "file": "LaborRouter.rpt",
+    "display_name": "LaborRouter",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "LaborRouter_TTX",
+        "location": "LaborRouter",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "laborutilization",
+    "file": "LaborUtilization.rpt",
+    "display_name": "LaborUtilization",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "LaborUtilization_TTX",
+        "location": "LaborUtilization",
+        "field_count": 20,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "manualpartslist",
+    "file": "ManualPartsList.rpt",
+    "display_name": "ManualPartsList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ManualPartsList_TTX",
+        "location": "ManualPartsList",
+        "field_count": 23,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "miscunplannedissues",
+    "file": "MiscUnplannedIssues.rpt",
+    "display_name": "MiscUnplannedIssues",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "MiscUnplannedIssues_TTX",
+        "location": "MiscUnplannedIssues",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "miscunplannedreceipts",
+    "file": "MiscUnplannedReceipts.rpt",
+    "display_name": "MiscUnplannedReceipts",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "MiscUnplannedReceipts_TTX",
+        "location": "MiscUnplannedReceipts",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "openpolineitems",
+    "file": "OpenPOLineItems.rpt",
+    "display_name": "OpenPOLineItems",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "OpenPOLineItems_TTX",
+        "location": "OpenPOLineItems",
+        "field_count": 17,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "opensolistbypartnumber",
+    "file": "OpenSOListByPartNumber.rpt",
+    "display_name": "OpenSOListByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SOListByPartNumber_TTX",
+        "location": "OpenSOListByPartNumber",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "operationcodes",
+    "file": "OperationCodes.rpt",
+    "display_name": "OperationCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "OperationCodes_TTX",
+        "location": "OperationCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "outputreport",
+    "file": "OutputReport.rpt",
+    "display_name": "OutputReport",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "OutputReport_TTX",
+        "location": "OutputReport",
+        "field_count": 10,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "partcountlist",
+    "file": "PartCountList.rpt",
+    "display_name": "PartCountList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PartCountList_TTX",
+        "location": "PartCountList",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "partcounttag",
+    "file": "PartCountTag.rpt",
+    "display_name": "PartCountTag",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PartCountTag_TTX",
+        "location": "PartCountTag",
+        "field_count": 10,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "partcrossreference",
+    "file": "PartCrossReference.rpt",
+    "display_name": "PartCrossReference",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PartCrossReference_TTX",
+        "location": "PartCrossReference",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "partlist",
+    "file": "PartList.rpt",
+    "display_name": "PartList",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "PartList_TTX",
+        "location": "PartList",
+        "field_count": 10,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pastdueporeceipts",
+    "file": "PastDuePOReceipts.rpt",
+    "display_name": "PastDuePOReceipts",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PastDuePOReceipts_TTX",
+        "location": "PastDuePOReceipts",
+        "field_count": 20,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pastdueshipmentsbypartnumber",
+    "file": "PastDueShipmentsByPartNumber.rpt",
+    "display_name": "PastDueShipmentsByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "BackOrderListing_TTX",
+        "location": "PastDueShipmentsByPartNumber",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pastdueshipmentsbyrequireddate",
+    "file": "PastDueShipmentsByRequiredDate.rpt",
+    "display_name": "PastDueShipmentsByRequiredDate",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "BackOrderListing_TTX",
+        "location": "PastDueShipmentsByRequiredDate",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pendingcostbom",
+    "file": "PendingCostBOM.rpt",
+    "display_name": "PendingCostBOM",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PendingCostBOM_TTX",
+        "location": "PendingCostBOM",
+        "field_count": 29,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pipbypartnumber",
+    "file": "PIPByPartNumber.rpt",
+    "display_name": "PIPByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PIPByPartNumber_TTX",
+        "location": "PIPByPartNumber",
+        "field_count": 17,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pipbypurchaseorder",
+    "file": "PIPByPurchaseOrder.rpt",
+    "display_name": "PIPByPurchaseOrder",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PIPByPurchaseOrder_TTX",
+        "location": "PIPByPurchaseOrder",
+        "field_count": 22,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "plannedorders",
+    "file": "PlannedOrders.rpt",
+    "display_name": "PlannedOrders",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PlannedOrders_TTX",
+        "location": "PlannedOrders",
+        "field_count": 30,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pobypartnumber",
+    "file": "POByPartNumber.rpt",
+    "display_name": "POByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "POByPartNumber_TTX",
+        "location": "POByPartNumber",
+        "field_count": 8,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pobysupplier",
+    "file": "POBySupplier.rpt",
+    "display_name": "POBySupplier",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "POBySupplier_TTX",
+        "location": "POBySupplier",
+        "field_count": 10,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pocommitmentgraph",
+    "file": "POCommitmentGraph.rpt",
+    "display_name": "POCommitmentGraph",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "POCommitmentGraph_TTX",
+        "location": "POCommitmentGraph",
+        "field_count": 3,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "popicklist",
+    "file": "POPickList.rpt",
+    "display_name": "POPickList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "POPickList_TTX",
+        "location": "POPickList",
+        "field_count": 31,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "poreceipt",
+    "file": "POReceipt.rpt",
+    "display_name": "POReceipt",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "POReceipt_TTX",
+        "location": "POReceipt",
+        "field_count": 20,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pototalsgraph",
+    "file": "POTotalsGraph.rpt",
+    "display_name": "POTotalsGraph",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "POTotalsGraph_TTX",
+        "location": "POTotalsGraph",
+        "field_count": 6,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "pricediscountcodes",
+    "file": "PriceDiscountCodes.rpt",
+    "display_name": "PriceDiscountCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "PriceDiscountCodes_TTX",
+        "location": "PriceDiscountCodes",
+        "field_count": 3,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "productdiscountcodes",
+    "file": "ProductDiscountCodes.rpt",
+    "display_name": "ProductDiscountCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "ProductDiscountCodes_TTX",
+        "location": "ProductDiscountCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "productionbacklog",
+    "file": "ProductionBacklog.rpt",
+    "display_name": "ProductionBacklog",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ProductionBacklog_TTX",
+        "location": "ProductionBacklog",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "productionschedule",
+    "file": "ProductionSchedule.rpt",
+    "display_name": "ProductionSchedule",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ProductionSchedule_TTX",
+        "location": "ProductionSchedule",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "productrevenuecodes",
+    "file": "ProductRevenueCodes.rpt",
+    "display_name": "ProductRevenueCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "ProductRevenueCodes_TTX",
+        "location": "ProductRevenueCodes",
+        "field_count": 4,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "purchasecommitment",
+    "file": "PurchaseCommitment.rpt",
+    "display_name": "PurchaseCommitment",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyPhone",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyPhone",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyEmail",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyEmail",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyFAX",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyFAX",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PurchaseCommitment_TTX",
+        "location": "PurchaseCommitment",
+        "field_count": 12,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "purchaseorder",
+    "file": "PurchaseOrder.rpt",
+    "display_name": "PurchaseOrder",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "PurchaseOrder_TTX",
+        "location": "PurchaseOrder",
+        "field_count": 71,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "quotation",
+    "file": "Quotation.rpt",
+    "display_name": "Quotation",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyPhone",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyPhone",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyFAX",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyFAX",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyEmail",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyEmail",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "Acknowledgement_TTX",
+        "location": "Quotation",
+        "field_count": 72,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "regioncodes",
+    "file": "RegionCodes.rpt",
+    "display_name": "RegionCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "RegionCodes_TTX",
+        "location": "RegionCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "returntovendorlist",
+    "file": "ReturnToVendorList.rpt",
+    "display_name": "ReturnToVendorList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ReturnToVendorList_TTX",
+        "location": "ReturnToVendorList",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "salesorder",
+    "file": "SalesOrder.rpt",
+    "display_name": "SalesOrder",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyPhone",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyPhone",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyFAX",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyFAX",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyEmail",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyEmail",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATBranchID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATBranchID",
+        "subreport": null
+      },
+      {
+        "crystal_name": "VATRegNumber",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "VATRegNumber",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SalesOrder_TTX",
+        "location": "SalesOrder",
+        "field_count": 72,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "shipmentlist",
+    "file": "ShipmentList.rpt",
+    "display_name": "ShipmentList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ShipmentListReport_TTX",
+        "location": "ShipmentList",
+        "field_count": 36,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "shipviacodes",
+    "file": "ShipViaCodes.rpt",
+    "display_name": "ShipViaCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "ShipViaCodes_TTX",
+        "location": "ShipViaCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "shortagereport",
+    "file": "ShortageReport.rpt",
+    "display_name": "ShortageReport",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "ShortageReport_TTX",
+        "location": "ShortageReport",
+        "field_count": 12,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "sobookings",
+    "file": "SOBookings.rpt",
+    "display_name": "SOBookings",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SOBookings_TTX",
+        "location": "SOBookings",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "solistbycustomerid",
+    "file": "SOListByCustomerID.rpt",
+    "display_name": "SOListByCustomerID",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SOListByCustomerID_TTX",
+        "location": "SOListByCustomerID",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "solistbypartnumber",
+    "file": "SOListByPartNumber.rpt",
+    "display_name": "SOListByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SOListByPartNumber_TTX",
+        "location": "SOListByPartNumber",
+        "field_count": 8,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "sopicklist",
+    "file": "SOPickList.rpt",
+    "display_name": "SOPickList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SOPickList_TTX",
+        "location": "SOPickList",
+        "field_count": 17,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "sototalsgraph",
+    "file": "SOTotalsGraph.rpt",
+    "display_name": "SOTotalsGraph",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "SOTotalsGraph_TTX",
+        "location": "SOTotalsGraph",
+        "field_count": 6,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "standardcostbom",
+    "file": "StandardCostBOM.rpt",
+    "display_name": "StandardCostBOM",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CompanyName",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CompanyName",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "StandardCostBOM_TTX",
+        "location": "StandardCostBOM",
+        "field_count": 31,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "stockroomlocations",
+    "file": "StockroomLocations.rpt",
+    "display_name": "StockroomLocations",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "StockroomLocations_TTX",
+        "location": "StockroomLocations",
+        "field_count": 7,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "stockroomonhand",
+    "file": "StockroomOnHand.rpt",
+    "display_name": "StockroomOnHand",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "StockroomOnHand_TTX",
+        "location": "StockroomOnHand",
+        "field_count": 14,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "stockstatus",
+    "file": "StockStatus.rpt",
+    "display_name": "StockStatus",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "StockStatus_TTX",
+        "location": "StockStatus",
+        "field_count": 20,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "subcontractpokitlist",
+    "file": "SubContractPOKitList.rpt",
+    "display_name": "SubContractPOKitList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "SubContractPOKitList_TTX",
+        "location": "SubContractPOKitList",
+        "field_count": 34,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "supplierlisting",
+    "file": "SupplierListing.rpt",
+    "display_name": "SupplierListing",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "SupplierListing_TTX",
+        "location": "SupplierListing",
+        "field_count": 26,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "systemusedoncodes",
+    "file": "SystemUsedOnCodes.rpt",
+    "display_name": "SystemUsedOnCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "SystemUsedOnCodes_TTX",
+        "location": "SystemUsedOnCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "taxcodes",
+    "file": "TaxCodes.rpt",
+    "display_name": "TaxCodes",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "TaxCode",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "prompt",
+        "label": "TaxCode",
+        "subreport": null
+      },
+      {
+        "crystal_name": "LiabilityAccount",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "prompt",
+        "label": "LiabilityAccount",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "TaxCodes_TTX",
+        "location": "TaxCodes",
+        "field_count": 4,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "template_blank_landscape",
+    "file": "template blank landscape.rpt",
+    "display_name": "template blank landscape",
+    "menu": null,
+    "parameters": [],
+    "tables": [],
+    "error": null
+  },
+  {
+    "id": "template_blank_portrait",
+    "file": "template blank portrait.rpt",
+    "display_name": "template blank portrait",
+    "menu": null,
+    "parameters": [],
+    "tables": [],
+    "error": null
+  },
+  {
+    "id": "termscodes",
+    "file": "TermsCodes.rpt",
+    "display_name": "TermsCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "TermsCodes_TTX",
+        "location": "TermsCodes",
+        "field_count": 2,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "transactionreport",
+    "file": "TransactionReport.rpt",
+    "display_name": "TransactionReport",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "TransactionReport_TTX",
+        "location": "TransactionReport",
+        "field_count": 12,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "uomcodes",
+    "file": "UOMCodes.rpt",
+    "display_name": "UOMCodes",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "UOMCodes_TTX",
+        "location": "UOMCodes",
+        "field_count": 5,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "whereused",
+    "file": "WhereUsed.rpt",
+    "display_name": "WhereUsed",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WhereUsed_TTX",
+        "location": "WhereUsed",
+        "field_count": 13,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "wipbypartnumber",
+    "file": "WIPByPartNumber.rpt",
+    "display_name": "WIPByPartNumber",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WIPByPartNumber_TTX",
+        "location": "WIPByPartNumber",
+        "field_count": 16,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "wipbyworkorder",
+    "file": "WIPByWorkOrder.rpt",
+    "display_name": "WIPByWorkOrder",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "CostDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "CostDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      },
+      {
+        "crystal_name": "CurrencySymbol",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "global",
+        "label": "CurrencySymbol",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WIPByWorkOrder_TTX",
+        "location": "WIPByWorkOrder",
+        "field_count": 21,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "wokitlist",
+    "file": "WOKitList.rpt",
+    "display_name": "WOKitList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WOKitList_TTX",
+        "location": "WOKitList",
+        "field_count": 19,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "wopicklist",
+    "file": "WOPickList.rpt",
+    "display_name": "WOPickList",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WO Pick List_TTX",
+        "location": "WOPickList",
+        "field_count": 29,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "workcenterlisting",
+    "file": "WorkCenterListing.rpt",
+    "display_name": "WorkCenterListing",
+    "menu": null,
+    "parameters": [],
+    "tables": [
+      {
+        "name": "WorkCenterListing_TTX",
+        "location": "WorkCenterListing",
+        "field_count": 18,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "workcenterloads",
+    "file": "WorkCenterLoads.rpt",
+    "display_name": "WorkCenterLoads",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "WorkCenterID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "prompt",
+        "label": "WorkCenterID",
+        "subreport": null
+      },
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WorkCenterLoads_TTX",
+        "location": "WorkCenterLoads",
+        "field_count": 15,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "workcenterloadsgraph",
+    "file": "WorkCenterLoadsGraph.rpt",
+    "display_name": "WorkCenterLoadsGraph",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "WorkCenterID",
+        "value_kind": "StringParameter",
+        "type": "string",
+        "source": "prompt",
+        "label": "WorkCenterID",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WorkCenterLoadsGraph_TTX",
+        "location": "WorkCenterLoadsGraph",
+        "field_count": 3,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  },
+  {
+    "id": "workordertraveler",
+    "file": "WorkOrderTraveler.rpt",
+    "display_name": "WorkOrderTraveler",
+    "menu": null,
+    "parameters": [
+      {
+        "crystal_name": "QuantityDecimals",
+        "value_kind": "NumberParameter",
+        "type": "number",
+        "source": "global",
+        "label": "QuantityDecimals",
+        "subreport": null
+      }
+    ],
+    "tables": [
+      {
+        "name": "WorkOrderTraveler_TTX",
+        "location": "WorkOrderTraveler",
+        "field_count": 24,
+        "legacy_staging": true,
+        "subreport": null
+      }
+    ],
+    "error": null
+  }
+]

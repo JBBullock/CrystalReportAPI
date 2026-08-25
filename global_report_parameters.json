@@ -1,0 +1,11 @@
+{
+  "CompanyName": "",
+  "CompanyPhone": "",
+  "CompanyFAX": "",
+  "CompanyEmail": "",
+  "VATRegNumber": "",
+  "VATBranchID": "",
+  "QuantityDecimals": 2,
+  "CostDecimals": 2,
+  "CurrencySymbol": "$"
+}

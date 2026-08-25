@@ -102,6 +102,7 @@ class CrystalReportsPipeline:
         output_path: str,
         export_format: str = "PDF",
         parameters: Optional[dict] = None,
+        record_filters: Optional[dict] = None,
     ) -> ReportResult:
         """
         Run a single Crystal Reports export end-to-end.
@@ -114,6 +115,17 @@ class CrystalReportsPipeline:
             parameters: Optional dict of report parameter name -> value,
                 e.g. {"Region": "West", "Year": 2026}. Keys must match the
                 parameter names defined inside the .rpt file.
+            record_filters: Optional dict narrowing one or more of the
+                report's TableQueryCatalog tables down to a single record,
+                e.g. {"SOHeader": {"column": "SONumber", "value": "12345"},
+                "SODetail": {"column": "SONumber", "value": "12345"}} -
+                shaped for Program.cs's --record-filter (see
+                LoadRecordFilters/BuildReportDataSet there). Unlike
+                `parameters` (Crystal report parameters), this filters the
+                Postgres query itself, before Crystal ever sees the data.
+                report_service.render_report_for_record() is what builds
+                this dict; most callers should go through that rather than
+                constructing it by hand.
 
         Returns:
             ReportResult with success=True and output_path set on success.
@@ -123,34 +135,35 @@ class CrystalReportsPipeline:
             subprocess.TimeoutExpired: if the worker hangs past timeout_seconds.
         """
         params_file = None
+        record_filter_file = None
         try:
-            # Step 1: stage parameters as a temp JSON file, if provided.
-            # A file (rather than an inline --params '{"a": 1}' arg) sidesteps
+            # Step 1: stage parameters/record filters as temp JSON files, if
+            # provided. A file (rather than inline args) sidesteps
             # shell-quoting headaches with special characters/unicode values.
             if parameters:
-                print("Parameters are True")
                 params_file = self._write_params_file(parameters)
+            if record_filters:
+                record_filter_file = self._write_params_file(record_filters)
 
             # Step 2: build and run the subprocess command.
-            # print("OUTPUT PATH", out_path)
-            command = self._build_command(report_path, output_path, export_format, params_file)
-            # print("Command sent to sub process", command)
+            command = self._build_command(
+                report_path, output_path, export_format, params_file, record_filter_file
+            )
             completed = subprocess.run(
                 command,
                 capture_output=True,
                 text=True,
                 timeout=self.timeout_seconds,
             )
-            print(completed.stdout)
-            # print(completed.stderr)
 
             # Step 3: parse the single JSON line the worker printed.
             return self._parse_worker_output(completed.stdout, completed.stderr)
 
         finally:
-            # Step 4: always clean up the temp params file, success or failure.
-            if params_file and os.path.exists(params_file):
-                os.remove(params_file)
+            # Step 4: always clean up the temp files, success or failure.
+            for f in (params_file, record_filter_file):
+                if f and os.path.exists(f):
+                    os.remove(f)
 
     def inspect_report(self, report_path: str) -> dict:
         """
@@ -183,6 +196,11 @@ class CrystalReportsPipeline:
     def _parse_json_line(self, stdout: str, stderr: str) -> dict:
         """Shared helper: takes the last non-empty stdout line, parses it
         as JSON, and raises CrystalReportError on any failure signal.
+
+        _parse_worker_output() used to duplicate this logic (only
+        differing in that it also unpacked the dict into a ReportResult
+        dataclass) - collapsed into one implementation so a future fix to
+        the "how do we find the JSON line" logic only has to happen once.
         """
         lines = [line for line in stdout.strip().splitlines() if line.strip()]
         if not lines:
@@ -204,7 +222,11 @@ class CrystalReportsPipeline:
         return payload
 
     def _write_params_file(self, parameters: dict) -> str:
-        """Writes report parameters to a temp JSON file and returns its path."""
+        """Writes a dict (report parameters OR record filters - both are
+        just flat JSON on disk from the worker's point of view) to a temp
+        JSON file and returns its path. Name kept for parameters' sake even
+        though generate_report() also reuses it for record_filters.
+        """
         fd, path = tempfile.mkstemp(suffix=".json", prefix="crystal_params_")
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(parameters, f)
@@ -216,6 +238,7 @@ class CrystalReportsPipeline:
         output_path: str,
         export_format: str,
         params_file: Optional[str],
+        record_filter_file: Optional[str] = None,
     ) -> list[str]:
         """Assembles the argv list passed to subprocess.run for the worker exe."""
         command = [
@@ -226,6 +249,8 @@ class CrystalReportsPipeline:
         ]
         if params_file:
             command += ["--params", params_file]
+        if record_filter_file:
+            command += ["--record-filter", record_filter_file]
         return command
 
     def _parse_worker_output(self, stdout: str, stderr: str) -> ReportResult:
@@ -233,35 +258,19 @@ class CrystalReportsPipeline:
         Parses the worker's stdout JSON line into a ReportResult, raising
         CrystalReportError if the worker signaled failure (or produced no
         parseable JSON at all, e.g. it crashed before reaching its own
-        try/catch).
+        try/catch). Delegates the actual "find and parse the JSON line"
+        work to _parse_json_line so that logic exists in exactly one place.
         """
-        # The worker prints exactly one line of JSON; take the last
-        # non-empty line defensively in case anything else got written
-        # to stdout (e.g. SDK warnings).
-        lines = [line for line in stdout.strip().splitlines() if line.strip()]
-        if not lines:
-            raise CrystalReportError(
-                f"Worker produced no output. stderr: {stderr.strip()}"
-            )
-
-        try:
-            payload = json.loads(lines[-1])
-        except json.JSONDecodeError as exc:
-            raise CrystalReportError(
-                f"Could not parse worker output as JSON: {lines[-1]!r}. "
-                f"stderr: {stderr.strip()}"
-            ) from exc
-
-        result = ReportResult(
+        payload = self._parse_json_line(stdout, stderr)
+        # _parse_json_line already raised if payload["success"] was falsy,
+        # so by this point result.success is always True - still read it
+        # from the payload rather than hardcoding True, in case that
+        # invariant ever changes.
+        return ReportResult(
             success=payload.get("success", False),
             output_path=payload.get("outputPath"),
             error=payload.get("error"),
         )
-
-        if not result.success:
-            raise CrystalReportError(result.error or "Unknown Crystal Reports error")
-
-        return result
 
 
 # -----------------------------------------------------------------------
@@ -290,7 +299,10 @@ if __name__ == "__main__":
         report_path,
         out_path,
         export_format="PDF",
-        params={"Month_req": "March", "Month_ordered": "August", "Year_ordered": 2026}
+        # BUG FIX: was `params=` - generate_report's real keyword is
+        # `parameters`; running this block directly used to raise
+        # TypeError: generate_report() got an unexpected keyword argument 'params'.
+        parameters={"Month_req": "March", "Month_ordered": "August", "Year_ordered": 2026}
     )
 
     print(f"Report generated at: {result.output_path}")

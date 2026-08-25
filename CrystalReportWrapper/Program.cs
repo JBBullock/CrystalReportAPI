@@ -32,6 +32,7 @@ using System.Data;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using CrystalDecisions.CrystalReports.Engine;
 using CrystalDecisions.Shared;
 using Npgsql;
@@ -494,7 +495,19 @@ namespace CrystalReportWrapper
                     requiredTables.Add(t.Name);
                 }
 
-                DataSet reportDataSet = BuildReportDataSet(requiredTables);
+                // Optional: filter one or more tables down to a single
+                // record (e.g. SOHeader/SODetail both WHERE SONumber =
+                // '12345') instead of fetching the whole table. Absent
+                // unless the caller passed --record-filter - every
+                // existing report keeps its current "fetch everything"
+                // behavior by default. See LoadRecordFilters/BuildReportDataSet.
+                Dictionary<string, RecordFilter>? recordFilters = null;
+                if (!string.IsNullOrEmpty(options.RecordFilterJsonPath))
+                {
+                    recordFilters = LoadRecordFilters(options.RecordFilterJsonPath);
+                }
+
+                DataSet reportDataSet = BuildReportDataSet(requiredTables, recordFilters);
                 report.SetDataSource(reportDataSet);
 
                 Console.WriteLine($"Table Count (report expects): {report.Database.Tables.Count}");
@@ -784,6 +797,9 @@ namespace CrystalReportWrapper
                     case "--params":
                         options.ParamsJsonPath = args[++i];
                         break;
+                    case "--record-filter":
+                        options.RecordFilterJsonPath = args[++i];
+                        break;
                     case "--inspect":
                         // Flag, not a key/value pair - takes no argument.
                         options.Inspect = true;
@@ -961,7 +977,129 @@ namespace CrystalReportWrapper
         /// same catalog + this one method serve every report, instead of
         /// needing per-report code.
         /// </summary>
-        private static DataSet BuildReportDataSet(IEnumerable<string> requiredTableNames)
+        // ("column", "value") to apply as a WHERE filter to one TableQueryCatalog
+        // table. Value is already coerced to a CLR type (string/double/bool)
+        // by CoerceFilterValue - see LoadRecordFilters.
+        private readonly struct RecordFilter
+        {
+            public RecordFilter(string column, object value)
+            {
+                Column = column;
+                Value = value;
+            }
+            public string Column { get; }
+            public object Value { get; }
+        }
+
+        /// <summary>
+        /// Parses a JSON file shaped like:
+        ///   {"SOHeader": {"column": "SONumber", "value": "12345"},
+        ///    "SODetail": {"column": "SONumber", "value": "12345"}}
+        /// into a per-table RecordFilter dictionary. Table names are matched
+        /// case-insensitively against TableQueryCatalog/requiredTableNames,
+        /// same convention as TableQueryCatalog itself.
+        ///
+        /// This file is built on the Python/ZMRP side (report_service.py's
+        /// render_report_for_record), which is where the report's db_tables
+        /// list and the actual PK column name (via ZMRP's own PK_MAP) get
+        /// resolved - Program.cs never needs to know what a "primary key"
+        /// is, it just mechanically applies whatever column/value pairs
+        /// it's handed.
+        /// </summary>
+        private static Dictionary<string, RecordFilter> LoadRecordFilters(string recordFilterJsonPath)
+        {
+            if (!File.Exists(recordFilterJsonPath))
+            {
+                throw new FileNotFoundException($"Record filter file not found: {recordFilterJsonPath}");
+            }
+
+            string json = File.ReadAllText(recordFilterJsonPath);
+            using var doc = JsonDocument.Parse(json);
+
+            var filters = new Dictionary<string, RecordFilter>(StringComparer.OrdinalIgnoreCase);
+            foreach (JsonProperty prop in doc.RootElement.EnumerateObject())
+            {
+                JsonElement entry = prop.Value;
+                if (!entry.TryGetProperty("column", out JsonElement columnEl) ||
+                    !entry.TryGetProperty("value", out JsonElement valueEl))
+                {
+                    throw new ArgumentException(
+                        $"Record filter entry for table '{prop.Name}' must have both " +
+                        $"'column' and 'value' - got: {entry}");
+                }
+
+                filters[prop.Name] = new RecordFilter(
+                    columnEl.GetString() ?? string.Empty,
+                    CoerceFilterValue(valueEl));
+            }
+            return filters;
+        }
+
+        /// <summary>
+        /// Lighter-weight cousin of CoerceToParameterType - a record filter
+        /// value isn't tied to a Crystal ParameterFieldDefinition (there is
+        /// no ParameterValueKind to consult), so this just maps JSON's own
+        /// value kind onto a reasonable Npgsql-friendly CLR type.
+        /// </summary>
+        private static object CoerceFilterValue(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.Number => element.GetDouble(),
+                JsonValueKind.True => true,
+                JsonValueKind.False => false,
+                JsonValueKind.String => element.GetString()!,
+                _ => element.ToString(),
+            };
+        }
+
+        // Matches a TableQueryCatalog SELECT's own `... AS "SomeAlias"` clauses.
+        // Column names in the catalog are always simple identifiers (no spaces
+        // or punctuation), so [A-Za-z0-9_]+ is deliberately narrow rather than
+        // trying to handle arbitrary quoted-identifier contents.
+        private static readonly Regex ColumnAliasPattern =
+            new(@"AS\s+""([A-Za-z0-9_]+)""", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
+        /// <summary>
+        /// Resolves the real, as-cataloged casing of a column alias in a
+        /// TableQueryCatalog base query, given a caller-supplied column name
+        /// of unknown casing. PK_MAP on the ZMRP/Python side uses lowercase
+        /// names like "sonumber" (matching Postgres's actual lowercase
+        /// physical columns), while TableQueryCatalog aliases columns
+        /// PascalCase for Crystal Reports, e.g. `sonumber AS "SONumber"`.
+        /// Postgres double-quoted identifiers are case-sensitive, so
+        /// quoting whatever casing the caller sent (WHERE "sonumber" = ...)
+        /// fails against the actual "SONumber" column even though the
+        /// column genuinely exists on that table.
+        ///
+        /// Scanning the query's own AS clauses case-insensitively and using
+        /// the text actually captured there sidesteps that - the query is
+        /// always the source of truth for its own alias casing.
+        ///
+        /// Returns null (not a throw) when no alias matches - e.g. a
+        /// db_tables data-entry mistake that points a filter at a table
+        /// which never carries that column at all (Customers/PartMaster
+        /// have no SONumber). The caller treats null as "can't safely
+        /// filter this table" and falls back to fetching it unfiltered
+        /// instead of emitting a WHERE clause against a column that
+        /// doesn't exist.
+        /// </summary>
+        private static string? ResolveActualColumnAlias(string baseQuery, string requestedColumn)
+        {
+            foreach (Match m in ColumnAliasPattern.Matches(baseQuery))
+            {
+                string aliasName = m.Groups[1].Value;
+                if (string.Equals(aliasName, requestedColumn, StringComparison.OrdinalIgnoreCase))
+                {
+                    return aliasName;
+                }
+            }
+            return null;
+        }
+
+        private static DataSet BuildReportDataSet(
+            IEnumerable<string> requiredTableNames,
+            Dictionary<string, RecordFilter>? recordFilters = null)
         {
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
@@ -992,7 +1130,63 @@ namespace CrystalReportWrapper
                         $"other report that also uses '{tableName}' will reuse the same entry.");
                 }
 
-                using var command = new NpgsqlCommand(query, connection);
+                // If the caller asked to filter this specific table down to
+                // one record, wrap the catalog's base query as a subquery
+                // and add a parameterized WHERE - parameterized (not string-
+                // interpolated) so a PK value containing a quote can't break
+                // out of the query. The subquery wrapper means the original
+                // TableQueryCatalog text never has to be parsed or edited -
+                // it stays exactly what --inspect/the designer already
+                // verified, just narrowed down.
+                // filter is pre-assigned `default` (not just `out RecordFilter
+                // filter` inline) so it stays definitely-assigned no matter
+                // what happens to isFiltered later in this block. isFiltered
+                // gets reassigned to false below (see ResolveActualColumnAlias
+                // fallback) - once a bool gating an out-parameter's use is
+                // reassigned anywhere in the method, the compiler can no
+                // longer prove the out-parameter is assigned at any check of
+                // that bool (CS0165), even ones textually before the
+                // reassignment. Pre-assigning sidesteps that limitation
+                // instead of fighting it.
+                RecordFilter filter = default;
+                bool isFiltered = recordFilters != null && recordFilters.TryGetValue(tableName, out filter);
+
+                // The caller's casing for filter.Column isn't trustworthy
+                // (see ResolveActualColumnAlias) - resolve it against this
+                // table's own query text before building any SQL from it.
+                string? resolvedAlias = null;
+                if (isFiltered)
+                {
+                    resolvedAlias = ResolveActualColumnAlias(query, filter.Column);
+                    if (resolvedAlias == null)
+                    {
+                        // Requested column isn't one of this table's own
+                        // aliases - fail safe by fetching unfiltered instead
+                        // of emitting a WHERE clause against a column that
+                        // doesn't exist on this table at all.
+                        Console.WriteLine(
+                            $"Warning: table '{tableName}' has no column matching " +
+                            $"'{filter.Column}' - fetching it unfiltered instead of " +
+                            $"filtering by record. Check this table's db_tables entry " +
+                            $"in report_registry.json.");
+                        isFiltered = false;
+                    }
+                }
+
+                string effectiveQuery = query;
+                if (isFiltered)
+                {
+                    string trimmedBaseQuery = query.TrimEnd().TrimEnd(';');
+                    effectiveQuery =
+                        $"SELECT * FROM ({trimmedBaseQuery}) AS _rptconvert_filtered " +
+                        $"WHERE \"{resolvedAlias}\" = @filterValue";
+                }
+
+                using var command = new NpgsqlCommand(effectiveQuery, connection);
+                if (isFiltered)
+                {
+                    command.Parameters.AddWithValue("@filterValue", filter.Value);
+                }
                 using var adapter = new NpgsqlDataAdapter(command);
 
                 // TableName set here (not after Fill) - DataSet.Tables.Add
@@ -1002,7 +1196,10 @@ namespace CrystalReportWrapper
                 var table = new DataTable(tableName);
                 adapter.Fill(table);
 
-                Console.WriteLine($"Rows for '{tableName}': {table.Rows.Count}");
+                Console.WriteLine(
+                    isFiltered
+                        ? $"Rows for '{tableName}' (filtered {resolvedAlias} = {filter.Value}): {table.Rows.Count}"
+                        : $"Rows for '{tableName}': {table.Rows.Count}");
                 dataSet.Tables.Add(table);
             }
 
@@ -1048,6 +1245,11 @@ namespace CrystalReportWrapper
             public string OutputPath { get; set; } = string.Empty;
             public string Format { get; set; } = "PDF";
             public string? ParamsJsonPath { get; set; }
+            // Path to a JSON file shaped {"SOHeader": {"column": "SONumber",
+            // "value": "12345"}, "SODetail": {...}, ...} - one entry per
+            // TableQueryCatalog table that should be filtered to a single
+            // record instead of fetched whole. See BuildReportDataSet.
+            public string? RecordFilterJsonPath { get; set; }
             public bool Inspect { get; set; } = false;
         }
     }
