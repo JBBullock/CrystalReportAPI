@@ -1051,8 +1051,7 @@ namespace CrystalReportWrapper
                 LEFT JOIN routers r ON r.partnumber = wo.partnumber
                 LEFT JOIN partmaster pm ON pm.partnumber = wo.partnumber
                 LEFT JOIN workcenters wc ON wc.workcenterid = r.workcenterid
-                LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode
-                ORDER BY r.sequenceid;",
+                LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode;",
 
             // PurchaseOrder_TTX - poheader+podetail (one row per PO line),
             // joined out to partmaster, suppliers/supplieraddress (the

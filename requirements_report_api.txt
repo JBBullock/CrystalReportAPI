@@ -1,0 +1,13 @@
+# Additional dependencies for report_api_server.py / generate_cert.py -
+# not part of the existing CrystalReportWrapper/report_service.py stack,
+# kept in a separate file so this doesn't get confused with (or silently
+# alter) whatever the rest of RPTConvert already depends on.
+#
+# Install with: pip install -r requirements_report_api.txt
+#
+# Versions intentionally left unpinned - pick whatever pip resolves as
+# current at install time (this is a small, self-contained API surface;
+# pin these later only if a specific upgrade ever breaks something).
+fastapi
+uvicorn
+cryptography

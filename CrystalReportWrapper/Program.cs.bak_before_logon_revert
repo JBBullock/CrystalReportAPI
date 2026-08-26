@@ -1051,8 +1051,7 @@ namespace CrystalReportWrapper
                 LEFT JOIN routers r ON r.partnumber = wo.partnumber
                 LEFT JOIN partmaster pm ON pm.partnumber = wo.partnumber
                 LEFT JOIN workcenters wc ON wc.workcenterid = r.workcenterid
-                LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode
-                ORDER BY r.sequenceid;",
+                LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode;",
 
             // PurchaseOrder_TTX - poheader+podetail (one row per PO line),
             // joined out to partmaster, suppliers/supplieraddress (the
@@ -1369,43 +1368,56 @@ namespace CrystalReportWrapper
                 DataSet reportDataSet = BuildReportDataSet(requiredTables, recordFilters);
                 report.SetDataSource(reportDataSet);
 
-                // report.SetDataSource(reportDataSet) above only reliably
-                // clears a table's original data-provider binding (Access/
-                // DAO, ODBC, or - the case that matters for the legacy
-                // Alliance reports - a Field-Definitions-Only/TTX table
-                // pointed at a path like C:\Alliance32\Reports\*.TTX that
-                // hasn't existed since ~2002) when the table was originally
-                // authored against an ADO.NET/XML-schema connection in the
-                // Designer. For every other table type, Crystal can still
-                // consider the table "not logged on" and try to actually
-                // open its original provider during Export() - which is
-                // what throws LogOnException here, unrelated to Postgres
-                // entirely (Postgres already answered the query above; this
-                // is Crystal separately trying to satisfy the table's own
-                // baked-in connection). Calling the per-TABLE SetDataSource
-                // overload (not the whole-DataSet one) is the documented
-                // way to force that swap regardless of the table's original
-                // driver, so do that explicitly for every table the report
-                // expects that we actually have data for.
-                foreach (CrystalDecisions.CrystalReports.Engine.Table pushTable in report.Database.Tables)
-                {
-                    if (reportDataSet.Tables.Contains(pushTable.Name))
-                    {
-                        pushTable.SetDataSource(reportDataSet.Tables[pushTable.Name]);
-                    }
-                }
-
-                // Diagnostic only (no longer used to drive any fix) -
-                // shows what each table's ORIGINAL design-time connection
-                // info still says post-SetDataSource, so a future logon-
-                // shaped failure is visible in console output immediately
-                // instead of requiring another blind round-trip.
+                // SetDataSource(reportDataSet) supplies real data, but each
+                // table on the .rpt can still be carrying its ORIGINAL
+                // design-time connection info (whatever server/database it
+                // was last pointed at - an Access file, an ODBC DSN, etc.),
+                // and Crystal can try to actually log into THAT during
+                // Export() rather than trusting the pushed DataSet - that is
+                // what "LogOnException: Database logon failed" means here,
+                // a different failure mode than the "Failed to load
+                // database information" the DataSet-wrapping above already
+                // solved. Print what each table thinks its own connection
+                // is before touching it, so if blanking it out below turns
+                // out to be the wrong fix for some table, that's visible in
+                // console output instead of a second blind guess.
                 foreach (CrystalDecisions.CrystalReports.Engine.Table diagTable in report.Database.Tables)
                 {
                     ConnectionInfo ci = diagTable.LogOnInfo.ConnectionInfo;
                     Console.WriteLine(
                         $"Table '{diagTable.Name}' original connection - Server: '{ci.ServerName}', " +
                         $"Database: '{ci.DatabaseName}', UserID: '{ci.UserID}'");
+                }
+
+                // Standard SAP Crystal Reports .NET SDK workaround for this
+                // exact combination (SetDataSource + LogOnException at
+                // Export time): re-apply each table's LogOnInfo with blank
+                // credentials so Crystal treats the connection as already
+                // satisfied instead of dialing out to whatever it remembers
+                // from design time. Applied to the main report AND every
+                // subreport - a subreport carries its own separate
+                // LogOnInfo per table, same pattern already sketched below
+                // for subreport.SetDataSource.
+                foreach (CrystalDecisions.CrystalReports.Engine.Table logonTable in report.Database.Tables)
+                {
+                    TableLogOnInfo logOnInfo = logonTable.LogOnInfo;
+                    logOnInfo.ConnectionInfo.ServerName = "";
+                    logOnInfo.ConnectionInfo.DatabaseName = "";
+                    logOnInfo.ConnectionInfo.UserID = "";
+                    logOnInfo.ConnectionInfo.Password = "";
+                    logonTable.ApplyLogOnInfo(logOnInfo);
+                }
+                foreach (ReportDocument subreport in report.Subreports)
+                {
+                    foreach (CrystalDecisions.CrystalReports.Engine.Table subLogonTable in subreport.Database.Tables)
+                    {
+                        TableLogOnInfo subLogOnInfo = subLogonTable.LogOnInfo;
+                        subLogOnInfo.ConnectionInfo.ServerName = "";
+                        subLogOnInfo.ConnectionInfo.DatabaseName = "";
+                        subLogOnInfo.ConnectionInfo.UserID = "";
+                        subLogOnInfo.ConnectionInfo.Password = "";
+                        subLogonTable.ApplyLogOnInfo(subLogOnInfo);
+                    }
                 }
 
                 Console.WriteLine($"Table Count (report expects): {report.Database.Tables.Count}");

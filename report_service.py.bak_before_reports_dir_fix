@@ -51,11 +51,7 @@ HERE = Path(__file__).parent
 
 REGISTRY_PATH = HERE / "report_registry.json"
 GLOBALS_PATH = HERE / "global_report_parameters.json"
-REPORTS_DIR = HERE / "reports"  # matches the folder each report is
-    # actually tested from (see ProgramCommands.md) - "TemplateRPTs" never
-    # existed in this checkout, which would have made every report fail
-    # through this module even though direct CrystalReportWrapper.exe CLI
-    # tests (which always pass --report explicitly) never hit this path.
+REPORTS_DIR = HERE / "TemplateRPTs"
 WORKER_EXE = HERE / "CrystalReportWrapper" / "bin" / "Debug" / "net48" / "CrystalReportWrapper.exe"
 OUTPUT_DIR = HERE / "out" / "rendered"
 
