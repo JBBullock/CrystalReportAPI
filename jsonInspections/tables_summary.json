@@ -1,0 +1,7797 @@
+{
+  "distinct_table_count": 96,
+  "real_table_count": 0,
+  "legacy_staging_table_count": 96,
+  "real_tables": [],
+  "legacy_staging_tables": [
+    "Acknowledgement_TTX",
+    "BOMWithReferences_TTX",
+    "BackOrderListing_TTX",
+    "BillOfMaterials_TTX",
+    "CommodityCodes_TTX",
+    "CreditMemoTransaction_TTX",
+    "CreditMemo_TTX",
+    "CurrencyCodes_TTX",
+    "CustomerContactList_TTX",
+    "CustomerDiscLevel_TTX",
+    "CustomerListing_TTX",
+    "DensityCodes_TTX",
+    "DepartmentCodes_TTX",
+    "ECNClassCodes_TTX",
+    "ECNSummary_TTX",
+    "EmployeeInformationList_TTX",
+    "EmployeeListReport_TTX",
+    "EngineeringChangeNotice_TTX",
+    "EngineeringPartMaster_TTX",
+    "ExceptionReport_TTX",
+    "FOBCodes_TTX",
+    "ForecastReport_TTX",
+    "Holiday List_TTX",
+    "IndentedBOM_TTX",
+    "IndentedStdCostBOM_TTX",
+    "IntrastatCodes_TTX",
+    "IntrastatRates_TTX",
+    "IntrastatReporting_TTX",
+    "InventoryPartCost_TTX",
+    "InventoryVarianceReport_TTX",
+    "InvoiceReport_TTX",
+    "InvoiceTransaction_TTX",
+    "JobSummary",
+    "LaborDistrByEmployee_TTX",
+    "LaborDistrByWO_TTX",
+    "LaborRouter_TTX",
+    "LaborUtilization_TTX",
+    "ManualPartsList_TTX",
+    "MiscUnplannedIssues_TTX",
+    "MiscUnplannedReceipts_TTX",
+    "OpenPOLineItems_TTX",
+    "OperationCodes_TTX",
+    "OutputReport_TTX",
+    "PIPByPartNumber_TTX",
+    "PIPByPurchaseOrder_TTX",
+    "POByPartNumber_TTX",
+    "POBySupplier_TTX",
+    "POCommitmentGraph_TTX",
+    "POPickList_TTX",
+    "POReceipt_TTX",
+    "POTotalsGraph_TTX",
+    "PartCountList_TTX",
+    "PartCountTag_TTX",
+    "PartCrossReference_TTX",
+    "PartList_TTX",
+    "PastDuePOReceipts_TTX",
+    "PendingCostBOM_TTX",
+    "PlannedOrders_TTX",
+    "PriceDiscountCodes_TTX",
+    "ProductDiscountCodes_TTX",
+    "ProductRevenueCodes_TTX",
+    "ProductionBacklog_TTX",
+    "ProductionSchedule_TTX",
+    "PurchaseCommitment_TTX",
+    "PurchaseOrder_TTX",
+    "RegionCodes_TTX",
+    "ReturnToVendorList_TTX",
+    "SOBookings_TTX",
+    "SOListByCustomerID_TTX",
+    "SOListByPartNumber_TTX",
+    "SOPickList_TTX",
+    "SOTotalsGraph_TTX",
+    "SalesOrder_TTX",
+    "ShipViaCodes_TTX",
+    "ShipmentListReport_TTX",
+    "ShortageReport_TTX",
+    "StandardCostBOM_TTX",
+    "StockStatus_TTX",
+    "StockroomLocations_TTX",
+    "StockroomOnHand_TTX",
+    "SubContractPOKitList_TTX",
+    "SupplierListing_TTX",
+    "SystemUsedOnCodes_TTX",
+    "TaxCodes_TTX",
+    "TermsCodes_TTX",
+    "TransactionReport_TTX",
+    "UOMCodes_TTX",
+    "WIPByPartNumber_TTX",
+    "WIPByWorkOrder_TTX",
+    "WO Pick List_TTX",
+    "WOKitList_TTX",
+    "WhereUsed_TTX",
+    "WorkCenterListing_TTX",
+    "WorkCenterLoadsGraph_TTX",
+    "WorkCenterLoads_TTX",
+    "WorkOrderTraveler_TTX"
+  ],
+  "tables": {
+    "Acknowledgement_TTX": {
+      "name": "Acknowledgement_TTX",
+      "legacy_staging": true,
+      "sample_location": "Acknowledgement",
+      "field_count": 72,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderedBy",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPO",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FOBCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceDiscType",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SODetail_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "CustomerDiscount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Taxable",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ConvertListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AfterExchangePrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineSubtotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineTotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SOHeader_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "SODetail_IsnullNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "SOHeader_IsnullNotes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "acknowledgement",
+        "quotation"
+      ]
+    },
+    "BillOfMaterials_TTX": {
+      "name": "BillOfMaterials_TTX",
+      "legacy_staging": true,
+      "sample_location": "BillOfMaterials",
+      "field_count": 21,
+      "fields": [
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Assembly_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Assembly_EngNotes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Component_EngNotes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_BOMNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "Isnull_AssemblyNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "Isnull_ComponentNotes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "billofmaterials"
+      ]
+    },
+    "BOMWithReferences_TTX": {
+      "name": "BOMWithReferences_TTX",
+      "legacy_staging": true,
+      "sample_location": "BOMWithReferences",
+      "field_count": 18,
+      "fields": [
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RefDesignator",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RefDesignators_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_RefDesNotes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "bomwithreferences"
+      ]
+    },
+    "CommodityCodes_TTX": {
+      "name": "CommodityCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "CommodityCodes",
+      "field_count": 8,
+      "fields": [
+        {
+          "name": "CommodityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CommodityCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MiddleInitial",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCodes_DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "commoditycodes"
+      ]
+    },
+    "CreditMemo_TTX": {
+      "name": "CreditMemo_TTX",
+      "legacy_staging": true,
+      "sample_location": "CreditMemo",
+      "field_count": 44,
+      "fields": [
+        {
+          "name": "CreditMemoNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InvoiceNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CreditMemoHeader_SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FreightAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ReturnDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CreditMemoLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CreditMemoDetail_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Price",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOHeader_SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExtendedAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineSubtotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineTotal",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "creditmemo"
+      ]
+    },
+    "CreditMemoTransaction_TTX": {
+      "name": "CreditMemoTransaction_TTX",
+      "legacy_staging": true,
+      "sample_location": "CreditMemoTransaction",
+      "field_count": 39,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UOMConversion",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExtendedAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "creditmemotransaction"
+      ]
+    },
+    "CurrencyCodes_TTX": {
+      "name": "CurrencyCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "CurrencyCodes",
+      "field_count": 6,
+      "fields": [
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExchangeRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EURORate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "EMUMember",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "currencycodes"
+      ]
+    },
+    "CustomerContactList_TTX": {
+      "name": "CustomerContactList_TTX",
+      "legacy_staging": true,
+      "sample_location": "CustomerContactList",
+      "field_count": 19,
+      "fields": [
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipHoldFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "ActiveFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceDiscType",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ContactID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Name",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Phone",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAX",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PhoneFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAXFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Email",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DiscountPercentage",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PriceDiscountCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel_DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "customercontactlist"
+      ]
+    },
+    "CustomerDiscLevel_TTX": {
+      "name": "CustomerDiscLevel_TTX",
+      "legacy_staging": true,
+      "sample_location": "CustomerDiscLevel",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "CustomerDiscLevel",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "customerdisclevel"
+      ]
+    },
+    "CustomerListing_TTX": {
+      "name": "CustomerListing_TTX",
+      "legacy_staging": true,
+      "sample_location": "CustomerListing",
+      "field_count": 35,
+      "fields": [
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ContactID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActiveFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "VATRegNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "VATBranchID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DateAdded",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CreditLimit",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceDiscType",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ExchangeRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "BillToFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "DiscountPercentage",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PriceDiscountCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Name",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Email",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Phone",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PhoneFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAX",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAXFMT",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "customerlisting"
+      ]
+    },
+    "DensityCodes_TTX": {
+      "name": "DensityCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "DensityCodes",
+      "field_count": 6,
+      "fields": [
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LengthFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WeightFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "VolumeFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AreaFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "densitycodes"
+      ]
+    },
+    "DepartmentCodes_TTX": {
+      "name": "DepartmentCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "DepartmentCodes",
+      "field_count": 5,
+      "fields": [
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "NettableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "InventoryFlag",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "departmentcodes"
+      ]
+    },
+    "ECNClassCodes_TTX": {
+      "name": "ECNClassCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "ECNClassCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "ECNClassCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "ecnclasscodes"
+      ]
+    },
+    "ECNSummary_TTX": {
+      "name": "ECNSummary_TTX",
+      "legacy_staging": true,
+      "sample_location": "ECNSummary",
+      "field_count": 9,
+      "fields": [
+        {
+          "name": "ECNNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNClassCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNParts_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNClassCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_Notes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "ecnsummary"
+      ]
+    },
+    "EmployeeInformationList_TTX": {
+      "name": "EmployeeInformationList_TTX",
+      "legacy_staging": true,
+      "sample_location": "EmployeeInformationList",
+      "field_count": 21,
+      "fields": [
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SSN",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MiddleInitial",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIP",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Email",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WageRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CommissionRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Active",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Phone",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAX",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "employeeinformationlist"
+      ]
+    },
+    "EmployeeListReport_TTX": {
+      "name": "EmployeeListReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "EmployeeList",
+      "field_count": 7,
+      "fields": [
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MiddleInitial",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SSN",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Active",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "employeelist"
+      ]
+    },
+    "EngineeringChangeNotice_TTX": {
+      "name": "EngineeringChangeNotice_TTX",
+      "legacy_staging": true,
+      "sample_location": "EngineeringChangeNotice",
+      "field_count": 9,
+      "fields": [
+        {
+          "name": "ECNNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNClassCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNParts_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ECNClassCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_Notes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "engineeringchangenotice"
+      ]
+    },
+    "EngineeringPartMaster_TTX": {
+      "name": "EngineeringPartMaster_TTX",
+      "legacy_staging": true,
+      "sample_location": "EngineeringPartMaster",
+      "field_count": 7,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Dimension",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Weight",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "engineeringpartmaster"
+      ]
+    },
+    "ExceptionReport_TTX": {
+      "name": "ExceptionReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "Exception",
+      "field_count": 29,
+      "fields": [
+        {
+          "name": "MRPJobID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Priority",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SafetyStock",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LeadTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderMultiple",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YieldFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StartQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Balance",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Pegging",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MoveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ReferenceLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MRP_Action",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "OnHand",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BalanceSortOrder",
+          "value_type": "Int32sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "exception"
+      ]
+    },
+    "FOBCodes_TTX": {
+      "name": "FOBCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "FOBCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "FOBCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "fobcodes"
+      ]
+    },
+    "ForecastReport_TTX": {
+      "name": "ForecastReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "Forecast",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "ForecastID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OriginationDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "MRPInputFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TimeFence",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ForecastStartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ForecastEndDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ForecastQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_Notes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "forecast"
+      ]
+    },
+    "Holiday List_TTX": {
+      "name": "Holiday List_TTX",
+      "legacy_staging": true,
+      "sample_location": "HolidayList",
+      "field_count": 3,
+      "fields": [
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EndDate",
+          "value_type": "DateTimeField"
+        }
+      ],
+      "used_by_report_ids": [
+        "holidaylist"
+      ]
+    },
+    "IndentedBOM_TTX": {
+      "name": "IndentedBOM_TTX",
+      "legacy_staging": true,
+      "sample_location": "IndentedBOM",
+      "field_count": 18,
+      "fields": [
+        {
+          "name": "ReportSection",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssOrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CompISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompOrderQuantity",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "indentedbom"
+      ]
+    },
+    "IndentedStdCostBOM_TTX": {
+      "name": "IndentedStdCostBOM_TTX",
+      "legacy_staging": true,
+      "sample_location": "IndentedSTDCostedBOM",
+      "field_count": 32,
+      "fields": [
+        {
+          "name": "ReportSection",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssOrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssMaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssLaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssBurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssSetupCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssSubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CompISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompOrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompMaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CompLaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CompBurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CompSetupCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CompSubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CompCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TestConversion",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "indentedstdcostedbom"
+      ]
+    },
+    "IntrastatCodes_TTX": {
+      "name": "IntrastatCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "IntrastatCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "ICNCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "intrastatcodes"
+      ]
+    },
+    "IntrastatRates_TTX": {
+      "name": "IntrastatRates_TTX",
+      "legacy_staging": true,
+      "sample_location": "IntrastatRates",
+      "field_count": 3,
+      "fields": [
+        {
+          "name": "ICNCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "intrastatrates"
+      ]
+    },
+    "IntrastatReporting_TTX": {
+      "name": "IntrastatReporting_TTX",
+      "legacy_staging": true,
+      "sample_location": "IntrastatReporting",
+      "field_count": 11,
+      "fields": [
+        {
+          "name": "TransactionID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ICNCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "VATRegNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Tax_Collected",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "intrastatreporting"
+      ]
+    },
+    "InventoryPartCost_TTX": {
+      "name": "InventoryPartCost_TTX",
+      "legacy_staging": true,
+      "sample_location": "InventoryPartCost",
+      "field_count": 21,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "STDMaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "STDBurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "STDLaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "STDSetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "STDSubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YTDUsage",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CostRevisionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DefaultPOCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CurrentCostsTotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StandardCostsTotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CostVariance",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DateAdded",
+          "value_type": "DateTimeField"
+        }
+      ],
+      "used_by_report_ids": [
+        "inventorypartcost"
+      ]
+    },
+    "InventoryVarianceReport_TTX": {
+      "name": "InventoryVarianceReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "InventoryVariance",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "TagNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InventoryQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CountQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "QuantityVariance",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CostVariance",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "inventoryvariance"
+      ]
+    },
+    "InvoiceReport_TTX": {
+      "name": "InvoiceReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "Invoice",
+      "field_count": 62,
+      "fields": [
+        {
+          "name": "InvoiceNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TrackingNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Carrier",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FreightAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ShipmentDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "InvoiceLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Price",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "BaseTaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ExtendedAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineSubtotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineTotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPO",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_ZipCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FOBCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InvoiceHeader_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "InvoiceDetail_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "BillOfLading",
+          "value_type": "StringField"
+        },
+        {
+          "name": "IsNull_InvoiceHeaderNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "IsNull_InvoiceDetailNotes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "invoice"
+      ]
+    },
+    "InvoiceTransaction_TTX": {
+      "name": "InvoiceTransaction_TTX",
+      "legacy_staging": true,
+      "sample_location": "InvoiceTransaction",
+      "field_count": 53,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPO",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ShipViaCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FOBCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Customer_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExtendedAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Company_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_ZipCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Company_Postal",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "invoicetransaction"
+      ]
+    },
+    "JobSummary": {
+      "name": "JobSummary",
+      "legacy_staging": true,
+      "sample_location": "JobSummary",
+      "field_count": 25,
+      "fields": [
+        {
+          "name": "ReportSection",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Description",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Line",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Price",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Total",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "NonJobIssues",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OperationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OperationDescription",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterDescription",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Hours",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PercentComplete",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RefDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PartDescription",
+          "value_type": "StringField"
+        },
+        {
+          "name": "NetLaborCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "jobsummary"
+      ]
+    },
+    "LaborDistrByEmployee_TTX": {
+      "name": "LaborDistrByEmployee_TTX",
+      "legacy_staging": true,
+      "sample_location": "LaborDistrByEmployee",
+      "field_count": 16,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StopDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LaborDistribution_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WageRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MiddleInitial",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Suffix",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCodes_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActualTime",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "labordistrbyemployee"
+      ]
+    },
+    "LaborDistrByWO_TTX": {
+      "name": "LaborDistrByWO_TTX",
+      "legacy_staging": true,
+      "sample_location": "LaborDistrByWO",
+      "field_count": 19,
+      "fields": [
+        {
+          "name": "LaborDistribution_WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WOHeader_WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LaborDistribution_StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "LaborDistribution_StopDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "LaborDistribution_QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LaborDistribution_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WageRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "WOHeader_StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "WOHeader_RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WOHeader_QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCodes_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActualTime",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "labordistrbywo"
+      ]
+    },
+    "LaborRouter_TTX": {
+      "name": "LaborRouter_TTX",
+      "legacy_staging": true,
+      "sample_location": "LaborRouter",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OperationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QueueTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SetUpTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RunTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "IsAlternate",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OperationCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "laborrouter"
+      ]
+    },
+    "LaborUtilization_TTX": {
+      "name": "LaborUtilization_TTX",
+      "legacy_staging": true,
+      "sample_location": "LaborUtilization",
+      "field_count": 20,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "EmployeeID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LaborDistribution_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StopDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SetUpTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RunTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MiddleInitial",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Suffix",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WageRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCodes_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActualTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StandardTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UtilizationPercent",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "laborutilization"
+      ]
+    },
+    "ManualPartsList_TTX": {
+      "name": "ManualPartsList_TTX",
+      "legacy_staging": true,
+      "sample_location": "ManualPartsList",
+      "field_count": 23,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Balance",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Pegging",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ReferenceLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LeadTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SafetyStock",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderMultiple",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YieldFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MRPJobID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "Priority",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "manualpartslist"
+      ]
+    },
+    "MiscUnplannedIssues_TTX": {
+      "name": "MiscUnplannedIssues_TTX",
+      "legacy_staging": true,
+      "sample_location": "MiscUnplannedIssues",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ToDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromLocation",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EnteredBy",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "miscunplannedissues"
+      ]
+    },
+    "MiscUnplannedReceipts_TTX": {
+      "name": "MiscUnplannedReceipts_TTX",
+      "legacy_staging": true,
+      "sample_location": "MiscUnplannedReceipts",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ToDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ToLocation",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EnteredBy",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "miscunplannedreceipts"
+      ]
+    },
+    "OpenPOLineItems_TTX": {
+      "name": "OpenPOLineItems_TTX",
+      "legacy_staging": true,
+      "sample_location": "OpenPOLineItems",
+      "field_count": 17,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PurchaseUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReceived",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRTV",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PODetail_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PONetQty",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StockQty",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "openpolineitems"
+      ]
+    },
+    "SOListByPartNumber_TTX": {
+      "name": "SOListByPartNumber_TTX",
+      "legacy_staging": true,
+      "sample_location": "OpenSOListByPartNumber",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReturned",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityShipped",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Remaining",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "opensolistbypartnumber",
+        "solistbypartnumber"
+      ]
+    },
+    "OperationCodes_TTX": {
+      "name": "OperationCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "OperationCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "OperationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "operationcodes"
+      ]
+    },
+    "OutputReport_TTX": {
+      "name": "OutputReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "OutputReport",
+      "field_count": 10,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionType",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SOCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "outputreport"
+      ]
+    },
+    "PartCountList_TTX": {
+      "name": "PartCountList_TTX",
+      "legacy_staging": true,
+      "sample_location": "PartCountList",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "TagNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InventoryQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CountQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "NettableFlag",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "partcountlist"
+      ]
+    },
+    "PartCountTag_TTX": {
+      "name": "PartCountTag_TTX",
+      "legacy_staging": true,
+      "sample_location": "PartCountTag",
+      "field_count": 10,
+      "fields": [
+        {
+          "name": "TagNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InventoryQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "partcounttag"
+      ]
+    },
+    "PartCrossReference_TTX": {
+      "name": "PartCrossReference_TTX",
+      "legacy_staging": true,
+      "sample_location": "PartCrossReference",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "XRefDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierRating",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SupplierLeadtime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ApprovedSource",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "SupplierPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DefaultPOCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "partcrossreference"
+      ]
+    },
+    "PartList_TTX": {
+      "name": "PartList_TTX",
+      "legacy_staging": true,
+      "sample_location": "PartList",
+      "field_count": 10,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ICNCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "partlist"
+      ]
+    },
+    "PastDuePOReceipts_TTX": {
+      "name": "PastDuePOReceipts_TTX",
+      "legacy_staging": true,
+      "sample_location": "PastDuePOReceipts",
+      "field_count": 20,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRTV",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReceived",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LastReceiptDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "POPlacedWith",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Name",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAX",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAXFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Phone",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PhoneFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Email",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOpen",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DaysLate",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pastdueporeceipts"
+      ]
+    },
+    "BackOrderListing_TTX": {
+      "name": "BackOrderListing_TTX",
+      "legacy_staging": true,
+      "sample_location": "PastDueShipmentsByPartNumber",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityShipped",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReturned",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActualShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "BackOrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BackOrderCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pastdueshipmentsbypartnumber",
+        "pastdueshipmentsbyrequireddate"
+      ]
+    },
+    "PendingCostBOM_TTX": {
+      "name": "PendingCostBOM_TTX",
+      "legacy_staging": true,
+      "sample_location": "PendingCostBOM",
+      "field_count": 29,
+      "fields": [
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Assembly_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_MaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_LaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_BurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_SetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_SubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_MaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_LaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_BurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_SetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_SubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_RowTotalCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_TotalCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pendingcostbom"
+      ]
+    },
+    "PIPByPartNumber_TTX": {
+      "name": "PIPByPartNumber_TTX",
+      "legacy_staging": true,
+      "sample_location": "PIPByPartNumber",
+      "field_count": 17,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PIPIssues_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLOTNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PO_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReceived",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InventoryCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TotalPIPIssues",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "POPercentCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CalculatePIPValue",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pipbypartnumber"
+      ]
+    },
+    "PIPByPurchaseOrder_TTX": {
+      "name": "PIPByPurchaseOrder_TTX",
+      "legacy_staging": true,
+      "sample_location": "PIPByPurchaseOrder",
+      "field_count": 22,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PO_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRTV",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PO_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReceived",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "PIPIssues_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PIPIssues_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartMasterPO_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMasterD_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UnitCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TotalPIPIssues",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "POPercentCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PIPValue",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pipbypurchaseorder"
+      ]
+    },
+    "PlannedOrders_TTX": {
+      "name": "PlannedOrders_TTX",
+      "legacy_staging": true,
+      "sample_location": "PlannedOrders",
+      "field_count": 30,
+      "fields": [
+        {
+          "name": "MRPHeaderID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "MRPJobID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Priority",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LeadTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SafetyStock",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderMultiple",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YieldFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StartQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Balance",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Pegging",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MoveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ReferenceLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "MRP_Action",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OnHand",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BalanceSortOrder",
+          "value_type": "Int32sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "plannedorders"
+      ]
+    },
+    "POByPartNumber_TTX": {
+      "name": "POByPartNumber_TTX",
+      "legacy_staging": true,
+      "sample_location": "POByPartNumber",
+      "field_count": 8,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "POUnitPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pobypartnumber"
+      ]
+    },
+    "POBySupplier_TTX": {
+      "name": "POBySupplier_TTX",
+      "legacy_staging": true,
+      "sample_location": "POBySupplier",
+      "field_count": 10,
+      "fields": [
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompanyAccount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POUnitPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pobysupplier"
+      ]
+    },
+    "POCommitmentGraph_TTX": {
+      "name": "POCommitmentGraph_TTX",
+      "legacy_staging": true,
+      "sample_location": "POCommitmentGraph",
+      "field_count": 3,
+      "fields": [
+        {
+          "name": "Date",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ExistingCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PlannedCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pocommitmentgraph"
+      ]
+    },
+    "POPickList_TTX": {
+      "name": "POPickList_TTX",
+      "legacy_staging": true,
+      "sample_location": "POPickList",
+      "field_count": 31,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PurchaseUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ReleaseDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequisitionNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyStockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ComponentISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentLocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentDensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "popicklist"
+      ]
+    },
+    "POReceipt_TTX": {
+      "name": "POReceipt_TTX",
+      "legacy_staging": true,
+      "sample_location": "POReceipt",
+      "field_count": 20,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UOMConversion",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequestedBy",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FirstName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PO_QuantityReceived",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "poreceipt"
+      ]
+    },
+    "POTotalsGraph_TTX": {
+      "name": "POTotalsGraph_TTX",
+      "legacy_staging": true,
+      "sample_location": "POTotalsGraph",
+      "field_count": 6,
+      "fields": [
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "POUnitPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "LineTotalNoTax",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pototalsgraph"
+      ]
+    },
+    "PriceDiscountCodes_TTX": {
+      "name": "PriceDiscountCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "PriceDiscountCodes",
+      "field_count": 3,
+      "fields": [
+        {
+          "name": "PriceCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DiscountPercentage",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "pricediscountcodes"
+      ]
+    },
+    "ProductDiscountCodes_TTX": {
+      "name": "ProductDiscountCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "ProductDiscountCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "ProductPriceCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "productdiscountcodes"
+      ]
+    },
+    "ProductionBacklog_TTX": {
+      "name": "ProductionBacklog_TTX",
+      "legacy_staging": true,
+      "sample_location": "ProductionBacklog",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "WOPriority",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "PartMaster_DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StandardHours",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCodes_DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "productionbacklog"
+      ]
+    },
+    "ProductionSchedule_TTX": {
+      "name": "ProductionSchedule_TTX",
+      "legacy_staging": true,
+      "sample_location": "ProductionSchedule",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "WOPriority",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "PartMaster_DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StandardHours",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCodes_DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "productionschedule"
+      ]
+    },
+    "ProductRevenueCodes_TTX": {
+      "name": "ProductRevenueCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "ProductRevenueCodes",
+      "field_count": 4,
+      "fields": [
+        {
+          "name": "ProductClass",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RevenueAccount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExpenseAccount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "productrevenuecodes"
+      ]
+    },
+    "PurchaseCommitment_TTX": {
+      "name": "PurchaseCommitment_TTX",
+      "legacy_staging": true,
+      "sample_location": "PurchaseCommitment",
+      "field_count": 12,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POUnitPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRTV",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReceived",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "purchasecommitment"
+      ]
+    },
+    "PurchaseOrder_TTX": {
+      "name": "PurchaseOrder_TTX",
+      "legacy_staging": true,
+      "sample_location": "PurchaseOrder",
+      "field_count": 71,
+      "fields": [
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequisitionNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaDescription",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BuyerCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExchangeRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "POHeader_RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "FOBDescription",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POUnitPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PurchaseUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "BaseTaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "KitPartFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PODetail_RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CompanyAccount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "LineNotes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "POHeader_IsnullNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "PODetail_IsnullLineNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "BillToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_ZipCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_ZipCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ExtendedAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineSubtotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineTotal",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "purchaseorder"
+      ]
+    },
+    "RegionCodes_TTX": {
+      "name": "RegionCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "RegionCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "regioncodes"
+      ]
+    },
+    "ReturnToVendorList_TTX": {
+      "name": "ReturnToVendorList_TTX",
+      "legacy_staging": true,
+      "sample_location": "ReturnToVendorList",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UOMConversion",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster.DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCodes.DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "returntovendorlist"
+      ]
+    },
+    "SalesOrder_TTX": {
+      "name": "SalesOrder_TTX",
+      "legacy_staging": true,
+      "sample_location": "SalesOrder",
+      "field_count": 72,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderedBy",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencyRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPO",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag2",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxFlag3",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "TaxCode3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TermsCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FOBCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PriceDiscType",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate2",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TaxRate3",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CurrencySymbol",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SODetail_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "CustomerDiscount",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerDiscLevel_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Taxable",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ConvertListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AfterExchangePrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BaseTaxAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineSubtotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax2Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Tax3Amount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LineTotal",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SOHeader_Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "SODetail_IsnullNotes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "SOHeader_IsnullNotes",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "salesorder"
+      ]
+    },
+    "ShipmentListReport_TTX": {
+      "name": "ShipmentListReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "ShipmentList",
+      "field_count": 36,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UOMConversion",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerPO",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Attention",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SalesUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipViaCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShipToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BillToAddress_Postal",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionInformation",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "shipmentlist"
+      ]
+    },
+    "ShipViaCodes_TTX": {
+      "name": "ShipViaCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "ShipViaCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "ShipViaCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "shipviacodes"
+      ]
+    },
+    "ShortageReport_TTX": {
+      "name": "ShortageReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "ShortageReport",
+      "field_count": 12,
+      "fields": [
+        {
+          "name": "POWONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Stockroom_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LastName",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "shortagereport"
+      ]
+    },
+    "SOBookings_TTX": {
+      "name": "SOBookings_TTX",
+      "legacy_staging": true,
+      "sample_location": "SOBookings",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SalesPerson",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "sobookings"
+      ]
+    },
+    "SOListByCustomerID_TTX": {
+      "name": "SOListByCustomerID_TTX",
+      "legacy_staging": true,
+      "sample_location": "SOListByCustomerID",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOHeader_CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Customers_CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ActualShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityShipped",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineAmount",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "solistbycustomerid"
+      ]
+    },
+    "SOPickList_TTX": {
+      "name": "SOPickList_TTX",
+      "legacy_staging": true,
+      "sample_location": "SOPickList",
+      "field_count": 17,
+      "fields": [
+        {
+          "name": "SONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SOLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityShipped",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReturned",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "CustomerName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredQuantity",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "sopicklist"
+      ]
+    },
+    "SOTotalsGraph_TTX": {
+      "name": "SOTotalsGraph_TTX",
+      "legacy_staging": true,
+      "sample_location": "SOTotalsGraph",
+      "field_count": 6,
+      "fields": [
+        {
+          "name": "CustomerID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CustomerPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ScheduledShipDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "LineTotalNoTax",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "sototalsgraph"
+      ]
+    },
+    "StandardCostBOM_TTX": {
+      "name": "StandardCostBOM_TTX",
+      "legacy_staging": true,
+      "sample_location": "StandardCostBOM",
+      "field_count": 31,
+      "fields": [
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Assembly_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_STDMaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_STDBurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_STDLaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_STDSetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_STDSubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly_ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_STDMaterialCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_STDBurdenCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_STDLaborCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_STDSetUpCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_STDSubContCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TestConversion",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Component_TotalCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "standardcostbom"
+      ]
+    },
+    "StockroomLocations_TTX": {
+      "name": "StockroomLocations_TTX",
+      "legacy_staging": true,
+      "sample_location": "StockroomLocations",
+      "field_count": 7,
+      "fields": [
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockLocations_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "NettableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "InventoryFlag",
+          "value_type": "BooleanField"
+        }
+      ],
+      "used_by_report_ids": [
+        "stockroomlocations"
+      ]
+    },
+    "StockroomOnHand_TTX": {
+      "name": "StockroomOnHand_TTX",
+      "legacy_staging": true,
+      "sample_location": "StockroomOnHand",
+      "field_count": 14,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DateReceived",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ExpirationDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DepartmentCodes_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "NettableFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "ExtendedCost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "stockroomonhand"
+      ]
+    },
+    "StockStatus_TTX": {
+      "name": "StockStatus_TTX",
+      "legacy_staging": true,
+      "sample_location": "StockStatus",
+      "field_count": 20,
+      "fields": [
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OMC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ABCCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LeadTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SUOCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "CommodityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SafetyStock",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "OrderMultiple",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YieldFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ListPrice",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityOnHand",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "YTDUsage",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "LastXactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "DateAdded",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "stockstatus"
+      ]
+    },
+    "SubContractPOKitList_TTX": {
+      "name": "SubContractPOKitList_TTX",
+      "legacy_staging": true,
+      "sample_location": "SubContractPOKitList",
+      "field_count": 34,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TranD_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POD_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromLocation",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AuditDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "POLine",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartXReference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityOrdered",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster1_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "subcontractpokitlist"
+      ]
+    },
+    "SupplierListing_TTX": {
+      "name": "SupplierListing_TTX",
+      "legacy_staging": true,
+      "sample_location": "SupplierListing",
+      "field_count": 26,
+      "fields": [
+        {
+          "name": "SupplierID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SupplierName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ActiveFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "RegionCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DateAdded",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "APHoldFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "CurrencyCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "VATRegNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "VATBranchID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Name",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Email",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Phone",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PhoneFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAX",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FAXFMT",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine1",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine2",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine3",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AddressLine4",
+          "value_type": "StringField"
+        },
+        {
+          "name": "City",
+          "value_type": "StringField"
+        },
+        {
+          "name": "State",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ZIPCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Country",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Postal",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "supplierlisting"
+      ]
+    },
+    "SystemUsedOnCodes_TTX": {
+      "name": "SystemUsedOnCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "SystemUsedOnCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "SUOCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "systemusedoncodes"
+      ]
+    },
+    "TaxCodes_TTX": {
+      "name": "TaxCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "TaxCodes",
+      "field_count": 4,
+      "fields": [
+        {
+          "name": "TaxCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TaxRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LiabilityAccount",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "taxcodes"
+      ]
+    },
+    "TermsCodes_TTX": {
+      "name": "TermsCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "TermsCodes",
+      "field_count": 2,
+      "fields": [
+        {
+          "name": "TermsCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "termscodes"
+      ]
+    },
+    "TransactionReport_TTX": {
+      "name": "TransactionReport_TTX",
+      "legacy_staging": true,
+      "sample_location": "TransactionReport",
+      "field_count": 12,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionID",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionType",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Reference",
+          "value_type": "StringField"
+        },
+        {
+          "name": "TransactionDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "LineNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromDepartmentCodes_AccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ToDepartmentCodes_AccountNumber",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "transactionreport"
+      ]
+    },
+    "UOMCodes_TTX": {
+      "name": "UOMCodes_TTX",
+      "legacy_staging": true,
+      "sample_location": "UOMCodes",
+      "field_count": 5,
+      "fields": [
+        {
+          "name": "UOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UOMType",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ConversionFactor",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "IsBaseUOM",
+          "value_type": "Int16sField"
+        }
+      ],
+      "used_by_report_ids": [
+        "uomcodes"
+      ]
+    },
+    "WhereUsed_TTX": {
+      "name": "WhereUsed_TTX",
+      "legacy_staging": true,
+      "sample_location": "WhereUsed",
+      "field_count": 13,
+      "fields": [
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly_StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_Revision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component_StockUOM",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "whereused"
+      ]
+    },
+    "WIPByPartNumber_TTX": {
+      "name": "WIPByPartNumber_TTX",
+      "legacy_staging": true,
+      "sample_location": "WIPByPartNumber",
+      "field_count": 16,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WIPIssues_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLOTNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WOHeader_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "InventoryCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TotalWIPIssues",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WOPercentCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CalculateWIPValue",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "wipbypartnumber"
+      ]
+    },
+    "WIPByWorkOrder_TTX": {
+      "name": "WIPByWorkOrder_TTX",
+      "legacy_staging": true,
+      "sample_location": "WIPByWorkOrder",
+      "field_count": 21,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WOHeader_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WOHeader_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "ClosedFlag",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "WIPIssues_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WIPIssues_QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartMasterH_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMasterD_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Cost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "UnitCost",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TotalWIPIssues",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WOPercentCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WIPValue",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "wipbyworkorder"
+      ]
+    },
+    "WOKitList_TTX": {
+      "name": "WOKitList_TTX",
+      "legacy_staging": true,
+      "sample_location": "WOKitList",
+      "field_count": 19,
+      "fields": [
+        {
+          "name": "TransactionGroup",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "TransactionDetail_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromDepartment",
+          "value_type": "StringField"
+        },
+        {
+          "name": "FromLocation",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SNLotNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AuditDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WOHeader_PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WOPriority",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "PartMasterH_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMasterD_DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "wokitlist"
+      ]
+    },
+    "WO Pick List_TTX": {
+      "name": "WO Pick List_TTX",
+      "legacy_staging": true,
+      "sample_location": "WOPickList",
+      "field_count": 29,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkOrderUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ReleasedDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "AssemblyStockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDepartmentCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "AssemblyDensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Assembly",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Component",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityPer",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "BOMUOMCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ItemSequence",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ObsoleteDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "EffectiveDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ComponentISC",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentStockroomCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentLocationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentDescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentRevision",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentStockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ComponentDensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "Quantity",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "wopicklist"
+      ]
+    },
+    "WorkCenterListing_TTX": {
+      "name": "WorkCenterListing_TTX",
+      "legacy_staging": true,
+      "sample_location": "WorkCenterListing",
+      "field_count": 18,
+      "fields": [
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "ShiftID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DefaultWageRate",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WCAccountNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "UseShifts",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "StartTime",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StopTime",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Capacity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Monday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Tuesday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Wednesday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Thursday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Friday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Saturday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "Sunday",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "ReasonDown",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "workcenterlisting"
+      ]
+    },
+    "WorkCenterLoads_TTX": {
+      "name": "WorkCenterLoads_TTX",
+      "legacy_staging": true,
+      "sample_location": "WorkCenterLoads",
+      "field_count": 15,
+      "fields": [
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "StartDateTime",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StopDateTime",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "StartQuantity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "MinutesUsed",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SummaryDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "OperationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OverCapacity",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "WorkCenterName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "Capacity",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "CapUsage",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "workcenterloads"
+      ]
+    },
+    "WorkCenterLoadsGraph_TTX": {
+      "name": "WorkCenterLoadsGraph_TTX",
+      "legacy_staging": true,
+      "sample_location": "WorkCenterLoadsGraph",
+      "field_count": 3,
+      "fields": [
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "CapUsage",
+          "value_type": "NumberField"
+        }
+      ],
+      "used_by_report_ids": [
+        "workcenterloadsgraph"
+      ]
+    },
+    "WorkOrderTraveler_TTX": {
+      "name": "WorkOrderTraveler_TTX",
+      "legacy_staging": true,
+      "sample_location": "WorkOrderTraveler",
+      "field_count": 24,
+      "fields": [
+        {
+          "name": "WONumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OperationCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "SequenceID",
+          "value_type": "Int32sField"
+        },
+        {
+          "name": "JobNumber",
+          "value_type": "StringField"
+        },
+        {
+          "name": "StartDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "RequiredDate",
+          "value_type": "DateTimeField"
+        },
+        {
+          "name": "QuantityToStart",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityRequired",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "QuantityReleased",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WorkOrderUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "QuantityCompleted",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "WorkCenterID",
+          "value_type": "StringField"
+        },
+        {
+          "name": "IsAlternate",
+          "value_type": "BooleanField"
+        },
+        {
+          "name": "QueueTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "SetUpTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "RunTime",
+          "value_type": "NumberField"
+        },
+        {
+          "name": "Notes",
+          "value_type": "PersistentMemoField"
+        },
+        {
+          "name": "Isnull_Notes",
+          "value_type": "Int16sField"
+        },
+        {
+          "name": "StockUOM",
+          "value_type": "StringField"
+        },
+        {
+          "name": "DensityCode",
+          "value_type": "StringField"
+        },
+        {
+          "name": "PartMaster_DescText",
+          "value_type": "StringField"
+        },
+        {
+          "name": "WorkCenterName",
+          "value_type": "StringField"
+        },
+        {
+          "name": "OperationCodes_DescText",
+          "value_type": "StringField"
+        }
+      ],
+      "used_by_report_ids": [
+        "workordertraveler"
+      ]
+    }
+  }
+}
