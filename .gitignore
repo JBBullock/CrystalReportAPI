@@ -1,0 +1,35 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Secrets / environment
+.env
+
+# TLS private key + cert - see generate_cert.py's docstring: these are
+# regenerated locally (or per-deployment), not something to commit.
+# cert.pem specifically also has to be hand-copied to every SecureZMRP
+# client as CA_CERT_PATH, so keeping it out of history isn't just about
+# the private key.
+report_api_certs/
+
+# Rendered report output
+out/
+
+# .NET build artifacts
+CrystalReportWrapper/bin/
+CrystalReportWrapper/obj/
+CrystalReportWrapper/*.bak_*
+CrystalReportWrapper/Program.cs.bak_*
+CrystalReportWrapper/_scratch_to_delete/
+
+# Scratch / working folders
+Scratch/
+SQLFetches/
+bin64/
+
+#CR Run Time
+crruntime/*.msi
+crruntime/
+config/db_profiles.json
+_to_delete/

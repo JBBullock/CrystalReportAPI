@@ -1,0 +1,9 @@
+SELECT
+    partnumber AS "PartNumber",
+    desctext AS "DescText",
+    revision AS "Revision",
+    dimension AS "Dimension",
+    weight AS "Weight",
+    densitycode AS "DensityCode",
+    stockuom AS "StockUOM"
+FROM partmaster;

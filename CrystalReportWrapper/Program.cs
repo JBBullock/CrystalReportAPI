@@ -127,26 +127,83 @@ namespace CrystalReportWrapper
         public string? Error { get; set; }
     }
 
+    // ------------------------------------------------------------------
+    // --extract-sql mode result type. One JSON line per run, same
+    // contract as --inspect/export: Python reads the last stdout line.
+    // ------------------------------------------------------------------
+    internal class ExtractSqlResult
+    {
+        public bool Success { get; set; }
+        public string ReportPath { get; set; } = string.Empty;
+        public string? SqlPath { get; set; }
+        // Every table the report (and its subreports) expects, in order.
+        public System.Collections.Generic.List<string> Tables { get; set; } = new();
+        // Tables that had a TableQueryCatalog entry - real SQL was written.
+        public System.Collections.Generic.List<string> MatchedTables { get; set; } = new();
+        // Tables with NO catalog entry - a commented-out skeleton was
+        // written instead, listing the columns the report expects.
+        public System.Collections.Generic.List<string> MissingTables { get; set; } = new();
+        // True when the .sql file already existed with different content
+        // and was copied to <name>.sql.bak before being overwritten.
+        public bool BackedUp { get; set; }
+        public string? Error { get; set; }
+    }
+
     internal class Program
     {
         // ====================================================================
-        // >>> DATABASE CONFIGURATION - EDIT THESE VALUES FOR YOUR POSTGRES <<<
+        // >>> DATABASE CONFIGURATION - set via environment variables <<<
         // ====================================================================
-        // These are used to connect to Postgres directly from C# (via the
-        // Npgsql driver), fetch the report's data as a DataTable, and hand
-        // that table to Crystal Reports with SetDataSource(). Crystal never
-        // talks to the database itself this way - no ODBC driver required,
+        // These connect to Postgres directly from C# (via the Npgsql
+        // driver), fetch the report's data as a DataTable, and hand that
+        // table to Crystal Reports with SetDataSource() - Crystal never
+        // talks to the database itself this way, no ODBC driver required,
         // which sidesteps the 32-bit/64-bit ODBC registration problems.
         //
-        // Fill in your real values below:
-        private const string PgHost = "127.0.0.1";        // <-- Postgres server hostname or IP
-        private const string PgPort = "5430";              // <-- Postgres port (5432 is the default)
-        private const string PgDatabase = "postgres"; // <-- database name
-        private const string PgUser = "postgres";     // <-- database username
-        private const string PgPassword = "engineer123"; // <-- database password
+        // Previously five hardcoded `const string` literals here,
+        // including a plaintext password compiled straight into the
+        // .exe and committed to source control. Moved to environment
+        // variables for two reasons: (1) "127.0.0.1" only means
+        // anything on a bare-metal run - inside a container it's the
+        // container's OWN loopback, not the Docker host's, so a
+        // hardcoded value silently breaks the moment this runs
+        // containerized (see docker-compose.yml's PG_HOST, which points
+        // at host.docker.internal instead); (2) a password baked into a
+        // compiled binary can't be rotated without a rebuild and can't
+        // be kept out of git history. Host/Port/Database/User keep the
+        // SAME values as before as their fallback default, so a
+        // bare-metal run with no environment variables set behaves
+        // exactly like it did before this change. PgPassword has NO
+        // fallback - this fails fast at startup (same pattern as
+        // report_api_server.py's RPTCONVERT_API_KEY check) instead of
+        // silently connecting with an empty or wrong password.
+        private static readonly string PgHost = Environment.GetEnvironmentVariable("PG_HOST") ?? "127.0.0.1";
+        private static readonly string PgPort = Environment.GetEnvironmentVariable("PG_PORT") ?? "5430";
+        private static readonly string PgDatabase = Environment.GetEnvironmentVariable("PG_DATABASE") ?? "postgres";
+        private static readonly string PgUser = Environment.GetEnvironmentVariable("PG_USER") ?? "postgres";
+        // A property (evaluated on first USE in BuildReportDataSet), not a
+        // static readonly field: as a field initializer, the throw below
+        // ran in Program's type initializer, so merely touching ANY static
+        // (e.g. TableQueryCatalog from --extract-sql, which never connects
+        // to Postgres) failed with a TypeInitializationException when
+        // PG_PASSWORD was unset. Export still fails fast - just at the
+        // point a connection string is actually built.
+        private static string PgPassword => Environment.GetEnvironmentVariable("PG_PASSWORD")
+            ?? throw new InvalidOperationException(
+                "PG_PASSWORD environment variable is not set - CrystalReportWrapper.exe " +
+                "refuses to start without it, since a Postgres password used to be " +
+                "hardcoded directly in this file (and therefore in source control). Set " +
+                "PG_PASSWORD before running this - see docker-compose.yml for the " +
+                "containerized case, or set it as a user/system environment variable for " +
+                "a bare-metal run.");
 
-        // TABLE QUERY CATALOG
-        // -------------------
+        // TABLE QUERY CATALOG  (FALLBACK ONLY)
+        // ------------------------------------
+        // A report's queries now come from SQLqueries\<ReportName>.sql (see
+        // LoadReportSqlFile). This dictionary is used only for a table that
+        // file has no query for - new queries belong in the .sql file, and
+        // an entry here can be deleted once its reports have files.
+        //
         // This is NOT "the tables for the current report" - it's every
         // table this worker knows how to fetch, across ALL reports you'll
         // ever run through it. A given .rpt only pulls the subset it
@@ -184,13 +241,13 @@ namespace CrystalReportWrapper
             ["SOHeader"] = @"
                 SELECT
                     sonumber AS ""SONumber"",
-                    orderdate AS ""OrderDate"",
+                    orderdate::timestamp AS ""OrderDate"",
                     customerid AS ""CustomerID"",
                     salesperson AS ""SalesPerson"",
                     termscode AS ""TermsCode"",
                     shipviacode AS ""ShipViaCode"",
                     fobcode AS ""FOBCode"",
-                    requireddate AS ""RequiredDate"",
+                    requireddate::timestamp AS ""RequiredDate"",
                     enteredby AS ""EnteredBy"",
                     notes AS ""Notes"",
                     billtoaddress AS ""BillToAddress"",
@@ -223,10 +280,10 @@ namespace CrystalReportWrapper
                     partnumber AS ""PartNumber"",
                     partxreference AS ""PartXReference"",
                     quantityordered AS ""QuantityOrdered"",
-                    actualshipdate AS ""ActualShipDate"",
+                    actualshipdate::timestamp AS ""ActualShipDate"",
                     quantityshipped AS ""QuantityShipped"",
                     quantityreturned AS ""QuantityReturned"",
-                    scheduledshipdate AS ""ScheduledShipDate"",
+                    scheduledshipdate::timestamp AS ""ScheduledShipDate"",
                     customerprice AS ""CustomerPrice"",
                     salesuom AS ""SalesUOM"",
                     notes AS ""Notes"",
@@ -255,7 +312,7 @@ namespace CrystalReportWrapper
                     currencycode AS ""CurrencyCode"",
                     vatregnumber AS ""VATRegNumber"",
                     vatbranchid AS ""VATBranchID"",
-                    dateadded AS ""DateAdded"",
+                    dateadded::timestamp AS ""DateAdded"",
                     notes AS ""Notes"",
                     activeflag AS ""ActiveFlag"",
                     creditlimit AS ""CreditLimit"",
@@ -279,7 +336,7 @@ namespace CrystalReportWrapper
                     weight AS ""Weight"",
                     userdefined1 AS ""UserDefined1"",
                     enteredby AS ""EnteredBy"",
-                    dateadded AS ""DateAdded"",
+                    dateadded::timestamp AS ""DateAdded"",
                     engnotes AS ""EngNotes"",
                     isc AS ""ISC"",
                     omc AS ""OMC"",
@@ -307,20 +364,20 @@ namespace CrystalReportWrapper
                     taxableflag AS ""TaxableFlag"",
                     taxcode AS ""TaxCode"",
                     userdefined2 AS ""UserDefined2"",
-                    lastxactiondate AS ""LastXactionDate"",
+                    lastxactiondate::timestamp AS ""LastXactionDate"",
                     ytdusage AS ""YTDUsage"",
                     abccode AS ""ABCCode"",
                     abcdollarusage AS ""ABCDollarUsage"",
                     abcpartpercent AS ""ABCPartPercent"",
                     abcdollarpercent AS ""ABCDollarPercent"",
-                    lastcountdate AS ""LastCountDate"",
+                    lastcountdate::timestamp AS ""LastCountDate"",
                     generatetagflag AS ""GenerateTagFlag"",
                     stdmaterialcost AS ""STDMaterialCost"",
                     stdburdencost AS ""STDBurdenCost"",
                     stdlaborcost AS ""STDLaborCost"",
                     stdsetupcost AS ""STDSetUpCost"",
                     stdsubcontcost AS ""STDSubContCost"",
-                    costrevisiondate AS ""CostRevisionDate"",
+                    costrevisiondate::timestamp AS ""CostRevisionDate"",
                     materialcost AS ""MaterialCost"",
                     laborcost AS ""LaborCost"",
                     burdencost AS ""BurdenCost"",
@@ -340,8 +397,8 @@ namespace CrystalReportWrapper
             ["WOHeader"] = @"
                 SELECT
                     wonumber AS ""WONumber"",
-                    startdate AS ""StartDate"",
-                    requireddate AS ""RequiredDate"",
+                    startdate::timestamp AS ""StartDate"",
+                    requireddate::timestamp AS ""RequiredDate"",
                     wopriority AS ""WOPriority"",
                     quantitycompleted AS ""QuantityCompleted"",
                     quantityreleased AS ""QuantityReleased"",
@@ -351,44 +408,63 @@ namespace CrystalReportWrapper
                     workorderuom AS ""WorkOrderUOM"",
                     closedflag AS ""ClosedFlag"",
                     enteredby AS ""EnteredBy"",
-                    releaseddate AS ""ReleasedDate"",
+                    releaseddate::timestamp AS ""ReleasedDate"",
                     jobnumber AS ""JobNumber"",
                     notes AS ""Notes"",
                     userdefined AS ""UserDefined"",
                     woheader_pkey AS ""WOHeader_PKey""
                 FROM woheader;",
 
-            // ---- Legacy _TTX staging tables -----------------------------
-            // These table names (TermsCodes_TTX, CommodityCodes_TTX, etc.)
-            // come from report.Database.Tables on the real .rpt files, not
-            // from any Postgres naming choice - see tables_summary.json
-            // (generate_reports_manifest.py) for the full inventory and
-            // _is_legacy_staging_table's detection of the pattern. Each one
-            // below maps to a real, already-migrated Postgres table; the AS
-            // aliases are Crystal's own field names for that _TTX table,
-            // confirmed via --inspect against the actual .rpt - NOT derived
-            // from the live column names, which is why some don't match
-            // 1:1 (e.g. suocode's Crystal field is "SUOCode", not
-            // "SystemUsedOnCode"). Table names themselves came from
-            // menu_config.py's TABLE_MAP, columns from its COLUMN_MAP -
-            // both hand-confirmed against real ZMRP source, not guessed.
-            ["TermsCodes_TTX"] = @"
+            // Company - added 2026-08-27. salesorder.rpt's Database.Tables
+            // includes a table literally named 'company' (confirmed a real
+            // Postgres table via SQLFetches/schema_only.sql - NOT the same
+            // as `preferences`, ZMRP's own File > Company Preferences
+            // table, and NOT vestigial as first suspected before the user
+            // pointed at schema_only.sql). Column list/types below are
+            // confirmed against that schema dump. Aliases are NOT
+            // confirmed against a real --inspect of the live
+            // reports/SalesOrder.rpt (TemplateRPTs\SalesOrder.rpt, which
+            // WAS inspected on 2026-08-25 as jsonInspections/inspect-
+            // sales.json, has no 'company' table at all - that inspection
+            // is either stale or of a different copy of the file than the
+            // one actually deployed to reports/, so it can't be used as
+            // ground truth here) - six of these columns share their exact
+            // name with this report's own global parameters
+            // (CompanyName/CompanyPhone/CompanyFAX/CompanyEmail/
+            // VATRegNumber/VATBranchID, confirmed present in inspect-
+            // sales.json's parameter list), which is a strong but NOT
+            // certain signal for what the table-bound fields are named
+            // too - followed the same direct-PascalCase-of-the-column
+            // convention as every other single-table entry here
+            // (Customers/PartMaster/etc.) rather than renaming to match
+            // the parameters, since this file's own precedent (see
+            // Customers.vatregnumber -> ""VATRegNumber"") is bare
+            // PascalCasing, not prefixing/renaming. If Export() throws a
+            // field-not-found error naming a specific alias, adjust that
+            // one alias to match - a much narrower fix than today's total
+            // block. phone1fmt/phone2fmt/faxfmt are guessed to be a
+            // paired display-format mask for phone1/phone2/fax (common in
+            // legacy Access-style contact tables) - unconfirmed, included
+            // as-is either way since dropping a real field would just
+            // trade this error for the same kind of error on a different
+            // field name.
+            ["Company"] = @"
                 SELECT
-                    termscode AS ""TermsCode"",
-                    desctext AS ""DescText""
-                FROM termscodes;",
-
-            ["ShipViaCodes_TTX"] = @"
-                SELECT
-                    shipviacode AS ""ShipViaCode"",
-                    desctext AS ""DescText""
-                FROM shipviacodes;",
-
-            ["FOBCodes_TTX"] = @"
-                SELECT
-                    fobcode AS ""FOBCode"",
-                    desctext AS ""DescText""
-                FROM fobcodes;",
+                    company_pkey AS ""Company_PKey"",
+                    companyname AS ""CompanyName"",
+                    contact1 AS ""Contact1"",
+                    contact2 AS ""Contact2"",
+                    email AS ""Email"",
+                    regioncode AS ""RegionCode"",
+                    vatregnumber AS ""VATRegNumber"",
+                    vatbranchid AS ""VATBranchID"",
+                    phone1 AS ""Phone1"",
+                    phone1fmt AS ""Phone1Fmt"",
+                    phone2 AS ""Phone2"",
+                    phone2fmt AS ""Phone2Fmt"",
+                    fax AS ""Fax"",
+                    faxfmt AS ""FaxFmt""
+                FROM company;",
 
             // COLUMN_MAP has no "Customer Discount Levels" entry to confirm
             // this against - column names assumed from the same code/
@@ -399,158 +475,6 @@ namespace CrystalReportWrapper
                     customerdisclevel AS ""CustomerDiscLevel"",
                     desctext AS ""DescText""
                 FROM customerdisclevel;",
-
-            ["ECNClassCodes_TTX"] = @"
-                SELECT
-                    ecnclasscode AS ""ECNClassCode"",
-                    desctext AS ""DescText""
-                FROM ecnclasscodes;",
-
-            ["RegionCodes_TTX"] = @"
-                SELECT
-                    regioncode AS ""RegionCode"",
-                    desctext AS ""DescText""
-                FROM regioncodes;",
-
-            // TABLE_MAP: ("Codes", "System Used On Codes") -> "suocodes" -
-            // NOT "systemusedoncodes" despite the _TTX table's own name.
-            ["SystemUsedOnCodes_TTX"] = @"
-                SELECT
-                    suocode AS ""SUOCode"",
-                    desctext AS ""DescText""
-                FROM suocodes;",
-
-            // COLUMN_MAP only listed "operationcode" for this submenu
-            // (ZMRP's own grid apparently doesn't display a description
-            // column) - --inspect against OperationCodes.rpt confirmed 2
-            // fields, so desctext is assumed present following every
-            // sibling code table's shape. Confirm if this comes back empty.
-            ["OperationCodes_TTX"] = @"
-                SELECT
-                    operationcode AS ""OperationCode"",
-                    desctext AS ""DescText""
-                FROM operationcodes;",
-
-            ["PriceDiscountCodes_TTX"] = @"
-                SELECT
-                    pricecode AS ""PriceCode"",
-                    discountpercentage AS ""DiscountPercentage"",
-                    desctext AS ""DescText""
-                FROM pricediscountcodes;",
-
-            // TABLE_MAP: ("Codes", "Product Revenue Class") ->
-            // "productclasscodes" - NOT "productrevenuecodes" despite the
-            // _TTX table's own name.
-            ["ProductRevenueCodes_TTX"] = @"
-                SELECT
-                    productclass AS ""ProductClass"",
-                    revenueaccount AS ""RevenueAccount"",
-                    expenseaccount AS ""ExpenseAccount"",
-                    desctext AS ""DescText""
-                FROM productclasscodes;",
-
-            // TABLE_MAP: ("Codes", "Product Discount Codes") ->
-            // "productdisccodes" - NOT "productdiscountcodes" despite the
-            // _TTX table's own name.
-            ["ProductDiscountCodes_TTX"] = @"
-                SELECT
-                    productpricecode AS ""ProductPriceCode"",
-                    desctext AS ""DescText""
-                FROM productdisccodes;",
-
-            ["TaxCodes_TTX"] = @"
-                SELECT
-                    taxcode AS ""TaxCode"",
-                    taxrate AS ""TaxRate"",
-                    desctext AS ""DescText"",
-                    liabilityaccount AS ""LiabilityAccount""
-                FROM taxcodes;",
-
-            ["CurrencyCodes_TTX"] = @"
-                SELECT
-                    currencycode AS ""CurrencyCode"",
-                    exchangerate AS ""ExchangeRate"",
-                    desctext AS ""DescText"",
-                    eurorate AS ""EURORate"",
-                    emumember AS ""EMUMember"",
-                    currencysymbol AS ""CurrencySymbol""
-                FROM currencycodes;",
-
-            ["DensityCodes_TTX"] = @"
-                SELECT
-                    densitycode AS ""DensityCode"",
-                    lengthfactor AS ""LengthFactor"",
-                    weightfactor AS ""WeightFactor"",
-                    volumefactor AS ""VolumeFactor"",
-                    areafactor AS ""AreaFactor"",
-                    desctext AS ""DescText""
-                FROM densitycodes;",
-
-            ["DepartmentCodes_TTX"] = @"
-                SELECT
-                    departmentcode AS ""DepartmentCode"",
-                    desctext AS ""DescText"",
-                    accountnumber AS ""AccountNumber"",
-                    nettableflag AS ""NettableFlag"",
-                    inventoryflag AS ""InventoryFlag""
-                FROM departmentcodes;",
-
-            // CONFIRMED against the real pg_dumpall schema: uomcodes has
-            // exactly 4 columns (uomcode, desctext, uomtype,
-            // conversionfactor, plus its pkey) - no isbaseuom column
-            // exists anywhere. IsBaseUOM is a NULL placeholder, not a
-            // guess dressed up as one - if the report needs a real value
-            // here, it's most likely conversionfactor = 1 (base unit
-            // converts 1:1 to itself), but that's an inference about
-            // business meaning, not a schema fact, so it isn't applied
-            // silently. Confirm the intended rule before uncommenting.
-            ["UOMCodes_TTX"] = @"
-                SELECT
-                    uomcode AS ""UOMCode"",
-                    desctext AS ""DescText"",
-                    uomtype AS ""UOMType"",
-                    conversionfactor AS ""ConversionFactor"",
-                    NULL::smallint AS ""IsBaseUOM""
-                    -- conversionfactor = 1 AS ""IsBaseUOM"" -- candidate, unconfirmed.
-                    -- Typed ::smallint (not ::boolean) because UOMCodes.TTX
-                    -- (TemplateTTX/) declares this field type ""short"" -
-                    -- Crystal expects a numeric column here, not a boolean
-                    -- one, even though the field is used as a flag.
-                FROM uomcodes;",
-
-            // Joins departmentcodes (for the DepartmentCode display columns
-            // COLUMN_MAP shows on this submenu) and employees (LastName/
-            // FirstName/MiddleInitial - column names inferred from
-            // EmployeeInformationList_TTX/EmployeeListReport_TTX's own
-            // field lists, not independently confirmed against the real
-            // employees schema - check before relying on this join).
-            // BUG FIX: was `cc.departmentcode` - commoditycodes has no
-            // departmentcode column at all (its whole schema is
-            // commoditycode/desctext/employeeid/commoditycodes_pkey; caught
-            // by cross-checking every TableQueryCatalog column reference
-            // against the pg_dumpall schema). This report's own field list
-            // makes the intent obvious: EmployeeID/LastName/FirstName/
-            // MiddleInitial already come from the joined employees row, and
-            // employees DOES have departmentcode - the commodity code's
-            // assigned employee belongs to a department, that department's
-            // code/description is what DepartmentCode/
-            // DepartmentCodes_DescText are showing. Was always going to
-            // fail this query outright ("column cc.departmentcode does not
-            // exist") the first time anything used this table, not a
-            // wrong-data bug.
-            ["CommodityCodes_TTX"] = @"
-                SELECT
-                    cc.commoditycode AS ""CommodityCode"",
-                    cc.employeeid AS ""EmployeeID"",
-                    cc.desctext AS ""CommodityCodes_DescText"",
-                    e.departmentcode AS ""DepartmentCode"",
-                    e.lastname AS ""LastName"",
-                    e.firstname AS ""FirstName"",
-                    e.middleinitial AS ""MiddleInitial"",
-                    dc.desctext AS ""DepartmentCodes_DescText""
-                FROM commoditycodes cc
-                LEFT JOIN employees e ON e.employeeid = cc.employeeid
-                LEFT JOIN departmentcodes dc ON dc.departmentcode = e.departmentcode;",
 
             // stocklocations' own column names aren't independently
             // confirmed (no COLUMN_MAP entry maps to this table - TABLE_MAP's
@@ -606,11 +530,11 @@ namespace CrystalReportWrapper
                 SELECT
                     sd.sonumber AS ""SONumber"",
                     sd.soline AS ""SOLine"",
-                    sh.requireddate AS ""RequiredDate"",
+                    sh.requireddate::timestamp AS ""RequiredDate"",
                     sh.customerid AS ""CustomerID"",
                     sh.orderedby AS ""OrderedBy"",
                     emp.lastname AS ""LastName"",
-                    sh.orderdate AS ""OrderDate"",
+                    sh.orderdate::timestamp AS ""OrderDate"",
                     sh.currencycode AS ""CurrencyCode"",
                     sh.currencyrate AS ""CurrencyRate"",
                     sh.customerpo AS ""CustomerPO"",
@@ -621,7 +545,7 @@ namespace CrystalReportWrapper
                     sd.taxcode2 AS ""TaxCode2"",
                     sd.taxflag3 AS ""TaxFlag3"",
                     sd.taxcode3 AS ""TaxCode3"",
-                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.scheduledshipdate::timestamp AS ""ScheduledShipDate"",
                     sd.quantityordered AS ""QuantityOrdered"",
                     sd.salesuom AS ""SalesUOM"",
                     sd.customerprice AS ""CustomerPrice"",
@@ -729,11 +653,11 @@ namespace CrystalReportWrapper
                 SELECT
                     sd.sonumber AS ""SONumber"",
                     sd.soline AS ""SOLine"",
-                    sh.requireddate AS ""RequiredDate"",
+                    sh.requireddate::timestamp AS ""RequiredDate"",
                     sh.customerid AS ""CustomerID"",
                     sh.orderedby AS ""OrderedBy"",
                     emp.lastname AS ""LastName"",
-                    sh.orderdate AS ""OrderDate"",
+                    sh.orderdate::timestamp AS ""OrderDate"",
                     sh.currencycode AS ""CurrencyCode"",
                     sh.currencyrate AS ""CurrencyRate"",
                     sh.customerpo AS ""CustomerPO"",
@@ -744,7 +668,7 @@ namespace CrystalReportWrapper
                     sd.taxcode2 AS ""TaxCode2"",
                     sd.taxflag3 AS ""TaxFlag3"",
                     sd.taxcode3 AS ""TaxCode3"",
-                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.scheduledshipdate::timestamp AS ""ScheduledShipDate"",
                     sd.quantityordered AS ""QuantityOrdered"",
                     sd.salesuom AS ""SalesUOM"",
                     sd.customerprice AS ""CustomerPrice"",
@@ -824,11 +748,11 @@ namespace CrystalReportWrapper
                 SELECT
                     sd.sonumber AS ""SONumber"",
                     sd.soline AS ""SOLine"",
-                    sh.requireddate AS ""RequiredDate"",
+                    sh.requireddate::timestamp AS ""RequiredDate"",
                     sh.customerid AS ""CustomerID"",
                     sh.orderedby AS ""OrderedBy"",
                     emp.lastname AS ""LastName"",
-                    sh.orderdate AS ""OrderDate"",
+                    sh.orderdate::timestamp AS ""OrderDate"",
                     sh.currencycode AS ""CurrencyCode"",
                     sh.currencyrate AS ""CurrencyRate"",
                     sh.customerpo AS ""CustomerPO"",
@@ -839,7 +763,7 @@ namespace CrystalReportWrapper
                     sd.taxcode2 AS ""TaxCode2"",
                     sd.taxflag3 AS ""TaxFlag3"",
                     sd.taxcode3 AS ""TaxCode3"",
-                    sd.scheduledshipdate AS ""ScheduledShipDate"",
+                    sd.scheduledshipdate::timestamp AS ""ScheduledShipDate"",
                     sd.quantityordered AS ""QuantityOrdered"",
                     sd.salesuom AS ""SalesUOM"",
                     sd.customerprice AS ""CustomerPrice"",
@@ -928,19 +852,6 @@ namespace CrystalReportWrapper
                     stockuom AS ""StockUOM""
                 FROM partmaster;",
 
-            // IntrastatCodes_TTX - resolves the ambiguity flagged earlier
-            // this session (""is this the same table as ICN Codes?""):
-            // TABLE_MAP[(""Codes"",""ICN Codes"")] = ""icncodes"" in ZMRP's
-            // menu_config.py, and TemplateTTX/IntrastatCodes.TTX's 2 fields
-            // (ICNCode, DescText) match icncodes' real columns exactly
-            // (confirmed via pg_dumpall) - it IS the same table, just a
-            // differently-named legacy report over it. Not a guess.
-            ["IntrastatCodes_TTX"] = @"
-                SELECT
-                    icncode AS ""ICNCode"",
-                    desctext AS ""DescText""
-                FROM icncodes;",
-
             // IntrastatRates_TTX - confirmed against pg_dumpall's
             // intrastatrates table (PK icncode+regioncode, per PK_MAP).
             ["IntrastatRates_TTX"] = @"
@@ -950,49 +861,22 @@ namespace CrystalReportWrapper
                     taxcode AS ""TaxCode""
                 FROM intrastatrates;",
 
-            // HolidayList_TTX - TemplateTTX/HolidayList.TTX's 3 fields
-            // (DescText, StartDate, EndDate) match the real ""calendar""
-            // table's columns exactly (PK_MAP['calendar'] = 'desctext';
-            // pg_dumpall's column comments literally describe it as
-            // ""Description/start/end date of holiday or shutdown"") - not
-            // an obvious name match from the report name alone, confirmed
-            // via PK_MAP + pg_dumpall rather than guessed.
-            ["HolidayList_TTX"] = @"
-                SELECT
-                    desctext AS ""DescText"",
-                    startdate AS ""StartDate"",
-                    enddate AS ""EndDate""
-                FROM calendar;",
-
-            // EngineeringChangeNotice_TTX / ECNSummary_TTX - matched
-            // against TemplateTTX/EngineeringChangeNotice.TTX and
-            // ECNSummary.TTX: identical field sets (field order differs
-            // slightly between the two .TTX files, which doesn't matter -
-            // Crystal binds by column name, not position). ecnheader and
-            // ecnparts confirmed against the real pg_dumpall schema;
-            // ecnclasscodes is the same lookup table already cataloged
-            // above as ECNClassCodes_TTX.
+            // EngineeringChangeNotice_TTX - confirmed against ecnheader/
+            // ecnparts (real pg_dumpall schema). ecnclasscodes is joined
+            // inline below for its DescText only - it's not its own
+            // TableQueryCatalog entry (ECNClassCodes_TTX was removed
+            // 2026-08-27 along with the other *Codes_TTX report entries;
+            // this report doesn't need it as a standalone catalog key,
+            // only as a lookup within this query).
+            // NOTE: ECNSummary_TTX used to share this exact comment (near-
+            // identical field set to this report) but was removed
+            // 2026-08-27 at the user's request - if it's ever re-added,
+            // its query should still match this shape.
             ["EngineeringChangeNotice_TTX"] = @"
                 SELECT
                     eh.ecnnumber AS ""ECNNumber"",
                     eh.ecnclasscode AS ""ECNClassCode"",
-                    eh.ecndate AS ""ECNDate"",
-                    ep.partnumber AS ""PartNumber"",
-                    ep.desctext AS ""ECNParts_DescText"",
-                    pm.desctext AS ""PartMaster_DescText"",
-                    ecc.desctext AS ""ECNClassCodes_DescText"",
-                    eh.notes AS ""Notes"",
-                    (CASE WHEN eh.notes IS NULL THEN 1 ELSE 0 END) AS ""Isnull_Notes""
-                FROM ecnheader eh
-                JOIN ecnparts ep ON ep.ecnnumber = eh.ecnnumber
-                LEFT JOIN partmaster pm ON pm.partnumber = ep.partnumber
-                LEFT JOIN ecnclasscodes ecc ON ecc.ecnclasscode = eh.ecnclasscode;",
-
-            ["ECNSummary_TTX"] = @"
-                SELECT
-                    eh.ecnnumber AS ""ECNNumber"",
-                    eh.ecnclasscode AS ""ECNClassCode"",
-                    eh.ecndate AS ""ECNDate"",
+                    eh.ecndate::timestamp AS ""ECNDate"",
                     ep.partnumber AS ""PartNumber"",
                     ep.desctext AS ""ECNParts_DescText"",
                     pm.desctext AS ""PartMaster_DescText"",
@@ -1021,6 +905,17 @@ namespace CrystalReportWrapper
             // is where a single free-text Notes field would naturally
             // live) - verify against the actual printed report once real
             // data is flowing, and swap to r.notes if it looks wrong.
+            // StartDate/RequiredDate use safe_to_timestamp() (defined once via
+            // SQLFetches/setup_safe_to_timestamp.sql) instead of a bare
+            // ::timestamp cast - startdate/requireddate are varchar-backed
+            // like every other date column here, and a bare cast aborts
+            // the whole query on the first blank/malformed value instead
+            // of just nulling that field. Added 2026-08-28 as a hardening
+            // measure alongside investigating why this report renders
+            // empty - NOT confirmed as the root cause of the empty render
+            // (that could also be a zero-row filter match or a Crystal-
+            // side binding issue - see crystal_reports_pipeline project
+            // memory). Re-test after this change and re-open if still empty.
             ["WorkOrderTraveler_TTX"] = @"
                 SELECT
                     wo.wonumber AS ""WONumber"",
@@ -1028,8 +923,8 @@ namespace CrystalReportWrapper
                     r.operationcode AS ""OperationCode"",
                     r.sequenceid AS ""SequenceID"",
                     wo.jobnumber AS ""JobNumber"",
-                    wo.startdate AS ""StartDate"",
-                    wo.requireddate AS ""RequiredDate"",
+                    safe_to_timestamp(wo.startdate) AS ""StartDate"",
+                    safe_to_timestamp(wo.requireddate) AS ""RequiredDate"",
                     wo.quantitytostart AS ""QuantityToStart"",
                     wo.quantityrequired AS ""QuantityRequired"",
                     wo.quantityreleased AS ""QuantityReleased"",
@@ -1053,7 +948,7 @@ namespace CrystalReportWrapper
                 LEFT JOIN workcenters wc ON wc.workcenterid = r.workcenterid
                 LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode
                 ORDER BY r.sequenceid;",
-
+            
             // PurchaseOrder_TTX - poheader+podetail (one row per PO line),
             // joined out to partmaster, suppliers/supplieraddress (the
             // "SupplierAddress_*" fields), companyaddress (BillToAddress_*/
@@ -1076,10 +971,10 @@ namespace CrystalReportWrapper
                     svc.desctext AS ""ShipViaDescription"",
                     po.buyercode AS ""BuyerCode"",
                     po.departmentcode AS ""DepartmentCode"",
-                    po.orderdate AS ""OrderDate"",
+                    po.orderdate::timestamp AS ""OrderDate"",
                     po.currencycode AS ""CurrencyCode"",
                     po.exchangerate AS ""ExchangeRate"",
-                    po.requireddate AS ""POHeader_RequiredDate"",
+                    po.requireddate::timestamp AS ""POHeader_RequiredDate"",
                     fc.desctext AS ""FOBDescription"",
                     pd.poline AS ""POLine"",
                     pd.partnumber AS ""PartNumber"",
@@ -1095,7 +990,7 @@ namespace CrystalReportWrapper
                     pd.revision AS ""Revision"",
                     pd.kitpartflag AS ""KitPartFlag"",
                     pd.partxreference AS ""PartXReference"",
-                    pd.requireddate AS ""PODetail_RequiredDate"",
+                    pd.requireddate::timestamp AS ""PODetail_RequiredDate"",
                     pm.desctext AS ""PartMaster_DescText"",
                     pm.stockuom AS ""StockUOM"",
                     tx1.taxrate AS ""BaseTaxRate"",
@@ -1185,8 +1080,8 @@ namespace CrystalReportWrapper
                     b.itemsequence AS ""ItemSequence"",
                     b.quantityper AS ""QuantityPer"",
                     b.bomuomcode AS ""BOMUOMCode"",
-                    b.obsoletedate AS ""ObsoleteDate"",
-                    b.effectivedate AS ""EffectiveDate"",
+                    b.obsoletedate::timestamp AS ""ObsoleteDate"",
+                    b.effectivedate::timestamp AS ""EffectiveDate"",
                     am.desctext AS ""Assembly_DescText"",
                     am.revision AS ""Assembly_Revision"",
                     am.stockuom AS ""Assembly_StockUOM"",
@@ -1211,7 +1106,7 @@ namespace CrystalReportWrapper
                     am.cost AS ""Assembly_TotalCost"" -- INFERRED: assembly's own rolled-up cost, not a SUM of component rows
                 FROM bom b
                 LEFT JOIN partmaster am ON am.partnumber = b.assembly
-                LEFT JOIN partmaster cm ON cm.partnumber = b.component;",
+                LEFT JOIN partmaster cm ON cm.partnumber = b.component;"
         };
 
         // RELATION CATALOG
@@ -1253,10 +1148,18 @@ namespace CrystalReportWrapper
         ///                             --output "C:\out\sales.pdf"
         ///                             --format PDF
         ///                             [--params "C:\out\params.json"]
+        ///                             [--sql-dir "C:\RPTConvert\SQLqueries"]
+        ///     (queries come from <sql-dir>\sales.sql - see LoadReportSqlFile)
         ///
         ///   CrystalReportWrapper.exe --report "C:\reports\sales.rpt" --inspect
         ///     (dumps the report's expected tables/fields/formulas/parameters
         ///      as JSON instead of exporting - no --output/--format needed)
+        ///
+        ///   CrystalReportWrapper.exe --report "C:\reports\sales.rpt" --extract-sql
+        ///                             [--sql-out-dir "C:\RPTConvert\SQLqueries"]
+        ///     (writes/refreshes <sql-out-dir>\sales.sql with a query, or a
+        ///      column skeleton, for every table the report uses - see
+        ///      RunExtractSql)
         ///
         /// Exit code 0 = success, 1 = failure (mirrors the JSON "Success" flag
         /// so Python can also branch on subprocess return code alone).
@@ -1278,6 +1181,10 @@ namespace CrystalReportWrapper
                 return 1;
             }
 
+            if (options.ExtractSql)
+            {
+                return RunExtractSql(options);
+            }
             return options.Inspect ? RunInspect(options) : RunExportPipeline(options);
         }
 
@@ -1366,7 +1273,16 @@ namespace CrystalReportWrapper
                     recordFilters = LoadRecordFilters(options.RecordFilterJsonPath);
                 }
 
-                DataSet reportDataSet = BuildReportDataSet(requiredTables, recordFilters);
+                // Queries come from SQLqueries\<ReportName>.sql when that
+                // file exists; any table it doesn't cover falls back to the
+                // embedded TableQueryCatalog. See LoadReportSqlFile.
+                string sqlDir = ResolveSqlDir(options);
+                Dictionary<string, string> fileQueries = LoadReportSqlFile(
+                    options.ReportPath, sqlDir, requiredTables, out string sqlFilePath);
+                Console.WriteLine(
+                    $"SQL file: {sqlFilePath} ({(File.Exists(sqlFilePath) ? fileQueries.Count + " query/queries loaded" : "not found - using embedded catalog")})");
+
+                DataSet reportDataSet = BuildReportDataSet(requiredTables, recordFilters, fileQueries, sqlFilePath);
                 report.SetDataSource(reportDataSet);
 
                 // report.SetDataSource(reportDataSet) above only reliably
@@ -1638,6 +1554,455 @@ namespace CrystalReportWrapper
         }
 
         /// <summary>
+        /// --extract-sql mode: loads the report (never touches Postgres or
+        /// exports), collects every table it expects - main report first,
+        /// then subreports, de-duplicated - and writes the TableQueryCatalog
+        /// query for each one into ONE file named after the report:
+        /// reports\WorkOrderTraveler.rpt -> SQLqueries\WorkOrderTraveler.sql.
+        ///
+        /// Why the SQL comes from TableQueryCatalog and not the .rpt: these
+        /// legacy reports are "Field Definitions Only" (TTX) reports, so the
+        /// .rpt/.ttx only describe the columns the report expects - there is
+        /// no SQL stored in either file. The real query is the hand-written
+        /// catalog entry this worker already runs at export time, so that's
+        /// the one written out here (exactly what export executes - the C#
+        /// "" escaping is already resolved at runtime).
+        ///
+        /// A table with no catalog entry doesn't fail the run: it gets a
+        /// commented-out SELECT skeleton listing every column the report
+        /// expects (exact alias spelling + Crystal type), and is reported in
+        /// MissingTables so a batch run can list what still needs writing.
+        ///
+        /// If the target .sql already exists with DIFFERENT content, it is
+        /// copied to .sql.bak first, so a hand edit is never silently lost.
+        /// </summary>
+        private static int RunExtractSql(CliOptions options)
+        {
+            var result = new ExtractSqlResult { ReportPath = options.ReportPath };
+
+            try
+            {
+                if (!File.Exists(options.ReportPath))
+                {
+                    throw new FileNotFoundException($"Report file not found: {options.ReportPath}");
+                }
+
+                using var report = new ReportDocument();
+                report.Load(options.ReportPath);
+
+                // Collect tables (main report, then each subreport), keeping
+                // first-seen order and dropping repeats - one query per table
+                // is all the export path ever runs.
+                var tables = new List<CrystalDecisions.CrystalReports.Engine.Table>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (CrystalDecisions.CrystalReports.Engine.Table t in report.Database.Tables)
+                {
+                    if (seen.Add(t.Name)) tables.Add(t);
+                }
+                foreach (ReportDocument subreport in report.Subreports)
+                {
+                    foreach (CrystalDecisions.CrystalReports.Engine.Table t in subreport.Database.Tables)
+                    {
+                        if (seen.Add(t.Name)) tables.Add(t);
+                    }
+                }
+
+                // A report with no data tables (e.g. "template blank
+                // portrait.rpt") needs no query - succeed without writing a file.
+                if (tables.Count == 0)
+                {
+                    result.Success = true;
+                    WriteJsonLine(result);
+                    return 0;
+                }
+
+                string reportName = Path.GetFileNameWithoutExtension(options.ReportPath);
+                string nl = "\r\n";
+
+                // Queries already in this report's .sql file are kept as-is
+                // (the file is the source of truth); the embedded catalog
+                // only fills in tables the file has no query for.
+                string outDir = ResolveSqlOutDir(options);
+                Dictionary<string, string> fileQueries = LoadReportSqlFile(
+                    options.ReportPath, outDir, tables.ConvertAll(t => t.Name), out _);
+                var sb = new System.Text.StringBuilder();
+
+                // ---- File header --------------------------------------------
+                // No timestamp on purpose: re-running on an unchanged report
+                // must produce an identical file (so it isn't backed up and
+                // doesn't show as a git change every time).
+                sb.Append("-- ============================================================================").Append(nl);
+                sb.Append($"-- {reportName}.sql").Append(nl);
+                sb.Append($"-- Extracted from {Path.GetFileName(options.ReportPath)} by CrystalReportWrapper --extract-sql.").Append(nl);
+                sb.Append("-- CrystalReportWrapper runs the queries in this file at render time - edit").Append(nl);
+                sb.Append("-- them here. One query per '-- Table: <name>' line; aliases must match the").Append(nl);
+                sb.Append("-- report's field names exactly (case-sensitive).").Append(nl);
+                sb.Append($"-- Tables: {string.Join(", ", tables.ConvertAll(t => t.Name))}").Append(nl);
+
+                // Parameters + record selection formula: not part of the
+                // catalog SQL (export filters via --record-filter /
+                // parameters instead), but they're what a WHERE clause would
+                // be derived from, so surface them as comments.
+                var parameters = InspectParameters(EnumerateParameterFields(report.DataDefinition.ParameterFields));
+                if (parameters.Count > 0)
+                {
+                    sb.Append("-- Report parameters:").Append(nl);
+                    foreach (var p in parameters)
+                    {
+                        sb.Append($"--   {p.Name} ({p.ValueKind})").Append(nl);
+                    }
+                }
+
+                string selectionFormula = string.Empty;
+                try { selectionFormula = report.RecordSelectionFormula ?? string.Empty; }
+                catch { /* some legacy reports throw here - just omit it */ }
+                if (!string.IsNullOrWhiteSpace(selectionFormula))
+                {
+                    sb.Append("-- Crystal record selection formula (NOT applied by the SQL below):").Append(nl);
+                    foreach (string line in SplitLines(selectionFormula))
+                    {
+                        sb.Append($"--   {line}").Append(nl);
+                    }
+                }
+                sb.Append("-- ============================================================================").Append(nl);
+
+                // ---- One section per table -----------------------------------
+                foreach (var table in tables)
+                {
+                    result.Tables.Add(table.Name);
+                    sb.Append(nl);
+                    sb.Append("-- ----------------------------------------------------------------------------").Append(nl);
+                    sb.Append($"-- Table: {table.Name}").Append(nl);
+                    if (!string.IsNullOrEmpty(table.Location) &&
+                        !string.Equals(table.Location, table.Name, StringComparison.OrdinalIgnoreCase))
+                    {
+                        sb.Append($"-- Original data source: {table.Location}").Append(nl);
+                    }
+
+                    string? query;
+                    bool fromFile = fileQueries.TryGetValue(table.Name, out query);
+                    if (fromFile || (TableQueryCatalog.TryGetValue(table.Name, out query) && !string.IsNullOrWhiteSpace(query)))
+                    {
+                        result.MatchedTables.Add(table.Name);
+                        sb.Append("-- ----------------------------------------------------------------------------").Append(nl);
+                        string sql = StripTrailingSemicolon(fromFile ? query! : Dedent(query!)) + ";";
+                        sb.Append(sql.Replace("\r\n", "\n").Replace("\n", nl)).Append(nl);
+                    }
+                    else
+                    {
+                        result.MissingTables.Add(table.Name);
+                        sb.Append("-- NO QUERY YET - TODO: replace the commented-out skeleton below with the").Append(nl);
+                        sb.Append("-- real query (remove the /* and */ lines).").Append(nl);
+                        sb.Append("-- Skeleton below lists every column the report expects; aliases must").Append(nl);
+                        sb.Append("-- match exactly (case-sensitive) for Crystal to bind them.").Append(nl);
+                        sb.Append("-- ----------------------------------------------------------------------------").Append(nl);
+                        sb.Append("/*").Append(nl);
+                        sb.Append("SELECT").Append(nl);
+                        var fields = new List<CrystalDecisions.CrystalReports.Engine.FieldDefinition>();
+                        foreach (CrystalDecisions.CrystalReports.Engine.FieldDefinition field in table.Fields)
+                        {
+                            fields.Add(field);
+                        }
+                        for (int i = 0; i < fields.Count; i++)
+                        {
+                            string fieldType = fields[i].ValueType.ToString();
+                            string comma = i < fields.Count - 1 ? "," : "";
+                            sb.Append($"    NULL AS \"{fields[i].Name}\"{comma} -- {fieldType} -> {SuggestPgType(fieldType)}").Append(nl);
+                        }
+                        sb.Append("FROM ???;").Append(nl);
+                        sb.Append("*/").Append(nl);
+                    }
+                }
+
+                // ---- Write (backing up a differing existing file) ------------
+                Directory.CreateDirectory(outDir);
+                string sqlPath = Path.Combine(outDir, reportName + ".sql");
+                string content = sb.ToString();
+
+                if (File.Exists(sqlPath))
+                {
+                    string existing = File.ReadAllText(sqlPath);
+                    if (existing.Trim().Length > 0 && !string.Equals(existing, content, StringComparison.Ordinal))
+                    {
+                        File.Copy(sqlPath, sqlPath + ".bak", overwrite: true);
+                        result.BackedUp = true;
+                    }
+                }
+
+                File.WriteAllText(sqlPath, content, new System.Text.UTF8Encoding(false));
+                result.SqlPath = sqlPath;
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = FlattenExceptionChain(ex);
+            }
+
+            WriteJsonLine(result);
+            return result.Success ? 0 : 1;
+        }
+
+        // ====================================================================
+        // REPORT SQL FILES  (SQLqueries\<ReportName>.sql)
+        // ====================================================================
+        // Each report's queries live in a .sql file named after its .rpt:
+        // reports\Acknowledgement.rpt -> SQLqueries\Acknowledgement.sql.
+        // Adding or fixing a report's SQL is a file edit - no rebuild.
+        //
+        // File format:
+        //   * One-table report (nearly all the legacy _TTX reports): the
+        //     file can be just the query.
+        //   * Multi-table report: one query per table, each under a marker
+        //     line naming the Crystal table it fills:
+        //         -- Table: SOHeader
+        //         SELECT ... ;
+        //         -- Table: SODetail
+        //         SELECT ... ;
+        //     (--extract-sql writes this layout, markers included, for
+        //     every report - both layouts load the same way.)
+        //   * A section with no SQL in it (blank, or only comments, e.g. the
+        //     /* ... */ skeleton --extract-sql writes for a table that has
+        //     no query yet) counts as "no query" and falls back to the
+        //     embedded TableQueryCatalog.
+        //
+        // Column aliases must still match the report's field names exactly
+        // (AS "SONumber") - plain SQL quoting here, NOT the doubled ""
+        // quotes the C# verbatim strings in TableQueryCatalog need.
+        private static readonly Regex TableMarkerPattern =
+            new(@"^\s*--\s*Table:\s*(\S+)\s*$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex BlockCommentPattern =
+            new(@"/\*.*?\*/", RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly Regex LineCommentPattern =
+            new(@"--[^\n]*", RegexOptions.Compiled);
+        private static readonly Regex TrailingSemicolonPattern =
+            new(@";\s*(--[^\n]*)?\s*\z", RegexOptions.Compiled);
+
+        /// <summary>
+        /// Where report .sql files are read from: --sql-dir if given, else
+        /// the RPTCONVERT_SQL_DIR environment variable, else a SQLqueries
+        /// folder next to the report's own folder
+        /// (RPTConvert\reports\X.rpt -> RPTConvert\SQLqueries).
+        /// </summary>
+        private static string ResolveSqlDir(CliOptions options)
+        {
+            if (!string.IsNullOrWhiteSpace(options.SqlDir))
+            {
+                return Path.GetFullPath(options.SqlDir);
+            }
+            string? fromEnv = Environment.GetEnvironmentVariable("RPTCONVERT_SQL_DIR");
+            if (!string.IsNullOrWhiteSpace(fromEnv))
+            {
+                return Path.GetFullPath(fromEnv);
+            }
+            string reportDir = Path.GetDirectoryName(Path.GetFullPath(options.ReportPath)) ?? ".";
+            string parent = Path.GetDirectoryName(reportDir) ?? reportDir;
+            return Path.Combine(parent, "SQLqueries");
+        }
+
+        /// <summary>
+        /// --extract-sql's output folder: --sql-out-dir if given, otherwise
+        /// the same folder the export path reads from (ResolveSqlDir), so
+        /// an extracted file is picked up by the next render.
+        /// </summary>
+        private static string ResolveSqlOutDir(CliOptions options)
+        {
+            if (!string.IsNullOrWhiteSpace(options.SqlOutDir))
+            {
+                return Path.GetFullPath(options.SqlOutDir);
+            }
+            return ResolveSqlDir(options);
+        }
+
+        /// <summary>True if text has anything left once comments are removed.</summary>
+        private static bool ContainsSql(string text)
+        {
+            string stripped = BlockCommentPattern.Replace(text, " ");
+            stripped = LineCommentPattern.Replace(stripped, " ");
+            return stripped.Trim().Trim(';').Trim().Length > 0;
+        }
+
+        /// <summary>Drops blank and comment-only lines from both ends.</summary>
+        private static string TrimCommentLines(string text)
+        {
+            var lines = new List<string>(text.Replace("\r\n", "\n").Split('\n'));
+            bool Skippable(string line)
+            {
+                string t = line.Trim();
+                return t.Length == 0 || t.StartsWith("--");
+            }
+            while (lines.Count > 0 && Skippable(lines[0])) lines.RemoveAt(0);
+            while (lines.Count > 0 && Skippable(lines[lines.Count - 1])) lines.RemoveAt(lines.Count - 1);
+            return string.Join("\n", lines);
+        }
+
+        /// <summary>
+        /// Removes a final ';' (and a "-- comment" after it). Queries are
+        /// run one at a time and may be wrapped as a subquery
+        /// (BuildReportDataSet), where a trailing ';' is a syntax error.
+        /// </summary>
+        private static string StripTrailingSemicolon(string query)
+        {
+            return TrailingSemicolonPattern.Replace(query.TrimEnd(), string.Empty).TrimEnd();
+        }
+
+        /// <summary>
+        /// Loads SQLqueries\&lt;ReportName&gt;.sql for reportPath and returns
+        /// its queries keyed by Crystal table name (case-insensitive). A
+        /// missing file returns an empty dictionary - every table then
+        /// falls back to TableQueryCatalog. See the format notes above.
+        ///
+        /// reportTableNames is the report's own table list
+        /// (report.Database.Tables): it names the table for a marker-less
+        /// file, and flags markers that match no table in the report.
+        /// </summary>
+        private static Dictionary<string, string> LoadReportSqlFile(
+            string reportPath,
+            string sqlDir,
+            IEnumerable<string> reportTableNames,
+            out string sqlPath)
+        {
+            var queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            sqlPath = Path.Combine(sqlDir, Path.GetFileNameWithoutExtension(reportPath) + ".sql");
+            if (!File.Exists(sqlPath))
+            {
+                return queries;
+            }
+
+            var expected = new List<string>();
+            var expectedSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string name in reportTableNames)
+            {
+                if (expectedSet.Add(name)) expected.Add(name);
+            }
+
+            // Split into sections at each "-- Table: X" line. The first
+            // section (Key == null) is whatever precedes the first marker:
+            // the whole file when there are no markers, else just a header.
+            var sections = new List<KeyValuePair<string, string>>();
+            string currentTable = null;
+            var buffer = new System.Text.StringBuilder();
+            foreach (string line in File.ReadAllText(sqlPath).Replace("\r\n", "\n").Split('\n'))
+            {
+                Match marker = TableMarkerPattern.Match(line);
+                if (marker.Success)
+                {
+                    sections.Add(new KeyValuePair<string, string>(currentTable, buffer.ToString()));
+                    buffer.Clear();
+                    currentTable = marker.Groups[1].Value;
+                    continue;
+                }
+                buffer.Append(line).Append('\n');
+            }
+            sections.Add(new KeyValuePair<string, string>(currentTable, buffer.ToString()));
+            bool hasMarkers = sections.Count > 1;
+
+            foreach (KeyValuePair<string, string> section in sections)
+            {
+                if (!ContainsSql(section.Value))
+                {
+                    continue;
+                }
+
+                string table = section.Key;
+                if (table == null)
+                {
+                    if (hasMarkers)
+                    {
+                        throw new InvalidOperationException(
+                            $"{sqlPath}: SQL found before the first '-- Table: <name>' line. " +
+                            $"Put every query under a marker line.");
+                    }
+                    if (expected.Count != 1)
+                    {
+                        throw new InvalidOperationException(
+                            $"{sqlPath} has no '-- Table: <name>' lines, but the report uses " +
+                            $"{expected.Count} tables ({string.Join(", ", expected)}). Add a " +
+                            $"marker line before each table's query.");
+                    }
+                    table = expected[0];
+                }
+
+                if (queries.ContainsKey(table))
+                {
+                    throw new InvalidOperationException(
+                        $"{sqlPath}: more than one query for table '{table}'.");
+                }
+                if (!expectedSet.Contains(table))
+                {
+                    Console.WriteLine(
+                        $"Warning: {sqlPath} has a query for '{table}', which is not a table " +
+                        $"in this report ({string.Join(", ", expected)}) - check the marker's spelling.");
+                }
+
+                queries[table] = StripTrailingSemicolon(TrimCommentLines(section.Value));
+            }
+
+            return queries;
+        }
+
+        private static List<string> SplitLines(string text)
+        {
+            var lines = new List<string>();
+            foreach (string raw in text.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n'))
+            {
+                lines.Add(raw.TrimEnd());
+            }
+            return lines;
+        }
+
+        /// <summary>
+        /// Catalog entries are C# verbatim strings indented to match the
+        /// source file. Strip leading/trailing blank lines and the common
+        /// leading indentation so the .sql reads like normal SQL. Returns
+        /// LF-joined text.
+        /// </summary>
+        private static string Dedent(string text)
+        {
+            var lines = SplitLines(text);
+            while (lines.Count > 0 && lines[0].Trim().Length == 0) lines.RemoveAt(0);
+            while (lines.Count > 0 && lines[lines.Count - 1].Trim().Length == 0) lines.RemoveAt(lines.Count - 1);
+
+            int indent = int.MaxValue;
+            foreach (string line in lines)
+            {
+                if (line.Trim().Length == 0) continue;
+                int n = 0;
+                while (n < line.Length && (line[n] == ' ' || line[n] == '\t')) n++;
+                indent = Math.Min(indent, n);
+            }
+            if (indent == int.MaxValue) indent = 0;
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                lines[i] = lines[i].Length >= indent ? lines[i].Substring(indent) : lines[i].TrimStart();
+            }
+            return string.Join("\n", lines);
+        }
+
+        /// <summary>Rough Crystal FieldValueType -> Postgres type hint for skeletons.</summary>
+        private static string SuggestPgType(string crystalType)
+        {
+            switch (crystalType)
+            {
+                case "StringField": return "text";
+                case "BooleanField": return "boolean";
+                case "DateField": return "date";
+                case "DateTimeField": return "timestamp";
+                case "TimeField": return "time";
+                case "CurrencyField":
+                case "NumberField": return "numeric";
+                case "Int8sField":
+                case "Int8uField":
+                case "Int16sField":
+                case "Int16uField":
+                case "Int32sField": return "integer";
+                case "Int32uField": return "bigint";
+                default: return "?";
+            }
+        }
+
+        /// <summary>
         /// Walks ex.InnerException down to the root cause and joins every
         /// level into one readable string, since the top-level message
         /// alone is often too vague (e.g. TypeInitializationException).
@@ -1702,6 +2067,16 @@ namespace CrystalReportWrapper
                         // Flag, not a key/value pair - takes no argument.
                         options.Inspect = true;
                         break;
+                    case "--extract-sql":
+                        // Flag - see RunExtractSql.
+                        options.ExtractSql = true;
+                        break;
+                    case "--sql-out-dir":
+                        options.SqlOutDir = args[++i];
+                        break;
+                    case "--sql-dir":
+                        options.SqlDir = args[++i];
+                        break;
                 }
             }
 
@@ -1710,7 +2085,7 @@ namespace CrystalReportWrapper
                 throw new ArgumentException("--report is a required argument.");
             }
 
-            if (!options.Inspect && string.IsNullOrEmpty(options.OutputPath))
+            if (!options.Inspect && !options.ExtractSql && string.IsNullOrEmpty(options.OutputPath))
             {
                 throw new ArgumentException("--report and --output are required arguments.");
             }
@@ -1997,7 +2372,9 @@ namespace CrystalReportWrapper
 
         private static DataSet BuildReportDataSet(
             IEnumerable<string> requiredTableNames,
-            Dictionary<string, RecordFilter>? recordFilters = null)
+            Dictionary<string, RecordFilter>? recordFilters = null,
+            Dictionary<string, string>? fileQueries = null,
+            string? sqlFilePath = null)
         {
             // Builds a connection string from the constants above. Npgsql's
             // connection string keys are: Host, Port, Database, Username,
@@ -2015,18 +2392,34 @@ namespace CrystalReportWrapper
 
             foreach (string tableName in requiredTableNames)
             {
-                if (!TableQueryCatalog.TryGetValue(tableName, out string? query))
+                // The report's own SQL file (SQLqueries\<ReportName>.sql,
+                // see LoadReportSqlFile) wins. The embedded
+                // TableQueryCatalog is only a fallback for tables that
+                // file doesn't cover.
+                string? query = null;
+                string querySource;
+                if (fileQueries != null && fileQueries.TryGetValue(tableName, out query))
+                {
+                    querySource = "SQL file";
+                }
+                else if (TableQueryCatalog.TryGetValue(tableName, out query))
+                {
+                    querySource = "embedded TableQueryCatalog";
+                }
+                else
                 {
                     // Fail loudly and specifically instead of silently
                     // exporting a report with a missing table (which would
                     // otherwise surface later as a vague Crystal binding
-                    // error). This is the "you need one new catalog entry"
-                    // signal - not a "write a new Program.cs" signal.
+                    // error).
                     throw new InvalidOperationException(
-                        $"Report requires table '{tableName}', which has no entry in " +
-                        $"TableQueryCatalog. Add a query for it there (once) - every " +
-                        $"other report that also uses '{tableName}' will reuse the same entry.");
+                        $"Report requires table '{tableName}', which has no query. " +
+                        $"Add one to {sqlFilePath ?? "the report's .sql file in SQLqueries"}" +
+                        $" (under a '-- Table: {tableName}' line if the report uses more " +
+                        $"than one table) - run --extract-sql to get a column skeleton.");
                 }
+                query = StripTrailingSemicolon(query);
+                Console.WriteLine($"Query for '{tableName}' from {querySource}");
 
                 // If the caller asked to filter this specific table down to
                 // one record, wrap the catalog's base query as a subquery
@@ -2074,9 +2467,10 @@ namespace CrystalReportWrapper
                 string effectiveQuery = query;
                 if (isFiltered)
                 {
-                    string trimmedBaseQuery = query.TrimEnd().TrimEnd(';');
+                    // Base query on its own lines, so a trailing "-- comment"
+                    // in it can't swallow the closing parenthesis.
                     effectiveQuery =
-                        $"SELECT * FROM ({trimmedBaseQuery}) AS _rptconvert_filtered " +
+                        $"SELECT * FROM (\n{query}\n) AS _rptconvert_filtered " +
                         $"WHERE \"{resolvedAlias}\" = @filterValue";
                 }
 
@@ -2149,6 +2543,17 @@ namespace CrystalReportWrapper
             // record instead of fetched whole. See BuildReportDataSet.
             public string? RecordFilterJsonPath { get; set; }
             public bool Inspect { get; set; } = false;
+            // --extract-sql: write the report's TableQueryCatalog SQL to
+            // <SqlOutDir>\<report name>.sql instead of exporting.
+            public bool ExtractSql { get; set; } = false;
+            // Defaults (when null) to a SQLqueries folder that is a sibling
+            // of the report's own folder - i.e. RPTConvert\reports\X.rpt ->
+            // RPTConvert\SQLqueries\X.sql. See ResolveSqlOutDir.
+            public string? SqlOutDir { get; set; }
+            // Folder holding <ReportName>.sql files read at render time.
+            // Defaults (when null) to RPTCONVERT_SQL_DIR, then to that same
+            // sibling SQLqueries folder. See ResolveSqlDir.
+            public string? SqlDir { get; set; }
         }
     }
 }

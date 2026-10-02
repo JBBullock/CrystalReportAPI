@@ -1,0 +1,26 @@
+{
+  "_comment": [
+    "One entry per Postgres database ZMRP users can switch to. See db_profiles.py.",
+    "host/port are as seen FROM THE CONTAINER (localhost/127.0.0.1 there is the container itself).",
+    "match_hosts: other spellings of the same server that ZMRP clients might use",
+    "  (IP, FQDN, 'localhost' if ZMRP runs on the Postgres box). Matching is case-insensitive.",
+    "password_env: name of an environment variable (in .env) holding that DB's password.",
+    "Passwords never go in this file. Edits are picked up without a restart."
+  ],
+  "live": {
+    "host": "johnaton",
+    "port": 5430,
+    "database": "postgres",
+    "user": "postgres",
+    "password_env": "PG_PASSWORD",
+    "match_hosts": ["localhost", "127.0.0.1"]
+  },
+  "test": {
+    "host": "other-server",
+    "port": 5432,
+    "database": "zonu_test",
+    "user": "postgres",
+    "password_env": "PG_PASSWORD_TEST",
+    "match_hosts": ["192.168.1.60"]
+  }
+}

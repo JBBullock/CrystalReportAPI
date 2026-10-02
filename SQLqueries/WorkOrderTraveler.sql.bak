@@ -1,0 +1,31 @@
+SELECT
+    wo.wonumber AS "WONumber",
+    wo.partnumber AS "PartNumber",
+    r.operationcode AS "OperationCode",
+    r.sequenceid AS "SequenceID",
+    wo.jobnumber AS "JobNumber",
+    safe_to_timestamp(wo.startdate) AS "StartDate",
+    safe_to_timestamp(wo.requireddate) AS "RequiredDate",
+    wo.quantitytostart AS "QuantityToStart",
+    wo.quantityrequired AS "QuantityRequired",
+    wo.quantityreleased AS "QuantityReleased",
+    wo.workorderuom AS "WorkOrderUOM",
+    wo.quantitycompleted AS "QuantityCompleted",
+    r.workcenterid AS "WorkCenterID",
+    r.isalternate AS "IsAlternate",
+    r.queuetime AS "QueueTime",
+    r.setuptime AS "SetUpTime",
+    r.runtime AS "RunTime",
+    wo.notes AS "Notes",
+    (CASE WHEN wo.notes IS NULL THEN 1 ELSE 0 END) AS "Isnull_Notes",
+    pm.stockuom AS "StockUOM",
+    pm.densitycode AS "DensityCode",
+    pm.desctext AS "PartMaster_DescText",
+    wc.workcentername AS "WorkCenterName",
+    oc.desctext AS "OperationCodes_DescText"
+FROM woheader wo
+LEFT JOIN routers r ON r.partnumber = wo.partnumber
+LEFT JOIN partmaster pm ON pm.partnumber = wo.partnumber
+LEFT JOIN workcenters wc ON wc.workcenterid = r.workcenterid
+LEFT JOIN operationcodes oc ON oc.operationcode = r.operationcode
+ORDER BY r.sequenceid;

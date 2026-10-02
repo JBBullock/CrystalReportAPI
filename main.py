@@ -103,6 +103,7 @@ class CrystalReportsPipeline:
         export_format: str = "PDF",
         parameters: Optional[dict] = None,
         record_filters: Optional[dict] = None,
+        db_env: Optional[dict] = None,
     ) -> ReportResult:
         """
         Run a single Crystal Reports export end-to-end.
@@ -126,6 +127,12 @@ class CrystalReportsPipeline:
                 report_service.render_report_for_record() is what builds
                 this dict; most callers should go through that rather than
                 constructing it by hand.
+            db_env: Optional PG_HOST/PG_PORT/PG_DATABASE/PG_USER/PG_PASSWORD
+                overrides for THIS worker process only (see
+                db_profiles.DbProfile.worker_env). Merged over os.environ
+                for the subprocess - never written into os.environ itself,
+                since concurrent renders for different databases share this
+                process. None = inherit this process's environment as-is.
 
         Returns:
             ReportResult with success=True and output_path set on success.
@@ -154,6 +161,7 @@ class CrystalReportsPipeline:
                 capture_output=True,
                 text=True,
                 timeout=self.timeout_seconds,
+                env={**os.environ, **db_env} if db_env else None,
             )
 
             # Step 3: parse the single JSON line the worker printed.
@@ -185,6 +193,34 @@ class CrystalReportsPipeline:
                 --inspect never attempts data binding/export.
         """
         command = [self.worker_exe, "--report", str(report_path), "--inspect"]
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=self.timeout_seconds,
+        )
+        return self._parse_json_line(completed.stdout, completed.stderr)
+
+    def extract_sql(self, report_path: str, sql_out_dir: Optional[str] = None) -> dict:
+        """
+        Runs the worker in --extract-sql mode: loads report_path (no
+        Postgres, no export) and writes the TableQueryCatalog query for
+        every table the report uses to <sql_out_dir>/<report name>.sql.
+        sql_out_dir defaults (worker-side) to a SQLqueries folder next to
+        the report's own folder.
+
+        Returns the worker's JSON payload: success, reportPath, sqlPath
+        (None for a report with no tables), tables, matchedTables,
+        missingTables (no catalog entry yet - a commented skeleton was
+        written for those), and backedUp (an existing, different .sql was
+        copied to .sql.bak first).
+
+        Raises:
+            CrystalReportError: if the worker failed (bad path, corrupt .rpt).
+        """
+        command = [self.worker_exe, "--report", str(report_path), "--extract-sql"]
+        if sql_out_dir:
+            command += ["--sql-out-dir", str(sql_out_dir)]
         completed = subprocess.run(
             command,
             capture_output=True,
@@ -281,7 +317,6 @@ if __name__ == "__main__":
     parent_folder_path = Path(__file__).parents[0]
 
     worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Debug"/"net48" / "CrystalReportWrapper.exe"
-    # worker_path = Path("C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\bin\\Debug\\net48\\CrystalReportWrapper.exe").as_posix()
     report_path = parent_folder_path / "CrystalReportWrapper" / "2016-RegionCodes.rpt"
     out_path = parent_folder_path / "out" / "output.json"
     
@@ -299,9 +334,7 @@ if __name__ == "__main__":
         report_path,
         out_path,
         export_format="PDF",
-        # BUG FIX: was `params=` - generate_report's real keyword is
-        # `parameters`; running this block directly used to raise
-        # TypeError: generate_report() got an unexpected keyword argument 'params'.
+       
         parameters={"Month_req": "March", "Month_ordered": "August", "Year_ordered": 2026}
     )
 

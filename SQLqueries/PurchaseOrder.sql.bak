@@ -1,0 +1,91 @@
+SELECT
+    pd.ponumber AS "PONumber",
+    po.requisitionnumber AS "RequisitionNumber",
+    svc.desctext AS "ShipViaDescription",
+    po.buyercode AS "BuyerCode",
+    po.departmentcode AS "DepartmentCode",
+    po.orderdate::timestamp AS "OrderDate",
+    po.currencycode AS "CurrencyCode",
+    po.exchangerate AS "ExchangeRate",
+    po.requireddate::timestamp AS "POHeader_RequiredDate",
+    fc.desctext AS "FOBDescription",
+    pd.poline AS "POLine",
+    pd.partnumber AS "PartNumber",
+    pd.pounitprice AS "POUnitPrice",
+    pd.quantityordered AS "QuantityOrdered",
+    pd.purchaseuom AS "PurchaseUOM",
+    pd.taxableflag AS "TaxableFlag",
+    pd.basetaxcode AS "BaseTaxCode",
+    pd.taxflag2 AS "TaxFlag2",
+    pd.taxcode2 AS "TaxCode2",
+    pd.taxflag3 AS "TaxFlag3",
+    pd.taxcode3 AS "TaxCode3",
+    pd.revision AS "Revision",
+    pd.kitpartflag AS "KitPartFlag",
+    pd.partxreference AS "PartXReference",
+    pd.requireddate::timestamp AS "PODetail_RequiredDate",
+    pm.desctext AS "PartMaster_DescText",
+    pm.stockuom AS "StockUOM",
+    tx1.taxrate AS "BaseTaxRate",
+    tx2.taxrate AS "TaxRate2",
+    tx3.taxrate AS "TaxRate3",
+    s.suppliername AS "SupplierName",
+    s.companyaccount AS "CompanyAccount",
+    supaddr.addressline1 AS "SupplierAddress_AddressLine1",
+    supaddr.addressline2 AS "SupplierAddress_AddressLine2",
+    supaddr.addressline3 AS "SupplierAddress_AddressLine3",
+    supaddr.addressline4 AS "SupplierAddress_AddressLine4",
+    supaddr.city AS "SupplierAddress_City",
+    supaddr.state AS "SupplierAddress_State",
+    supaddr.zipcode AS "SupplierAddress_ZIPCode",
+    supaddr.country AS "SupplierAddress_Country",
+    supaddr.postal AS "SupplierAddress_Postal",
+    tc.desctext AS "TermsCodes_DescText",
+    cc.currencysymbol AS "CurrencySymbol",
+    po.notes AS "Notes",
+    pd.linenotes AS "LineNotes",
+    (CASE WHEN po.notes IS NULL THEN 1 ELSE 0 END) AS "POHeader_IsnullNotes",
+    (CASE WHEN pd.linenotes IS NULL THEN 1 ELSE 0 END) AS "PODetail_IsnullLineNotes",
+    billaddr.addressline1 AS "BillToAddress_AddressLine1",
+    billaddr.addressline2 AS "BillToAddress_AddressLine2",
+    billaddr.addressline3 AS "BillToAddress_AddressLine3",
+    billaddr.addressline4 AS "BillToAddress_AddressLine4",
+    billaddr.city AS "BillToAddress_City",
+    billaddr.state AS "BillToAddress_State",
+    billaddr.zipcode AS "BillToAddress_ZipCode",
+    billaddr.country AS "BillToAddress_Country",
+    billaddr.postal AS "BillToAddress_Postal",
+    shipaddr.addressline1 AS "ShipToAddress_AddressLine1",
+    shipaddr.addressline2 AS "ShipToAddress_AddressLine2",
+    shipaddr.addressline3 AS "ShipToAddress_AddressLine3",
+    shipaddr.addressline4 AS "ShipToAddress_AddressLine4",
+    shipaddr.city AS "ShipToAddress_City",
+    shipaddr.state AS "ShipToAddress_State",
+    shipaddr.zipcode AS "ShipToAddress_ZipCode",
+    shipaddr.country AS "ShipToAddress_Country",
+    shipaddr.postal AS "ShipToAddress_Postal",
+    (pd.quantityordered * pd.pounitprice) AS "ExtendedAmount", -- INFERRED
+    (CASE WHEN pd.taxableflag THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END) AS "BaseTaxAmount", -- INFERRED
+    (pd.quantityordered * pd.pounitprice) AS "LineSubtotal", -- INFERRED: assumed equal to ExtendedAmount
+    (CASE WHEN pd.taxflag2 THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END) AS "Tax2Amount", -- INFERRED
+    (CASE WHEN pd.taxflag3 THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END) AS "Tax3Amount", -- INFERRED
+    (
+        (pd.quantityordered * pd.pounitprice)
+        + (CASE WHEN pd.taxableflag THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx1.taxrate, 0) ELSE 0 END)
+        + (CASE WHEN pd.taxflag2 THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx2.taxrate, 0) ELSE 0 END)
+        + (CASE WHEN pd.taxflag3 THEN (pd.quantityordered * pd.pounitprice) * COALESCE(tx3.taxrate, 0) ELSE 0 END)
+    ) AS "LineTotal" -- INFERRED
+FROM podetail pd
+JOIN poheader po ON po.ponumber = pd.ponumber
+LEFT JOIN partmaster pm ON pm.partnumber = pd.partnumber
+LEFT JOIN suppliers s ON s.supplierid = po.supplierid
+LEFT JOIN supplieraddress supaddr ON supaddr.supplierid = po.supplierid AND supaddr.addressid = po.supplieraddress::text
+LEFT JOIN companyaddress billaddr ON billaddr.addressid = po.billtoaddress::text
+LEFT JOIN companyaddress shipaddr ON shipaddr.addressid = po.shiptoaddress::text
+LEFT JOIN termscodes tc ON tc.termscode = po.termscode
+LEFT JOIN shipviacodes svc ON svc.shipviacode = po.shipviacode
+LEFT JOIN fobcodes fc ON fc.fobcode = po.fobcode
+LEFT JOIN currencycodes cc ON cc.currencycode = po.currencycode
+LEFT JOIN taxcodes tx1 ON tx1.taxcode = pd.basetaxcode
+LEFT JOIN taxcodes tx2 ON tx2.taxcode = pd.taxcode2
+LEFT JOIN taxcodes tx3 ON tx3.taxcode = pd.taxcode3;

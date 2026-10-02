@@ -1,0 +1,96 @@
+# docker-compose.yml
+#
+# Windows containers only - Docker Desktop must be switched to "Windows
+# containers" mode before `docker compose up` (see Dockerfile's header).
+#
+# Required secrets: copy .env.example to .env, fill in the real values,
+# and make sure .env is listed in .gitignore (it already is) so they
+# never get committed. RPTCONVERT_API_KEY and PG_PASSWORD used to be
+# hardcoded in report_client_config.py's default and
+# CrystalReportWrapper/Program.cs respectively - both now read from here
+# instead.
+
+services:
+  report-api:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    image: rptconvert-report-api:latest
+    ports:
+      - "8443:8443"
+    # Passes EVERY variable in .env into the container - needed for the
+    # per-database PG_PASSWORD_<NAME> variables config/db_profiles.json
+    # points at (password_env), so adding a database never means editing
+    # this file. The explicit `environment:` entries below still win for
+    # the variables they name.
+    env_file:
+      - ..\.env
+    environment:
+      # Must match SecureZMRP's report_client_config.py API_KEY (or its
+      # RPTCONVERT_API_KEY environment variable) - report_api_server.py
+      # refuses to start without this set to something.
+      RPTCONVERT_API_KEY: "${RPTCONVERT_API_KEY:?set RPTCONVERT_API_KEY in .env first}"
+
+      # Postgres - previously hardcoded in Program.cs as
+      # 127.0.0.1:5430/postgres/postgres/<plaintext password>. 127.0.0.1
+      # inside this container is the CONTAINER's own loopback, not the
+      # Docker host's, so that value can't just carry over as-is.
+      #
+      # PG_HOST defaults to "johnaton" - the same hostname
+      # report_client_config.py already uses to reach this machine
+      # (API_BASE_URL = https://JOHNATON:8443) - rather than assuming
+      # host.docker.internal resolves, since that isn't reliably
+      # supported for Windows containers across every Docker Desktop
+      # version. VERIFY this actually resolves from inside the container
+      # before trusting it:
+      #     docker compose exec report-api ping johnaton
+      # If it doesn't, try host.docker.internal, or this machine's real
+      # LAN IP, via PG_HOST in your .env.
+      PG_HOST: "${PG_HOST:-johnaton}"
+      PG_PORT: "${PG_PORT:-5430}"
+      PG_DATABASE: "${PG_DATABASE:-postgres}"
+      PG_USER: "${PG_USER:-postgres}"
+      PG_PASSWORD: "${PG_PASSWORD:?set PG_PASSWORD in .env first}"
+
+      # Which database each render uses is chosen PER REQUEST from the
+      # profiles in config/db_profiles.json (see db_profiles.py) - the PG_*
+      # values above are only the "default" profile, used when a client
+      # doesn't say. Set RPTCONVERT_REQUIRE_DB=1 in .env once every ZMRP
+      # client sends its database, so nothing can fall back to default.
+      RPTCONVERT_DB_PROFILES: "C:/app/config/db_profiles.json"
+      RPTCONVERT_REQUIRE_DB: "${RPTCONVERT_REQUIRE_DB:-0}"
+    volumes:
+      # TLS cert/key - generate these on the host first with
+      # generate_cert.py (see that script's docstring), then mount
+      # read-only rather than baking them into an image layer. Keeps the
+      # private key out of anything that might get pushed to a registry,
+      # and lets you rotate the cert without a rebuild.
+      - ../report_api_certs:C:/app/report_api_certs:ro
+      # Rendered PDFs - kept outside the container so they survive
+      # `docker compose down` / an image rebuild.
+      - ../out/rendered:C:/app/out/rendered
+      # Database profiles - a FOLDER mount, not a single-file mount:
+      # Windows containers can't bind-mount individual files. Read-only;
+      # edit config/db_profiles.json on the host and the server picks the
+      # change up on the next request, no restart.
+      - ../config:C:/app/config:ro
+      # Report SQL - CrystalReportWrapper reads SQLqueries/<ReportName>.sql
+      # at render time (see LoadReportSqlFile in Program.cs). Mounted so a
+      # query edit on the host applies to the next render, no rebuild.
+      - ../SQLqueries:C:/app/SQLqueries:ro
+    # Runs as a service: Docker restarts the container if it crashes, and
+    # brings it back whenever the Docker engine starts (e.g. after a
+    # reboot, once Docker Desktop is set to start on sign-in) - unless you
+    # explicitly `docker compose stop`/`down` it.
+    restart: unless-stopped
+    # Liveness probe against the unauthenticated /health endpoint, so
+    # `docker compose ps` shows healthy/unhealthy instead of just "running".
+    # Uses the image's own Python (curl isn't guaranteed in Server Core);
+    # unverified TLS context because the cert is self-signed and its SAN
+    # list may not include "localhost".
+    healthcheck:
+      test: ["CMD", "python", "-c", "import ssl,urllib.request; urllib.request.urlopen('https://localhost:8443/health', context=ssl._create_unverified_context(), timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s

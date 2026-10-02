@@ -1,0 +1,38 @@
+# Dev/tooling cruft that shouldn't (and for CrystalReportWrapper's
+# Debug build, largely can't - see Dockerfile) end up in the image.
+.git/
+.venv/
+__pycache__/
+*.pyc
+Scratch/
+SQLFetches/
+
+bin64/
+jsonInspections/inspect-sales.json
+
+# TLS private key - mounted as a volume by docker-compose.yml instead of
+# baked into an image layer (see that file's comment). Never want this
+# accidentally COPYed in even if the volume mount is removed later.
+report_api_certs/
+
+# Rendered output - also volume-mounted, not part of the image.
+out/
+
+# CrystalReportWrapper build cruft: intermediate obj/ files, the Debug
+# build (the image uses the Release publish/ output instead - see
+# report_service.py's RPTCONVERT_WORKER_EXE), old .bak snapshots, and the
+# scratch folder someone was part-way through cleaning up.
+CrystalReportWrapper/obj/
+CrystalReportWrapper/bin/Debug/
+CrystalReportWrapper/_scratch_to_delete/
+CrystalReportWrapper/*.bak_*
+CrystalReportWrapper/Program.cs.bak_*
+
+# Compose/env files themselves don't need to be inside the image.
+docker-compose.yml
+.env
+.env.example
+
+# Database profiles - volume-mounted by docker-compose.yml (./config) so
+# edits apply without a rebuild; keep a stale copy out of the image.
+config/

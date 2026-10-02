@@ -1,10 +1,10 @@
 {
-  "CompanyName": "",
-  "CompanyPhone": "",
-  "CompanyFAX": "",
-  "CompanyEmail": "",
-  "VATRegNumber": "",
-  "VATBranchID": "",
+  "CompanyName": "Optical Zonu",
+  "CompanyPhone": "8182560331",
+  "CompanyFAX": "2558",
+  "CompanyEmail": "ozc@woohoo",
+  "VATRegNumber": "5",
+  "VATBranchID": "8989",
   "QuantityDecimals": 2,
   "CostDecimals": 2,
   "CurrencySymbol": "$"
