@@ -77,29 +77,7 @@ class ReportEntry:
     menu: Optional[str]
     parameters: list[ReportParameter]
     error: Optional[str] = None
-    # TableQueryCatalog table names this report's data is pulled from - the
-    # subset that a single-record filter should apply to, not necessarily
-    # every table --inspect found. Matched case-insensitively against
-    # Crystal's own table names (see Program.cs's TableQueryCatalog /
-    # RecordFilter dictionaries), so the lowercase style already in use
-    # here (matching PK_MAP's own keys, e.g. "soheader") is fine as-is.
-    #
-    # Each entry is normally a bare table-name string, meaning "filter this
-    # table on the same PK column name as the report's header table" (true
-    # for every header/detail pair in this schema - e.g. SOHeader and
-    # SODetail both have a "sonumber" column). For a table whose linking
-    # column is named differently from the header PK - e.g. billofmaterials
-    # lists ["partmaster", "bom"], but BOM's linking column is "Assembly",
-    # not PartMaster's PK name "PartNumber" - use a dict instead:
-    # {"table": "bom", "column": "Assembly"}. See filter_targets().
-    #
-    # Empty by default: report_registry.json entries don't have this
-    # populated for every report yet (2026-08-25) - it's a manual fill-in
-    # pass the user is doing by hand, same as "menu" was, cross-referencing
-    # each report's tables (--inspect / CRYSTAL_REPORTS_PIPELINE_REVIEW.md /
-    # TableQueryCatalog in Program.cs) against SecureZMRP's PK_MAP. See
-    # report_service.render_report_for_record(), which refuses to run for
-    # a report with no db_tables rather than silently fetching everything.
+    
     db_tables: list[Any] = field(default_factory=list)
 
     @property
@@ -184,6 +162,27 @@ class ReportsCatalog:
         except KeyError:
             raise KeyError(f"No report registered with id '{report_id}'") from None
 
+    def entry_for_file(self, rpt_file: str) -> ReportEntry:
+        """The registry entry for one .rpt file name (case-insensitive) -
+        how reports_map.REPORTS reaches a report's parameters and db_tables.
+        A .rpt the registry has never seen gets a bare entry with no
+        parameters and no db_tables, so a report added to reports_map.py
+        can be tried straight away; if it does need parameters, the worker's
+        own error names them.
+        """
+        wanted = rpt_file.lower()
+        for entry in self._entries.values():
+            if entry.file.lower() == wanted:
+                return entry
+        stem = Path(rpt_file).stem
+        return ReportEntry(
+            id=stem.lower().replace(" ", "_"),
+            file=rpt_file,
+            display_name=stem,
+            menu=None,
+            parameters=[],
+        )
+
     def for_menu(self, menu_name: str) -> list[ReportEntry]:
         """Reports belonging to one ZMRP menu, renderable ones only - this
         is what ReportsDialog(menu_name=...) should list. Reports whose
@@ -214,11 +213,21 @@ class ReportsCatalog:
         params file and surfacing whatever ApplyParameters' own error
         looks like for that case.
         """
+        return self.resolve_entry_parameters(self.get(report_id), context=context, prompted=prompted)
+
+    def resolve_entry_parameters(
+        self,
+        entry: ReportEntry,
+        context: Optional[dict[str, Any]] = None,
+        prompted: Optional[dict[str, Any]] = None,
+    ) -> dict[str, Any]:
+        """resolve_parameters for an entry already in hand (see
+        entry_for_file) instead of a registry id."""
         context = context or {}
         prompted = prompted or {}
         resolved: dict[str, Any] = {}
 
-        for param in self.get(report_id).parameters:
+        for param in entry.parameters:
             if param.source == "global":
                 if param.crystal_name not in self._globals:
                     raise MissingParameterError(

@@ -1149,6 +1149,7 @@ namespace CrystalReportWrapper
         ///                             --format PDF
         ///                             [--params "C:\out\params.json"]
         ///                             [--sql-dir "C:\RPTConvert\SQLqueries"]
+        ///                             [--sql-file "C:\RPTConvert\SQLqueries\sales.sql"]
         ///     (queries come from <sql-dir>\sales.sql - see LoadReportSqlFile)
         ///
         ///   CrystalReportWrapper.exe --report "C:\reports\sales.rpt" --inspect
@@ -1278,7 +1279,7 @@ namespace CrystalReportWrapper
                 // embedded TableQueryCatalog. See LoadReportSqlFile.
                 string sqlDir = ResolveSqlDir(options);
                 Dictionary<string, string> fileQueries = LoadReportSqlFile(
-                    options.ReportPath, sqlDir, requiredTables, out string sqlFilePath);
+                    options.ReportPath, sqlDir, requiredTables, out string sqlFilePath, options.SqlFile);
                 Console.WriteLine(
                     $"SQL file: {sqlFilePath} ({(File.Exists(sqlFilePath) ? fileQueries.Count + " query/queries loaded" : "not found - using embedded catalog")})");
 
@@ -1860,13 +1861,30 @@ namespace CrystalReportWrapper
             string reportPath,
             string sqlDir,
             IEnumerable<string> reportTableNames,
-            out string sqlPath)
+            out string sqlPath,
+            string explicitSqlFile = null)
         {
             var queries = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            sqlPath = Path.Combine(sqlDir, Path.GetFileNameWithoutExtension(reportPath) + ".sql");
-            if (!File.Exists(sqlPath))
+            if (!string.IsNullOrWhiteSpace(explicitSqlFile))
             {
-                return queries;
+                // --sql-file: the caller named this report's file (Python's
+                // reports_map.REPORT_SQL), so a missing file is an error
+                // rather than a quiet fall back to the embedded catalog.
+                sqlPath = Path.GetFullPath(explicitSqlFile);
+                if (!File.Exists(sqlPath))
+                {
+                    throw new FileNotFoundException(
+                        $"SQL file not found: {sqlPath} (named by --sql-file - check " +
+                        $"REPORT_SQL in reports_map.py).");
+                }
+            }
+            else
+            {
+                sqlPath = Path.Combine(sqlDir, Path.GetFileNameWithoutExtension(reportPath) + ".sql");
+                if (!File.Exists(sqlPath))
+                {
+                    return queries;
+                }
             }
 
             var expected = new List<string>();
@@ -2076,6 +2094,9 @@ namespace CrystalReportWrapper
                         break;
                     case "--sql-dir":
                         options.SqlDir = args[++i];
+                        break;
+                    case "--sql-file":
+                        options.SqlFile = args[++i];
                         break;
                 }
             }
@@ -2554,6 +2575,10 @@ namespace CrystalReportWrapper
             // Defaults (when null) to RPTCONVERT_SQL_DIR, then to that same
             // sibling SQLqueries folder. See ResolveSqlDir.
             public string? SqlDir { get; set; }
+            // Exact .sql file for this report, from Python's
+            // reports_map.REPORT_SQL. When set it replaces the
+            // <SqlDir>\<ReportName>.sql lookup. See LoadReportSqlFile.
+            public string? SqlFile { get; set; }
         }
     }
 }

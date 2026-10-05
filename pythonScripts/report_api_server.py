@@ -56,13 +56,13 @@ except ImportError as exc:
         "run: pip install -r requirements_report_api.txt"
     ) from exc
 
-HERE = Path(__file__).parent
+PROJECT_ROOT = Path(__file__).parent
 
 API_KEY = os.environ.get("RPTCONVERT_API_KEY")
 HOST = os.environ.get("RPTCONVERT_API_HOST", "0.0.0.0")
 PORT = int(os.environ.get("RPTCONVERT_API_PORT", "8443"))
-CERT_FILE = os.environ.get("RPTCONVERT_API_CERT", str(HERE / "report_api_certs" / "cert.pem"))
-KEY_FILE = os.environ.get("RPTCONVERT_API_KEY_FILE", str(HERE / "report_api_certs" / "key.pem"))
+CERT_FILE = os.environ.get("RPTCONVERT_API_CERT", str(PROJECT_ROOT / "report_api_certs" / "cert.pem"))
+KEY_FILE = os.environ.get("RPTCONVERT_API_KEY_FILE", str(PROJECT_ROOT / "report_api_certs" / "key.pem"))
 
 if not API_KEY:
     raise RuntimeError(
@@ -224,6 +224,71 @@ def render_for_record(report_id: str, body: RenderForRecordBody) -> Response:
     result = _run_catching(
         report_service.render_report_for_record,
         report_id,
+        body.pk_column,
+        body.pk_value,
+        context=body.context,
+        prompted=body.prompted,
+        export_format=body.export_format,
+        output_name=body.output_name,
+        db_profile=body.db_profile,
+        db_target=body.db_target,
+    )
+    return _pdf_response(result, db)
+
+
+# ----------------------------------------------------------------------------
+# /v2 - reports addressed by (menu, report name), per reports_map.py
+# ----------------------------------------------------------------------------
+# The /reports/{report_id}/... routes above are the older id-based contract,
+# kept only until ZMRP calls these instead.
+
+class NamedRenderBody(RenderBody):
+    menu: str
+    report: str
+
+
+class NamedRenderForRecordBody(RenderForRecordBody):
+    menu: str
+    report: str
+
+
+@app.get("/v2/menus", dependencies=_AUTH)
+def v2_menus() -> dict:
+    """{menu: [report names]} for every menu."""
+    return _run_catching(report_service.menu_reports)
+
+
+@app.get("/v2/report", dependencies=_AUTH)
+def v2_report(menu: str, report: str) -> dict:
+    """?menu=...&report=... -> rpt, sql, db_tables and prompt_params."""
+    return _run_catching(report_service.named_report_info, menu, report)
+
+
+@app.post("/v2/render", dependencies=_AUTH)
+def v2_render(body: NamedRenderBody) -> Response:
+    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
+    result = _run_catching(
+        report_service.render_named_report,
+        body.menu,
+        body.report,
+        context=body.context,
+        prompted=body.prompted,
+        export_format=body.export_format,
+        record_filters=body.record_filters,
+        output_name=body.output_name,
+        db_profile=body.db_profile,
+        db_target=body.db_target,
+    )
+    return _pdf_response(result, db)
+
+
+@app.post("/v2/render_for_record", dependencies=_AUTH)
+def v2_render_for_record(body: NamedRenderForRecordBody) -> Response:
+    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
+    result = _run_catching(
+        report_service.render_named_report_for_record,
+        body.menu,
+        body.report,
         body.pk_column,
         body.pk_value,
         context=body.context,

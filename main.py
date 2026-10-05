@@ -104,6 +104,7 @@ class CrystalReportsPipeline:
         parameters: Optional[dict] = None,
         record_filters: Optional[dict] = None,
         db_env: Optional[dict] = None,
+        sql_file: Optional[str] = None,
     ) -> ReportResult:
         """
         Run a single Crystal Reports export end-to-end.
@@ -133,6 +134,9 @@ class CrystalReportsPipeline:
                 for the subprocess - never written into os.environ itself,
                 since concurrent renders for different databases share this
                 process. None = inherit this process's environment as-is.
+            sql_file: Optional path of the .sql file holding this report's
+                queries (reports_map.REPORT_SQL), passed as --sql-file. None =
+                the worker looks for SQLqueries/<report name>.sql itself.
 
         Returns:
             ReportResult with success=True and output_path set on success.
@@ -154,7 +158,8 @@ class CrystalReportsPipeline:
 
             # Step 2: build and run the subprocess command.
             command = self._build_command(
-                report_path, output_path, export_format, params_file, record_filter_file
+                report_path, output_path, export_format, params_file, record_filter_file,
+                sql_file,
             )
             completed = subprocess.run(
                 command,
@@ -275,6 +280,7 @@ class CrystalReportsPipeline:
         export_format: str,
         params_file: Optional[str],
         record_filter_file: Optional[str] = None,
+        sql_file: Optional[str] = None,
     ) -> list[str]:
         """Assembles the argv list passed to subprocess.run for the worker exe."""
         command = [
@@ -287,6 +293,8 @@ class CrystalReportsPipeline:
             command += ["--params", params_file]
         if record_filter_file:
             command += ["--record-filter", record_filter_file]
+        if sql_file:
+            command += ["--sql-file", str(sql_file)]
         return command
 
     def _parse_worker_output(self, stdout: str, stderr: str) -> ReportResult:
@@ -316,7 +324,7 @@ class CrystalReportsPipeline:
 if __name__ == "__main__":
     parent_folder_path = Path(__file__).parents[0]
 
-    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Debug"/"net48" / "CrystalReportWrapper.exe"
+    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Release"/"net48" / "CrystalReportWrapper.exe"
     report_path = parent_folder_path / "CrystalReportWrapper" / "2016-RegionCodes.rpt"
     out_path = parent_folder_path / "out" / "output.json"
     

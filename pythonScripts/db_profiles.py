@@ -75,11 +75,25 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Mapping, Optional
 
-HERE = Path(__file__).parent
+def get_user_roaming_dir(app_name: str = "ManufacturingDatabase") -> Path:
+    """Returns the per-user AppData/Roaming path for connection JSON storage."""
+    appdata = os.getenv("APPDATA")
+    if appdata:
+        base_dir = Path(appdata) / app_name
+    else:
+        # Fallback for non-Windows environments
+        base_dir = Path.home() / ".config" / app_name
+
+    base_dir.mkdir(parents=True, exist_ok=True)
+    return base_dir
+
+ROAMING_DIR = get_user_roaming_dir()
+PROJECT_ROOT = Path(__file__).parent
 PROFILES_PATH = Path(os.environ.get(
     "RPTCONVERT_DB_PROFILES",
-    str(HERE / "config" / "db_profiles.json"),
+    str(ROAMING_DIR / "config" / "pg_config.json"),
 ))
+
 DEFAULT_PROFILE_NAME = "default"
 
 
@@ -101,6 +115,8 @@ class DbProfile:
 
     @property
     def password(self) -> str:
+        """Read the password from the env variable named in the profile. Raises UnknownDatabaseError if database
+        is unknown"""
         value = os.environ.get(self.password_env)
         if value is None:
             raise UnknownDatabaseError(

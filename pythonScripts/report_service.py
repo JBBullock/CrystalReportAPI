@@ -45,15 +45,16 @@ from pathlib import Path
 from typing import Any, Optional
 
 import db_profiles
+import reports_map
 from main import CrystalReportError, CrystalReportsPipeline, ReportResult
 from report_renderer import ReportRenderer
-from reports_catalog import ReportsCatalog
+from reports_catalog import ReportEntry, ReportsCatalog
 
-HERE = Path(__file__).parent
+PROJECT_ROOT = Path(__file__).parent
 
-REGISTRY_PATH = HERE / "jsonInspections" / "report_registry.json"
-GLOBALS_PATH = HERE / "jsonInspections"/ "global_report_parameters.json"
-REPORTS_DIR = HERE / "reports"  # matches the folder each report is
+REGISTRY_PATH = PROJECT_ROOT / "jsonInspections" / "report_registry.json"
+GLOBALS_PATH = PROJECT_ROOT / "jsonInspections"/ "global_report_parameters.json"
+REPORTS_DIR = PROJECT_ROOT / "reports"  # matches the folder each report is
     # actually tested from (see ProgramCommands.md) - "TemplateRPTs" never
     # existed in this checkout, which would have made every report fail
     # through this module even though direct CrystalReportWrapper.exe CLI
@@ -65,23 +66,13 @@ REPORTS_DIR = HERE / "reports"  # matches the folder each report is
 # workflow already relies on.
 WORKER_EXE = Path(os.environ.get(
     "RPTCONVERT_WORKER_EXE",
-    str(HERE / "CrystalReportWrapper" / "bin" / "Debug" / "net48" / "CrystalReportWrapper.exe"),
+    str(PROJECT_ROOT / "CrystalReportWrapper" / "bin" / "Release" / "net48" / "CrystalReportWrapper.exe"),
 ))
-OUTPUT_DIR = HERE / "out" / "rendered"
-SQL_QUERIES_DIR = HERE / "SQLqueries"  # where extract_report_sql() writes <Report>.sql
+OUTPUT_DIR = PROJECT_ROOT / "out" / "rendered"
+SQL_QUERIES_DIR = PROJECT_ROOT / "SQLqueries"  # where extract_report_sql() writes <Report>.sql
 
 _renderer: Optional[ReportRenderer] = None
-# ZMRP's ReportPromptDialog renders through a background QThread
-# (BulkReportWorker) rather than the UI thread, and its MDI design lets more
-# than one Reports dialog be open at once - so two threads can call
-# _get_renderer() concurrently. Without this lock, both could see
-# `_renderer is None` and each construct their own ReportsCatalog/
-# ReportRenderer (re-parsing report_registry.json) before either assignment
-# lands; under CPython's GIL that can't corrupt _renderer itself, but it's
-# still wasted work and, briefly, two callers could hold two different
-# ReportsCatalog instances rather than the single shared one this module's
-# docstring promises. The lock makes first-render initialization a genuine
-# one-time cost regardless of how many report threads start at once.
+
 _renderer_lock = threading.Lock()
 
 
@@ -144,14 +135,17 @@ def render_report(
         main.CrystalReportError: the C# worker ran but reported failure.
     """
     profile = db_profiles.resolve(db_profile=db_profile, db_target=db_target)
-    return _get_renderer().render(
-        report_id,
+    renderer = _get_renderer()
+    entry = renderer.catalog.get(report_id)
+    return renderer.render_entry(
+        entry,
         context=context,
         prompted=prompted,
         export_format=export_format,
         record_filters=record_filters,
         output_name=output_name,
         db_profile=profile,
+        sql_file=_sql_file_for(entry.file),
     )
 
 
@@ -207,6 +201,116 @@ def render_report_for_record(
     }
     return render_report(
         report_id,
+        context=context,
+        prompted=prompted,
+        export_format=export_format,
+        record_filters=record_filters,
+        output_name=output_name,
+        db_profile=db_profile,
+        db_target=db_target,
+    )
+
+
+# ----------------------------------------------------------------------------
+# Named reports: (menu, report name) -> .rpt -> .sql, all from reports_map.py
+# ----------------------------------------------------------------------------
+# These are what the /v2 routes call. The id-based functions around them
+# (render_report, reports_for_menu, ...) still read menu/display_name from
+# report_registry.json and exist only until ZMRP has moved to the named
+# calls - delete them, and the /reports routes, once it has.
+
+def _sql_file_for(rpt_file: str) -> Optional[Path]:
+    """Full path of the .sql file reports_map.REPORT_SQL gives this .rpt,
+    or None if it has no entry (the worker then falls back to its own
+    SQLqueries/<report name>.sql lookup and embedded catalog)."""
+    name = reports_map.sql_for(rpt_file)
+    return SQL_QUERIES_DIR / name if name else None
+
+
+def _entry_for(menu: str, name: str) -> ReportEntry:
+    """KeyError if reports_map.REPORTS has no (menu, name)."""
+    return _get_renderer().catalog.entry_for_file(reports_map.rpt_for(menu, name))
+
+
+def menu_reports() -> dict[str, list[str]]:
+    """{menu: [report names]} - everything ZMRP needs to build its
+    Reports submenus, in one call."""
+    return reports_map.menus()
+
+
+def named_report_info(menu: str, name: str) -> dict[str, Any]:
+    """What a Reports dialog needs to know before rendering: which files
+    the report maps to, whether it can be filtered to one record
+    (db_tables), and which values to prompt for."""
+    entry = _entry_for(menu, name)
+    return {
+        "menu": menu,
+        "report": name,
+        "rpt": entry.file,
+        "sql": reports_map.sql_for(entry.file),
+        "db_tables": list(entry.db_tables),
+        "prompt_params": [
+            {"crystal_name": p.crystal_name, "label": p.label, "type": p.type}
+            for p in entry.prompted_parameters()
+        ],
+    }
+
+
+def render_named_report(
+    menu: str,
+    name: str,
+    context: Optional[dict[str, Any]] = None,
+    prompted: Optional[dict[str, Any]] = None,
+    export_format: str = "PDF",
+    record_filters: Optional[dict[str, dict[str, Any]]] = None,
+    output_name: Optional[str] = None,
+    db_profile: Optional[str] = None,
+    db_target: Optional[dict[str, Any]] = None,
+) -> ReportResult:
+    """render_report, addressed by (menu, report name) instead of an id.
+    Raises the same exceptions; KeyError means reports_map.REPORTS has no
+    such (menu, name)."""
+    profile = db_profiles.resolve(db_profile=db_profile, db_target=db_target)
+    entry = _entry_for(menu, name)
+    return _get_renderer().render_entry(
+        entry,
+        context=context,
+        prompted=prompted,
+        export_format=export_format,
+        record_filters=record_filters,
+        output_name=output_name,
+        db_profile=profile,
+        sql_file=_sql_file_for(entry.file),
+    )
+
+
+def render_named_report_for_record(
+    menu: str,
+    name: str,
+    pk_column: str,
+    pk_value: Any,
+    context: Optional[dict[str, Any]] = None,
+    prompted: Optional[dict[str, Any]] = None,
+    export_format: str = "PDF",
+    output_name: Optional[str] = None,
+    db_profile: Optional[str] = None,
+    db_target: Optional[dict[str, Any]] = None,
+) -> ReportResult:
+    """render_report_for_record, addressed by (menu, report name)."""
+    entry = _entry_for(menu, name)
+    if not entry.supports_record_filter:
+        raise ValueError(
+            f"Report '{name}' ({entry.file}) has no db_tables configured in "
+            f"report_registry.json - add its table name(s) there before "
+            f"filtering by record."
+        )
+    record_filters = {
+        table: {"column": column, "value": pk_value}
+        for table, column in entry.filter_targets(pk_column).items()
+    }
+    return render_named_report(
+        menu,
+        name,
         context=context,
         prompted=prompted,
         export_format=export_format,

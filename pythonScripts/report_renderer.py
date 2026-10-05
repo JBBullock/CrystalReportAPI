@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 # updating both import lines back) is a harmless, optional cleanup
 # whenever you want it - nothing here depends on which name wins.
 from main import CrystalReportsPipeline, ReportResult
-from reports_catalog import ReportsCatalog
+from reports_catalog import ReportEntry, ReportsCatalog
 
 
 class ReportRenderer:
@@ -50,15 +50,20 @@ class ReportRenderer:
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.pipeline = CrystalReportsPipeline(worker_exe=str(worker_exe))
 
-    def render(
+    def render(self, report_id: str, **kwargs: Any) -> ReportResult:
+        """render_entry for a registry id. KeyError if the id is unknown."""
+        return self.render_entry(self.catalog.get(report_id), **kwargs)
+
+    def render_entry(
         self,
-        report_id: str,
+        entry: ReportEntry,
         context: Optional[dict[str, Any]] = None,
         prompted: Optional[dict[str, Any]] = None,
         export_format: str = "PDF",
         record_filters: Optional[dict[str, dict[str, Any]]] = None,
         output_name: Optional[str] = None,
         db_profile: Optional["DbProfile"] = None,
+        sql_file: Optional[Path | str] = None,
     ) -> ReportResult:
         """Resolves this report's parameters (see ReportsCatalog.resolve_parameters
         for what "context" and "prompted" mean) and renders it via the existing
@@ -78,16 +83,18 @@ class ReportRenderer:
             goes in a per-profile subfolder so two users on different
             databases rendering the same report can't overwrite each
             other's PDF.
+        sql_file: the .sql file holding this report's queries (see
+            reports_map.REPORT_SQL). None = the worker looks for
+            SQLqueries/<report name>.sql itself.
         """
-        entry = self.catalog.get(report_id)
         if not entry.is_renderable:
             raise RuntimeError(
-                f"Report '{report_id}' failed --inspect ({entry.error}) - it needs "
+                f"Report '{entry.id}' failed --inspect ({entry.error}) - it needs "
                 f"a TableQueryCatalog/data-source fix (see Program.cs) before it "
                 f"can be rendered, independent of anything on the Python side."
             )
 
-        parameters = self.catalog.resolve_parameters(report_id, context=context, prompted=prompted)
+        parameters = self.catalog.resolve_entry_parameters(entry, context=context, prompted=prompted)
         report_path = self.reports_dir / entry.file
         stem = output_name or entry.id
         out_dir = self.output_dir / db_profile.name if db_profile else self.output_dir
@@ -101,4 +108,5 @@ class ReportRenderer:
             parameters=parameters,
             record_filters=record_filters,
             db_env=db_profile.worker_env() if db_profile else None,
+            sql_file=str(sql_file) if sql_file else None,
         )
