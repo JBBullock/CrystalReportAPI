@@ -1,304 +1,100 @@
 """
 report_api_server.py
 
-HTTPS front door for report_service.py, so SecureZMRP (or any other
-caller) can render reports over the network instead of importing this
-module directly - built for the "connect the apps over HTTPS" step,
-now that SecureZMRP and RPTConvert run on different machines.
+HTTPS front door for report_service.render(). Stateless: a request comes in,
+a PDF (or an error) goes out, and nothing is stored.
 
-This process must run on the SAME machine as CrystalReportWrapper.exe
-and the Postgres connection Program.cs's TableQueryCatalog queries
-against - it's a thin network wrapper around report_service.py, not a
-new rendering engine. Every function this exposes already existed in
-report_service.py; nothing here re-implements catalog/render logic.
+    POST /render      X-API-Key: <key>
+        {"port": 5430, "menu": "Demand", "report": "Sales Order",
+         "filter": {"sonumber": 1234}}
+        -> 200 application/pdf
+        -> 400 bad port / bad filter     -> 404 no such (menu, report)
+        -> 401 bad API key               -> 500 the render failed
+           (errors are JSON: {"detail": "..."})
+
+    GET /menus        X-API-Key: <key>
+        -> {"Demand": ["Sales Order", ...], ...}
+
+    GET /health       (no key)
+        -> {"status": "ok"}
 
 RUNNING
--------
-    pip install -r requirements_report_api.txt
-    python generate_cert.py --host <this-machine's-LAN-hostname-or-IP>
-    setx RPTCONVERT_API_KEY "<a long random string - share it with
-        SecureZMRP's report_client_config.py, NOT by committing it to
-        either repo>"
-    python report_api_server.py
-
-Defaults to 0.0.0.0:8443. Override with RPTCONVERT_API_HOST /
-RPTCONVERT_API_PORT env vars. Uses report_api_certs/cert.pem + key.pem
-from generate_cert.py by default - override with RPTCONVERT_API_CERT /
-RPTCONVERT_API_KEY_FILE if you keep them elsewhere.
+    Set RPTCONVERT_API_KEY, PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD
+    (see report_service.py), generate a certificate with generate_cert.py,
+    then:  python report_api_server.py
+    Listens on 0.0.0.0:8443; override with RPTCONVERT_API_HOST /
+    RPTCONVERT_API_PORT, and the certificate paths with RPTCONVERT_API_CERT /
+    RPTCONVERT_API_KEY_FILE.
 
 SECURITY
---------
-This is LAN-only self-signed TLS (see generate_cert.py) plus a single
-shared API key checked via the X-API-Key header (RPTCONVERT_API_KEY env
-var here, must match SecureZMRP's report_client_config.py). That's
-appropriate for "a shop-floor LAN, not the public internet" - if this
-server ever needs to be reachable from outside your network, replace the
-shared key with real per-user auth before doing that.
+    LAN-only: self-signed TLS plus one shared key in the X-API-Key header.
+    Replace the shared key with per-user auth before exposing this beyond
+    the shop network.
 """
 
 from __future__ import annotations
 
+import hmac
 import os
 from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Response
+from pydantic import BaseModel
 
 import report_service
-from main import CrystalReportError
-from reports_catalog import MissingParameterError
-
-try:
-    from pydantic import BaseModel
-except ImportError as exc:
-    raise ImportError(
-        "pydantic is required (installed automatically with fastapi) - "
-        "run: pip install -r requirements_report_api.txt"
-    ) from exc
-
-PROJECT_ROOT = Path(__file__).parent
 
 API_KEY = os.environ.get("RPTCONVERT_API_KEY")
 HOST = os.environ.get("RPTCONVERT_API_HOST", "0.0.0.0")
 PORT = int(os.environ.get("RPTCONVERT_API_PORT", "8443"))
-CERT_FILE = os.environ.get("RPTCONVERT_API_CERT", str(PROJECT_ROOT / "report_api_certs" / "cert.pem"))
-KEY_FILE = os.environ.get("RPTCONVERT_API_KEY_FILE", str(PROJECT_ROOT / "report_api_certs" / "key.pem"))
+CERT_FILE = os.environ.get("RPTCONVERT_API_CERT", str(report_service.ROOT / "report_api_certs" / "cert.pem"))
+KEY_FILE = os.environ.get("RPTCONVERT_API_KEY_FILE", str(report_service.ROOT / "report_api_certs" / "key.pem"))
 
 if not API_KEY:
     raise RuntimeError(
-        "RPTCONVERT_API_KEY is not set - this server refuses to start "
-        "without one, since it exposes report rendering (and therefore "
-        "Postgres-backed data) to the network. Set it to a long random "
-        "string before running this, and put the SAME value in "
-        "SecureZMRP's report_client_config.py (or its RPTCONVERT_API_KEY "
-        "environment variable)."
+        "RPTCONVERT_API_KEY is not set - this server refuses to start without "
+        "one, since it exposes database-backed reports to the network."
     )
 
 app = FastAPI(title="RPTConvert Report API")
 
 
 def _check_api_key(x_api_key: Optional[str] = Header(default=None)) -> None:
-    if x_api_key != API_KEY:
+    if x_api_key is None or not hmac.compare_digest(x_api_key.encode(), API_KEY.encode()):
         raise HTTPException(status_code=401, detail="missing or invalid X-API-Key")
 
 
 _AUTH = [Depends(_check_api_key)]
 
 
-class DbSelection(BaseModel):
-    """Which database to render from - see db_profiles.py. Send ONE of:
-    db_profile: a profile name from config/db_profiles.json, or
-    db_target: {"host", "port", "database"} of the caller's active
-        connection (ZMRP: straight off its SQLAlchemy engine.url).
-    Sending neither uses the "default" profile, unless the server sets
-    RPTCONVERT_REQUIRE_DB=1."""
-    db_profile: Optional[str] = None
-    db_target: Optional[dict[str, Any]] = None
-
-
-class RenderBody(DbSelection):
-    context: Optional[dict[str, Any]] = None
-    prompted: Optional[dict[str, Any]] = None
-    export_format: str = "PDF"
-    record_filters: Optional[dict[str, dict[str, Any]]] = None
-    output_name: Optional[str] = None
-
-
-class RenderForRecordBody(DbSelection):
-    pk_column: str
-    pk_value: Any
-    context: Optional[dict[str, Any]] = None
-    prompted: Optional[dict[str, Any]] = None
-    export_format: str = "PDF"
-    output_name: Optional[str] = None
-
-
-def _run_catching(fn, *args, **kwargs):
-    """Runs one report_service function and maps its exception types to
-    HTTP status codes report_client_config.py's report_service.py shim
-    knows how to translate back into the SAME exception types the local
-    (in-process) report_service.py raises - see that file's
-    _raise_for_error for the other half of this contract. Order matters:
-    MissingParameterError and CrystalReportError are both RuntimeError
-    subclasses, so they're listed before the bare RuntimeError catch.
-    """
-    try:
-        return fn(*args, **kwargs)
-    except KeyError as exc:
-        raise HTTPException(status_code=404, detail=str(exc)) from exc
-    except MissingParameterError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
-    except CrystalReportError as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-    except RuntimeError as exc:
-        raise HTTPException(status_code=409, detail=str(exc)) from exc
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"{type(exc).__name__}: {exc}") from exc
-
-
-def _pdf_response(result, db: dict) -> Response:
-    if not result.success or not result.output_path:
-        raise HTTPException(status_code=500, detail=result.error or "render failed with no error message")
-    data = Path(result.output_path).read_bytes()
-    stem = Path(result.output_path).stem
-    return Response(
-        content=data,
-        media_type="application/pdf",
-        # X-DB-* echo back which database this PDF was actually built
-        # from, so the client can verify it against its own connection.
-        headers={
-            "X-Output-Stem": stem,
-            "X-DB-Profile": db["name"],
-            "X-DB-Target": f"{db['host']}:{db['port']}/{db['database']}",
-        },
-    )
+class RenderRequest(BaseModel):
+    port: int
+    menu: str
+    report: str
+    filter: dict[str, Any] = {}
 
 
 @app.get("/health")
 def health() -> dict:
-    # Deliberately NOT behind _check_api_key - a plain liveness probe
-    # ("is this machine up at all") shouldn't require the report-rendering
-    # credential.
     return {"status": "ok"}
 
 
-@app.get("/databases", dependencies=_AUTH)
-def databases() -> list:
-    return _run_catching(report_service.database_profiles)
+@app.get("/menus", dependencies=_AUTH)
+def menus() -> dict:
+    return report_service.menus()
 
 
-@app.post("/databases/resolve", dependencies=_AUTH)
-def resolve_database(body: DbSelection) -> dict:
-    """Dry run: which profile would a render with this body use? Lets
-    ZMRP check right after a database switch, before any report runs."""
-    return _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
-
-
-@app.get("/reports/index/menu/{menu_name}", dependencies=_AUTH)
-def reports_index_for_menu(menu_name: str) -> dict:
-    return _run_catching(report_service.reports_index_for_menu, menu_name)
-
-
-@app.get("/reports/index/all", dependencies=_AUTH)
-def all_reports_index() -> dict:
-    return _run_catching(report_service.all_reports_index)
-
-
-@app.get("/reports/menu/{menu_name}", dependencies=_AUTH)
-def reports_for_menu(menu_name: str) -> list:
-    return _run_catching(report_service.reports_for_menu, menu_name)
-
-
-@app.get("/reports/{report_id}/db_tables", dependencies=_AUTH)
-def report_db_tables(report_id: str) -> list:
-    return _run_catching(report_service.report_db_tables, report_id)
-
-
-@app.get("/reports/{report_id}/prompt_params", dependencies=_AUTH)
-def reports_needing_prompt(report_id: str) -> list:
-    return _run_catching(report_service.reports_needing_prompt, report_id)
-
-
-@app.post("/reports/{report_id}/render", dependencies=_AUTH)
-def render(report_id: str, body: RenderBody) -> Response:
-    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
-    result = _run_catching(
-        report_service.render_report,
-        report_id,
-        context=body.context,
-        prompted=body.prompted,
-        export_format=body.export_format,
-        record_filters=body.record_filters,
-        output_name=body.output_name,
-        db_profile=body.db_profile,
-        db_target=body.db_target,
-    )
-    return _pdf_response(result, db)
-
-
-@app.post("/reports/{report_id}/render_for_record", dependencies=_AUTH)
-def render_for_record(report_id: str, body: RenderForRecordBody) -> Response:
-    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
-    result = _run_catching(
-        report_service.render_report_for_record,
-        report_id,
-        body.pk_column,
-        body.pk_value,
-        context=body.context,
-        prompted=body.prompted,
-        export_format=body.export_format,
-        output_name=body.output_name,
-        db_profile=body.db_profile,
-        db_target=body.db_target,
-    )
-    return _pdf_response(result, db)
-
-
-# ----------------------------------------------------------------------------
-# /v2 - reports addressed by (menu, report name), per reports_map.py
-# ----------------------------------------------------------------------------
-# The /reports/{report_id}/... routes above are the older id-based contract,
-# kept only until ZMRP calls these instead.
-
-class NamedRenderBody(RenderBody):
-    menu: str
-    report: str
-
-
-class NamedRenderForRecordBody(RenderForRecordBody):
-    menu: str
-    report: str
-
-
-@app.get("/v2/menus", dependencies=_AUTH)
-def v2_menus() -> dict:
-    """{menu: [report names]} for every menu."""
-    return _run_catching(report_service.menu_reports)
-
-
-@app.get("/v2/report", dependencies=_AUTH)
-def v2_report(menu: str, report: str) -> dict:
-    """?menu=...&report=... -> rpt, sql, db_tables and prompt_params."""
-    return _run_catching(report_service.named_report_info, menu, report)
-
-
-@app.post("/v2/render", dependencies=_AUTH)
-def v2_render(body: NamedRenderBody) -> Response:
-    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
-    result = _run_catching(
-        report_service.render_named_report,
-        body.menu,
-        body.report,
-        context=body.context,
-        prompted=body.prompted,
-        export_format=body.export_format,
-        record_filters=body.record_filters,
-        output_name=body.output_name,
-        db_profile=body.db_profile,
-        db_target=body.db_target,
-    )
-    return _pdf_response(result, db)
-
-
-@app.post("/v2/render_for_record", dependencies=_AUTH)
-def v2_render_for_record(body: NamedRenderForRecordBody) -> Response:
-    db = _run_catching(report_service.resolve_database, body.db_profile, body.db_target)
-    result = _run_catching(
-        report_service.render_named_report_for_record,
-        body.menu,
-        body.report,
-        body.pk_column,
-        body.pk_value,
-        context=body.context,
-        prompted=body.prompted,
-        export_format=body.export_format,
-        output_name=body.output_name,
-        db_profile=body.db_profile,
-        db_target=body.db_target,
-    )
-    return _pdf_response(result, db)
+@app.post("/render", dependencies=_AUTH)
+def render(body: RenderRequest) -> Response:
+    try:
+        pdf = report_service.render(body.port, body.menu, body.report, body.filter)
+    except report_service.ReportNotFound as exc:
+        raise HTTPException(status_code=404, detail=exc.args[0]) from exc
+    except report_service.BadRequest as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except report_service.RenderFailed as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
+    return Response(content=pdf, media_type="application/pdf")
 
 
 if __name__ == "__main__":
@@ -307,13 +103,7 @@ if __name__ == "__main__":
     if not Path(CERT_FILE).exists() or not Path(KEY_FILE).exists():
         raise SystemExit(
             f"Certificate/key not found at {CERT_FILE} / {KEY_FILE} - run "
-            f"generate_cert.py first (see this file's RUNNING section)."
+            f"generate_cert.py first."
         )
 
-    uvicorn.run(
-        app,
-        host=HOST,
-        port=PORT,
-        ssl_certfile=CERT_FILE,
-        ssl_keyfile=KEY_FILE,
-    )
+    uvicorn.run(app, host=HOST, port=PORT, ssl_certfile=CERT_FILE, ssl_keyfile=KEY_FILE)

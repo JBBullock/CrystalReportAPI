@@ -18,11 +18,8 @@ services:
     image: rptconvert-report-api:latest
     ports:
       - "8443:8443"
-    # Passes EVERY variable in .env into the container - needed for the
-    # per-database PG_PASSWORD_<NAME> variables config/db_profiles.json
-    # points at (password_env), so adding a database never means editing
-    # this file. The explicit `environment:` entries below still win for
-    # the variables they name.
+    # Passes every variable in .env into the container. The explicit
+    # `environment:` entries below still win for the variables they name.
     env_file:
       - ..\.env
     environment:
@@ -47,18 +44,16 @@ services:
       # If it doesn't, try host.docker.internal, or this machine's real
       # LAN IP, via PG_HOST in your .env.
       PG_HOST: "${PG_HOST:-johnaton}"
-      PG_PORT: "${PG_PORT:-5430}"
       PG_DATABASE: "${PG_DATABASE:-postgres}"
       PG_USER: "${PG_USER:-postgres}"
       PG_PASSWORD: "${PG_PASSWORD:?set PG_PASSWORD in .env first}"
 
-      # Which database each render uses is chosen PER REQUEST from the
-      # profiles in config/db_profiles.json (see db_profiles.py) - the PG_*
-      # values above are only the "default" profile, used when a client
-      # doesn't say. Set RPTCONVERT_REQUIRE_DB=1 in .env once every ZMRP
-      # client sends its database, so nothing can fall back to default.
-      RPTCONVERT_DB_PROFILES: "C:/app/config/db_profiles.json"
-      RPTCONVERT_REQUIRE_DB: "${RPTCONVERT_REQUIRE_DB:-0}"
+      # The Postgres PORT is not set here: each request names the port of
+      # the database to render from, and host/database/user/password above
+      # are the same for all of them. Optionally list the ports the service
+      # may connect to (e.g. RPTCONVERT_ALLOWED_PORTS=5430,5431 in .env);
+      # empty = any port.
+      RPTCONVERT_ALLOWED_PORTS: "${RPTCONVERT_ALLOWED_PORTS:-}"
     volumes:
       # TLS cert/key - generate these on the host first with
       # generate_cert.py (see that script's docstring), then mount
@@ -66,17 +61,9 @@ services:
       # private key out of anything that might get pushed to a registry,
       # and lets you rotate the cert without a rebuild.
       - ../report_api_certs:C:/app/report_api_certs:ro
-      # Rendered PDFs - kept outside the container so they survive
-      # `docker compose down` / an image rebuild.
-      - ../out/rendered:C:/app/out/rendered
-      # Database profiles - a FOLDER mount, not a single-file mount:
-      # Windows containers can't bind-mount individual files. Read-only;
-      # edit config/db_profiles.json on the host and the server picks the
-      # change up on the next request, no restart.
-      - ../config:C:/app/config:ro
-      # Report SQL - CrystalReportWrapper reads SQLqueries/<ReportName>.sql
-      # at render time (see LoadReportSqlFile in Program.cs). Mounted so a
-      # query edit on the host applies to the next render, no rebuild.
+      # Report SQL - the worker reads each report's .sql file at render
+      # time (see CrystalReportWrapper/ReportSql.cs). Mounted so a query
+      # edit on the host applies to the next render, no rebuild.
       - ../SQLqueries:C:/app/SQLqueries:ro
     # Runs as a service: Docker restarts the container if it crashes, and
     # brings it back whenever the Docker engine starts (e.g. after a

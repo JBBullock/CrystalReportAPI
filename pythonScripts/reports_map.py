@@ -7,19 +7,12 @@ nothing generates or overwrites this file.
     REPORTS     (menu, report name as shown in ZMRP) -> .rpt file in reports/
     REPORT_SQL  .rpt file -> .sql file in SQLqueries/
 
-A report appears in ZMRP only if it has a REPORTS entry. The same .rpt may
-appear under more than one menu or name. A .rpt with no REPORT_SQL entry
-still renders if the C# worker's embedded TableQueryCatalog covers its
-table(s); otherwise the worker reports which table has no query.
+A report can be rendered only if it has a REPORTS entry, and its .rpt has a
+REPORT_SQL entry. The same .rpt may appear under more than one menu or name.
 
 A report that uses several Crystal tables still has ONE .sql file - put
 each table's query under its own "-- Table: <name>" line inside it (see
-LoadReportSqlFile in Program.cs).
-
-What is NOT here: each report's parameters and record-filter tables stay
-in jsonInspections/report_registry.json, looked up by .rpt file name. The
-registry's own "menu" and "display_name" fields are no longer what the
-named (menu, report) routes use.
+CrystalReportWrapper/ReportSql.cs).
 
 Check the dictionaries against the files on disk with:
     python reports_map.py

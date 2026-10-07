@@ -1,518 +1,160 @@
 """
 report_service.py
 
-The single call-site wrapper the rest of this document's "how do I wire
-this up" answer refers to. reports_catalog.ReportsCatalog and
-report_renderer.ReportRenderer already do the real work; this module just
-saves every caller (ReportsDialog.py, a standalone script, a scheduled
-job, a REPL) from having to construct and wire those two objects itself
-every time it wants to run one report. The goal is that calling code -
-including code in a completely different repo, like SecureZMRP - never
-needs to know ReportsCatalog or ReportRenderer exist at all:
+Renders one report: render(port, menu, report, filter) -> PDF bytes.
 
-    from report_service import render_report
-    result = render_report("salesorder", context={"CustomerID": 42})
-    print(result.output_path)   # -> .../out/rendered/salesorder.pdf
+Stateless. Nothing is written to disk and nothing is kept between calls;
+every call runs the same five steps, top to bottom:
 
-WHY A MODULE-LEVEL SINGLETON INSTEAD OF A CLASS CALLERS INSTANTIATE
----------------------------------------------------------------------
-ReportsCatalog parses report_registry.json once, in __init__ - there's no
-reason for two different call sites in the same process (e.g. ZMRP's
-Products menu and its Demand menu) to each parse it separately and hold
-their own copy. A lazily-built module-level instance means the first
-render_report() call anywhere in the process pays the parse cost, and
-every call after that (from anywhere) reuses it. reset() exists for the
-one case where that caching is wrong: you edited report_registry.json or
-global_report_parameters.json and want the *same running process* to pick
-up the change without a restart (e.g. iterating on menu assignments with
-ZMRP already open).
+    1. Check the port.
+    2. Look up (menu, report) in reports_map.py -> the .rpt and .sql files.
+    3. Start CrystalReportWrapper.exe and send it one JSON request on stdin.
+    4. The worker loads the report, runs its SQL against Postgres on that
+       port, and writes the PDF to stdout (see CrystalReportWrapper/Program.cs).
+    5. Return those bytes.
 
-CONFIGURATION
--------------
-REGISTRY_PATH / GLOBALS_PATH / REPORTS_DIR / WORKER_EXE / OUTPUT_DIR below
-are resolved relative to this file, which is correct as long as this
-module stays inside RPTConvert/. If/when this moves into the SecureZMRP
-repo (or SecureZMRP imports it from here via a path/package reference),
-swap these five for values SecureZMRP already has - e.g. a config object
-or environment variables - rather than relative-to-this-file paths.
+Crystal Reports has no Python SDK, which is why step 4 is a separate C#
+process. A fresh process per request also means a crash inside the Crystal
+runtime cannot take the API down or leak anything into the next request.
+
+CONFIGURATION (environment variables, read once at startup)
+    PG_HOST, PG_DATABASE, PG_USER, PG_PASSWORD
+        The Postgres server and the report service's own login. Read by the
+        worker, which inherits this process's environment. The port is the
+        only connection value that comes from the request.
+    RPTCONVERT_ALLOWED_PORTS
+        Optional. Comma-separated ports the service may connect to, e.g.
+        "5430,5431". Unset = any port.
+    RPTCONVERT_WORKER_EXE
+        Optional. Path to CrystalReportWrapper.exe.
+
+jsonInspections/global_report_parameters.json holds the values for report
+parameters (CompanyName, QuantityDecimals, ...). It is sent whole with every
+request; the worker uses the ones the report defines.
 """
 
 from __future__ import annotations
 
+import json
+import logging
 import os
-import threading
+import subprocess
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Mapping, Optional
 
-import db_profiles
 import reports_map
-from main import CrystalReportError, CrystalReportsPipeline, ReportResult
-from report_renderer import ReportRenderer
-from reports_catalog import ReportEntry, ReportsCatalog
 
-PROJECT_ROOT = Path(__file__).parent
+log = logging.getLogger("report_service")
 
-REGISTRY_PATH = PROJECT_ROOT / "jsonInspections" / "report_registry.json"
-GLOBALS_PATH = PROJECT_ROOT / "jsonInspections"/ "global_report_parameters.json"
-REPORTS_DIR = PROJECT_ROOT / "reports"  # matches the folder each report is
-    # actually tested from (see ProgramCommands.md) - "TemplateRPTs" never
-    # existed in this checkout, which would have made every report fail
-    # through this module even though direct CrystalReportWrapper.exe CLI
-    # tests (which always pass --report explicitly) never hit this path.
-# RPTCONVERT_WORKER_EXE lets the containerized build point this at the
-# Release publish output (CrystalReportWrapper/bin/Release/net48/publish/
-# CrystalReportWrapper.exe) instead - see Dockerfile - without touching
-# the default, which stays the Debug build path every bare-metal dev
-# workflow already relies on.
+HERE = Path(__file__).resolve().parent
+# pythonScripts/ on the host; flattened into the app root in the Docker image.
+ROOT = HERE.parent if (HERE.parent / "reports").is_dir() else HERE
+
+REPORTS_DIR = ROOT / "reports"
+SQL_DIR = ROOT / "SQLqueries"
+PARAMETERS_PATH = ROOT / "jsonInspections" / "global_report_parameters.json"
 WORKER_EXE = Path(os.environ.get(
     "RPTCONVERT_WORKER_EXE",
-    str(PROJECT_ROOT / "CrystalReportWrapper" / "bin" / "Release" / "net48" / "CrystalReportWrapper.exe"),
+    str(ROOT / "CrystalReportWrapper" / "bin" / "Release" / "net48" / "CrystalReportWrapper.exe"),
 ))
-OUTPUT_DIR = PROJECT_ROOT / "out" / "rendered"
-SQL_QUERIES_DIR = PROJECT_ROOT / "SQLqueries"  # where extract_report_sql() writes <Report>.sql
+WORKER_TIMEOUT_SECONDS = 120
 
-_renderer: Optional[ReportRenderer] = None
+ALLOWED_PORTS = frozenset(
+    int(p) for p in os.environ.get("RPTCONVERT_ALLOWED_PORTS", "").replace(",", " ").split()
+)
+# utf-8-sig: tolerate a BOM if the file was saved from a Windows editor.
+REPORT_PARAMETERS: dict[str, Any] = json.loads(PARAMETERS_PATH.read_text(encoding="utf-8-sig"))
 
-_renderer_lock = threading.Lock()
-
-
-def _get_renderer() -> ReportRenderer:
-    global _renderer
-    if _renderer is None:
-        with _renderer_lock:
-            if _renderer is None:  # re-check: lost the race, another thread already built it
-                catalog = ReportsCatalog(registry_path=REGISTRY_PATH, globals_path=GLOBALS_PATH)
-                _renderer = ReportRenderer(
-                    catalog=catalog,
-                    reports_dir=REPORTS_DIR,
-                    worker_exe=WORKER_EXE,
-                    output_dir=OUTPUT_DIR,
-                )
-    return _renderer
+# Worker exit codes - see Program.cs.
+_EXIT_RENDERED = 0
+_EXIT_BAD_REQUEST = 2
 
 
-def render_report(
-    report_id: str,
-    context: Optional[dict[str, Any]] = None,
-    prompted: Optional[dict[str, Any]] = None,
-    export_format: str = "PDF",
-    record_filters: Optional[dict[str, dict[str, Any]]] = None,
-    output_name: Optional[str] = None,
-    db_profile: Optional[str] = None,
-    db_target: Optional[dict[str, Any]] = None,
-) -> ReportResult:
-    """Generate one report and return its ReportResult (output_path on
-    success). This is the one function most callers need.
+class ReportNotFound(KeyError):
+    """No report with that (menu, name) in reports_map.REPORTS."""
 
-    context:  values pulled from whatever ZMRP record is currently open
-              (e.g. {"CustomerID": 42} while a Sales Order is focused).
-              Only consulted for parameters the registry marks
-              source="context"; see ReportsCatalog.resolve_parameters.
-    prompted: values the user typed into the Reports dialog's own input
-              fields, for parameters the registry marks source="prompt".
-              Call reports_needing_prompt(report_id) first to know which
-              fields to render.
-    record_filters: low-level - most callers want render_report_for_record()
-              instead, which builds this dict for you from a single PK
-              column/value. Passed straight through to
-              ReportRenderer.render()/CrystalReportsPipeline.generate_report().
-    output_name: override the output file's stem - see render_report_for_record,
-              which uses this so a bulk run's N records don't collide on
-              one output path.
-    db_profile / db_target: which database to render from - a profile
-              name, or {"host", "port", "database"} of the caller's active
-              connection (what ZMRP sends). See db_profiles.resolve; an
-              unknown database raises db_profiles.UnknownDatabaseError
-              (a ValueError) instead of silently using another one.
 
-    Raises:
-        KeyError: report_id isn't in report_registry.json.
-        RuntimeError: the report exists but failed --inspect (needs a
-            TableQueryCatalog/data-source fix in Program.cs first).
-        reports_catalog.MissingParameterError: a required parameter had
-            no value from any source - raised before the C# worker is
-            even invoked.
-        main.CrystalReportError: the C# worker ran but reported failure.
+class BadRequest(ValueError):
+    """The request itself is wrong: bad port, bad filter value, or a filter
+    column that no table in the report has."""
+
+
+class RenderFailed(RuntimeError):
+    """The request was fine but the report could not be rendered."""
+
+
+def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]] = None) -> bytes:
+    """Render one report to PDF and return the bytes.
+
+    port:   the Postgres port of the database to render from.
+    menu, report: the report's menu and display name, as in reports_map.REPORTS
+            (e.g. "Products", "Bill of Materials").
+    filter: {column name: value}, e.g. {"sonumber": 1234}. Narrows every table
+            in the report that has that column. More than one key means AND.
+            Empty or None renders the whole report.
     """
-    profile = db_profiles.resolve(db_profile=db_profile, db_target=db_target)
-    renderer = _get_renderer()
-    entry = renderer.catalog.get(report_id)
-    return renderer.render_entry(
-        entry,
-        context=context,
-        prompted=prompted,
-        export_format=export_format,
-        record_filters=record_filters,
-        output_name=output_name,
-        db_profile=profile,
-        sql_file=_sql_file_for(entry.file),
-    )
+    filter = dict(filter or {})
 
+    # 1. Check the request.
+    if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
+        raise BadRequest(f"port must be a whole number from 1 to 65535, got {port!r}")
+    if ALLOWED_PORTS and port not in ALLOWED_PORTS:
+        raise BadRequest(f"port {port} is not one of this service's databases")
+    for column, value in filter.items():
+        if not isinstance(value, (str, int, float, bool)):
+            raise BadRequest(f"filter value for '{column}' must be text, a number or true/false")
 
-def render_report_for_record(
-    report_id: str,
-    pk_column: str,
-    pk_value: Any,
-    context: Optional[dict[str, Any]] = None,
-    prompted: Optional[dict[str, Any]] = None,
-    export_format: str = "PDF",
-    output_name: Optional[str] = None,
-    db_profile: Optional[str] = None,
-    db_target: Optional[dict[str, Any]] = None,
-) -> ReportResult:
-    """Generate one report filtered to a single record: every table in
-    report_db_tables(report_id) gets `WHERE "{pk_column}" = {pk_value}`
-    applied in Postgres, before Crystal ever sees the data (see Program.cs's
-    BuildReportDataSet/--record-filter).
+    # 2. Which files is this report?
+    try:
+        rpt_file = reports_map.REPORTS[(menu, report)]
+    except KeyError:
+        raise ReportNotFound(f"No report named '{report}' under menu '{menu}'") from None
+    sql_file = reports_map.sql_for(rpt_file)
+    if sql_file is None:
+        raise RenderFailed(f"{rpt_file} has no entry in reports_map.REPORT_SQL")
 
-    pk_column applies to every table in db_tables unless that table
-    overrides it (see ReportEntry.filter_targets/db_tables) - this module
-    doesn't know what a primary key is or consult any PK mapping itself.
-    The caller (ZMRP, via its own PK_MAP - see
-    mainDashboard/UI/menuBuilding/menu_config.py) is responsible for
-    resolving which column name that should be, typically the scalar PK of
-    whichever db_tables entry is the report's "header" table - the same
-    column name works for that table's related detail tables too in this
-    schema's convention (e.g. "sonumber" is SOHeader's whole PK AND the
-    first element of SODetail's composite PK), except where a db_tables
-    entry explicitly overrides its column (e.g. BOM's "Assembly").
-
-    output_name: pass a per-record name (e.g. f"{report_id}_{pk_value}")
-    when calling this in a loop for the "*" bulk case, so each record's
-    PDF gets its own file instead of overwriting the last one.
-
-    Raises:
-        ValueError: report_db_tables(report_id) is empty - this report has
-            no db_tables configured in report_registry.json yet, so there's
-            nothing to filter (see ReportEntry.supports_record_filter).
-        (plus everything render_report() can raise)
-    """
-    entry = _get_renderer().catalog.get(report_id)
-    if not entry.supports_record_filter:
-        raise ValueError(
-            f"Report '{report_id}' has no db_tables configured in "
-            f"report_registry.json - add its table name(s) there before "
-            f"filtering by record (see ReportEntry.db_tables)."
-        )
-
-    record_filters = {
-        table: {"column": column, "value": pk_value}
-        for table, column in entry.filter_targets(pk_column).items()
+    # 3-4. Run the worker: request on stdin, PDF on stdout.
+    request = {
+        "reportPath": str(REPORTS_DIR / rpt_file),
+        "sqlPath": str(SQL_DIR / sql_file),
+        "port": port,
+        "filter": filter,
+        "parameters": REPORT_PARAMETERS,
     }
-    return render_report(
-        report_id,
-        context=context,
-        prompted=prompted,
-        export_format=export_format,
-        record_filters=record_filters,
-        output_name=output_name,
-        db_profile=db_profile,
-        db_target=db_target,
-    )
+    try:
+        worker = subprocess.run(
+            [str(WORKER_EXE)],
+            input=json.dumps(request).encode("utf-8"),
+            capture_output=True,
+            timeout=WORKER_TIMEOUT_SECONDS,
+        )
+    except FileNotFoundError:
+        raise RenderFailed(f"Crystal Reports worker not found at {WORKER_EXE}") from None
+    except subprocess.TimeoutExpired:
+        raise RenderFailed(f"Report did not finish within {WORKER_TIMEOUT_SECONDS} seconds") from None
+
+    if worker.stderr:
+        log.info("worker [%s / %s]:\n%s", menu, report, worker.stderr.decode("utf-8", "replace").rstrip())
+
+    # 5. The PDF, or the worker's error.
+    if worker.returncode == _EXIT_RENDERED:
+        return worker.stdout
+    message = _worker_error(worker)
+    if worker.returncode == _EXIT_BAD_REQUEST:
+        raise BadRequest(message)
+    raise RenderFailed(message)
 
 
-# ----------------------------------------------------------------------------
-# Named reports: (menu, report name) -> .rpt -> .sql, all from reports_map.py
-# ----------------------------------------------------------------------------
-# These are what the /v2 routes call. The id-based functions around them
-# (render_report, reports_for_menu, ...) still read menu/display_name from
-# report_registry.json and exist only until ZMRP has moved to the named
-# calls - delete them, and the /reports routes, once it has.
-
-def _sql_file_for(rpt_file: str) -> Optional[Path]:
-    """Full path of the .sql file reports_map.REPORT_SQL gives this .rpt,
-    or None if it has no entry (the worker then falls back to its own
-    SQLqueries/<report name>.sql lookup and embedded catalog)."""
-    name = reports_map.sql_for(rpt_file)
-    return SQL_QUERIES_DIR / name if name else None
-
-
-def _entry_for(menu: str, name: str) -> ReportEntry:
-    """KeyError if reports_map.REPORTS has no (menu, name)."""
-    return _get_renderer().catalog.entry_for_file(reports_map.rpt_for(menu, name))
-
-
-def menu_reports() -> dict[str, list[str]]:
-    """{menu: [report names]} - everything ZMRP needs to build its
-    Reports submenus, in one call."""
+def menus() -> dict[str, list[str]]:
+    """{menu: [report names]} - what a client builds its Reports menus from."""
     return reports_map.menus()
 
 
-def named_report_info(menu: str, name: str) -> dict[str, Any]:
-    """What a Reports dialog needs to know before rendering: which files
-    the report maps to, whether it can be filtered to one record
-    (db_tables), and which values to prompt for."""
-    entry = _entry_for(menu, name)
-    return {
-        "menu": menu,
-        "report": name,
-        "rpt": entry.file,
-        "sql": reports_map.sql_for(entry.file),
-        "db_tables": list(entry.db_tables),
-        "prompt_params": [
-            {"crystal_name": p.crystal_name, "label": p.label, "type": p.type}
-            for p in entry.prompted_parameters()
-        ],
-    }
-
-
-def render_named_report(
-    menu: str,
-    name: str,
-    context: Optional[dict[str, Any]] = None,
-    prompted: Optional[dict[str, Any]] = None,
-    export_format: str = "PDF",
-    record_filters: Optional[dict[str, dict[str, Any]]] = None,
-    output_name: Optional[str] = None,
-    db_profile: Optional[str] = None,
-    db_target: Optional[dict[str, Any]] = None,
-) -> ReportResult:
-    """render_report, addressed by (menu, report name) instead of an id.
-    Raises the same exceptions; KeyError means reports_map.REPORTS has no
-    such (menu, name)."""
-    profile = db_profiles.resolve(db_profile=db_profile, db_target=db_target)
-    entry = _entry_for(menu, name)
-    return _get_renderer().render_entry(
-        entry,
-        context=context,
-        prompted=prompted,
-        export_format=export_format,
-        record_filters=record_filters,
-        output_name=output_name,
-        db_profile=profile,
-        sql_file=_sql_file_for(entry.file),
-    )
-
-
-def render_named_report_for_record(
-    menu: str,
-    name: str,
-    pk_column: str,
-    pk_value: Any,
-    context: Optional[dict[str, Any]] = None,
-    prompted: Optional[dict[str, Any]] = None,
-    export_format: str = "PDF",
-    output_name: Optional[str] = None,
-    db_profile: Optional[str] = None,
-    db_target: Optional[dict[str, Any]] = None,
-) -> ReportResult:
-    """render_report_for_record, addressed by (menu, report name)."""
-    entry = _entry_for(menu, name)
-    if not entry.supports_record_filter:
-        raise ValueError(
-            f"Report '{name}' ({entry.file}) has no db_tables configured in "
-            f"report_registry.json - add its table name(s) there before "
-            f"filtering by record."
-        )
-    record_filters = {
-        table: {"column": column, "value": pk_value}
-        for table, column in entry.filter_targets(pk_column).items()
-    }
-    return render_named_report(
-        menu,
-        name,
-        context=context,
-        prompted=prompted,
-        export_format=export_format,
-        record_filters=record_filters,
-        output_name=output_name,
-        db_profile=db_profile,
-        db_target=db_target,
-    )
-
-
-def reports_for_menu(menu_name: str) -> list[str]:
-    """Report ids belonging to one ZMRP menu ("Products", "Demand", ...) -
-    Unassigned-menu reports (see ReportsCatalog.unassigned_menu_reports)
-    never appear here.
-    """
-    return [entry.id for entry in _get_renderer().catalog.for_menu(menu_name)]
-
-
-def reports_index_for_menu(menu_name: str) -> dict[str, str]:
-    """{display_name: report_id} for one ZMRP menu - what
-    menu_config.py's Reports submenu is built from (the dict's keys become
-    the arrow-submenu's item labels).
-    """
-    return {entry.display_name: entry.id for entry in _get_renderer().catalog.for_menu(menu_name)}
-
-
-def all_reports_index() -> dict[str, str]:
-    """{display_name: report_id} across every menu - what mainView.py's
-    _special_dispatch builds its Reports entries from. One flat mapping is
-    correct (not per-menu) because _MenuBuilder._recursive_add's nested-dict
-    branch dispatches every menu's "Reports" submenu through the SAME
-    breadcrumb prefix ("Reports", display_name), regardless of which
-    top-level menu it's under - see menu_config.py's _with_kitting_submenus
-    precedent and the comment on mainView.py's Kitting/DeKitting dispatch
-    entries for the same pattern. Requires every renderable report's
-    display_name to be unique across the whole registry - true today (52/52
-    unique) but worth re-checking if report_registry.json ever gets two
-    reports with the same display_name.
-    """
-    return {
-        entry.display_name: entry.id
-        for entry in _get_renderer().catalog.all_reports()
-        if entry.is_renderable
-    }
-
-
-def report_db_tables(report_id: str) -> list[str]:
-    """The TableQueryCatalog table names render_report_for_record() would
-    filter for this report - what a Reports dialog checks (via
-    ReportEntry.supports_record_filter, or just `bool(report_db_tables(...))`)
-    to decide whether to show the record-key/`*` prompt at all, versus just
-    running the report immediately the way it does today.
-    """
-    return list(_get_renderer().catalog.get(report_id).db_tables)
-
-
-def reports_needing_prompt(report_id: str) -> list[dict[str, str]]:
-    """[{"crystal_name": ..., "label": ..., "type": ...}, ...] for the
-    parameters a Reports dialog needs to render an input field for, before
-    calling render_report(report_id, prompted={...}) with the values the
-    user typed in.
-    """
-    entry = _get_renderer().catalog.get(report_id)
-    return [
-        {"crystal_name": p.crystal_name, "label": p.label, "type": p.type}
-        for p in entry.prompted_parameters()
-    ]
-
-
-def database_profiles() -> list[dict[str, Any]]:
-    """Configured database profiles (no passwords) - lets a client check
-    up front that the database it's connected to is one this server knows."""
-    return [p.describe() for p in db_profiles.load_profiles().values()]
-
-
-def resolve_database(
-    db_profile: Optional[str] = None,
-    db_target: Optional[dict[str, Any]] = None,
-) -> dict[str, Any]:
-    """Which profile a request with these fields would render from."""
-    return db_profiles.resolve(db_profile=db_profile, db_target=db_target).describe()
-
-
-def reset() -> None:
-    """Drop the cached catalog/renderer so the next render_report() call
-    re-reads report_registry.json and global_report_parameters.json from
-    disk. Only needed if a long-running process must pick up a registry
-    edit without restarting.
-    """
-    global _renderer
-    with _renderer_lock:
-        _renderer = None
-
-
-# ----------------------------------------------------------------------------
-# SQL extraction (--extract-sql mode)
-# ----------------------------------------------------------------------------
-# The legacy .rpt files are TTX ("Field Definitions Only") reports - they
-# store the columns they expect but no SQL. The real query for each report
-# lives in SQLqueries/<ReportName>.sql, which the worker reads at render time
-# (Program.cs's TableQueryCatalog is only a fallback). These functions have
-# the worker write/refresh that file: queries already in it are kept, tables
-# with no query yet get a commented-out skeleton of the expected columns and
-# are listed under "missingTables" in the result.
-
-def _resolve_report_path(report: str | os.PathLike) -> Path:
-    """Accepts a full/relative .rpt path, or a bare report name
-    ("WorkOrderTraveler" / "WorkOrderTraveler.rpt") looked up in REPORTS_DIR."""
-    path = Path(report)
-    if path.suffix.lower() != ".rpt":
-        path = path.with_name(path.name + ".rpt")
-    if not path.exists() and not path.is_absolute():
-        path = REPORTS_DIR / path.name
-    if not path.exists():
-        raise FileNotFoundError(f"Report not found: {report} (looked in {REPORTS_DIR})")
-    return path
-
-
-def extract_report_sql(
-    report: str | os.PathLike,
-    out_dir: str | os.PathLike = SQL_QUERIES_DIR,
-) -> dict:
-    """Write the SQL that fills `report` to <out_dir>/<ReportName>.sql.
-
-    Returns the worker's JSON payload (sqlPath, tables, matchedTables,
-    missingTables, backedUp). Raises CrystalReportError if the worker fails.
-    """
-    pipeline = CrystalReportsPipeline(worker_exe=str(WORKER_EXE))
-    return pipeline.extract_sql(str(_resolve_report_path(report)), sql_out_dir=str(out_dir))
-
-
-def extract_all_report_sql(
-    reports_dir: str | os.PathLike = REPORTS_DIR,
-    out_dir: str | os.PathLike = SQL_QUERIES_DIR,
-) -> dict[str, dict]:
-    """Run extract_report_sql() for every .rpt in reports_dir. One failing
-    report doesn't stop the batch - its entry is {"success": False, "error": ...}.
-    Returns {report file name: payload}.
-    """
-    pipeline = CrystalReportsPipeline(worker_exe=str(WORKER_EXE))
-    results: dict[str, dict] = {}
-    for rpt in sorted(Path(reports_dir).glob("*.rpt"), key=lambda p: p.name.lower()):
-        try:
-            results[rpt.name] = pipeline.extract_sql(str(rpt), sql_out_dir=str(out_dir))
-        except Exception as exc:  # CrystalReportError, TimeoutExpired, ...
-            results[rpt.name] = {"success": False, "error": str(exc)}
-    return results
-
-
-def _print_extract_summary(results: dict[str, dict]) -> None:
-    written, partial, failed, no_tables = [], [], [], []
-    for name, r in results.items():
-        if not r.get("success"):
-            failed.append((name, r.get("error")))
-        elif not r.get("sqlPath"):
-            no_tables.append(name)
-        elif r.get("missingTables"):
-            partial.append((name, r["missingTables"]))
-        else:
-            written.append(name)
-
-    print(f"\nComplete SQL written ({len(written)}):")
-    for name in written:
-        print(f"  {name}")
-    print(f"\nSkeleton only - needs a TableQueryCatalog entry ({len(partial)}):")
-    for name, missing in partial:
-        print(f"  {name}: {', '.join(missing)}")
-    if no_tables:
-        print(f"\nNo data tables, no file written ({len(no_tables)}):")
-        for name in no_tables:
-            print(f"  {name}")
-    if failed:
-        print(f"\nFailed ({len(failed)}):")
-        for name, err in failed:
-            print(f"  {name}: {err}")
-    backed_up = [n for n, r in results.items() if r.get("backedUp")]
-    if backed_up:
-        print(f"\nExisting .sql differed and was saved as .sql.bak: {', '.join(backed_up)}")
-
-
-if __name__ == "__main__":
-    # python report_service.py --extract-sql                  -> every report in reports/
-    # python report_service.py --extract-sql WorkOrderTraveler PurchaseOrder
-    import argparse
-
-    parser = argparse.ArgumentParser(description="RPTConvert report service utilities")
-    parser.add_argument("--extract-sql", nargs="*", metavar="REPORT",
-                        help="Write SQLqueries/<Report>.sql for the named reports (all reports if none given)")
-    parser.add_argument("--out-dir", default=str(SQL_QUERIES_DIR),
-                        help=f"Output folder for .sql files (default: {SQL_QUERIES_DIR})")
-    args = parser.parse_args()
-
-    if args.extract_sql is None:
-        parser.print_help()
-    elif args.extract_sql:
-        summary = {}
-        for name in args.extract_sql:
-            try:
-                path = _resolve_report_path(name)
-                summary[path.name] = extract_report_sql(path, args.out_dir)
-            except (FileNotFoundError, CrystalReportError) as exc:
-                summary[name] = {"success": False, "error": str(exc)}
-        _print_extract_summary(summary)
-    else:
-        _print_extract_summary(extract_all_report_sql(out_dir=args.out_dir))
+def _worker_error(worker: subprocess.CompletedProcess) -> str:
+    """On failure the worker's stdout is {"error": "..."} instead of a PDF."""
+    try:
+        return str(json.loads(worker.stdout.decode("utf-8"))["error"])
+    except (ValueError, KeyError, TypeError):
+        # It died before it could report (e.g. the Crystal runtime is missing).
+        detail = worker.stderr.decode("utf-8", "replace").strip() or "no output"
+        return f"Worker exited with code {worker.returncode}: {detail}"

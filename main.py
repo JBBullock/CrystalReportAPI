@@ -1,349 +1,75 @@
 """
-crystal_reports_pipeline.py
+main.py - try one report from the command line.
 
-PURPOSE
--------
-SAP Crystal Reports only ships a C#/.NET SDK - there is no native Python
-SDK. This module bridges that gap by treating a small compiled C# worker
-(CrystalReportWrapper.exe, see CrystalReportWrapper/Program.cs) as an
-external tool: Python launches it as a subprocess, passes it what report
-to run and with which parameters, and reads back a JSON result.
+Calls report_service.render() directly (no HTTP, no API key), exactly as the
+API's /render route does, and saves the PDF it returns so you can open it.
+Saving the file is this test script's doing - the service itself writes
+nothing.
 
-EXECUTION FLOW
----------------
-  1. Caller invokes `generate_report(...)` with a report path, output
-     path, export format, and an optional dict of report parameters.
-  2. If parameters are given, they are written to a temporary JSON file
-     (the C# side reads parameters from a file rather than inline args
-     to avoid command-line length/escaping issues with complex values).
-  3. The module builds a subprocess command line for the worker exe and
-     runs it, capturing stdout/stderr.
-  4. The worker prints exactly one JSON line describing success/failure;
-     this module parses that line into a `ReportResult`.
-  5. On success, `ReportResult.output_path` points to the exported file
-     (PDF/XLSX/CSV/etc.) ready for the rest of the Python pipeline to
-     pick up (e.g. attach to an email, upload to storage, etc.).
-  6. On failure, a `CrystalReportError` is raised with the message the
-     C# side reported, so calling code can handle/log it like any other
-     Python exception.
+    python main.py --port 5430 --menu Supply --report "Work Order Traveler" ^
+                   --filter wonumber=WO00080002
 
-WHY A SUBPROCESS INSTEAD OF PYTHONNET/COM INTEROP
---------------------------------------------------
-pythonnet or COM interop (win32com) can call the Crystal Reports .NET
-assemblies in-process, but that ties your Python process's bitness,
-STA/threading model, and .NET runtime version to Crystal's requirements,
-and a crash inside the SDK can take down the whole Python process. A
-subprocess worker is slower to start per-call, but is isolated, easy to
-retry, and easy to run on a machine where only the worker (not your full
-Python app) needs to live on Windows.
+    python main.py --list          # every menu and report name
+
+Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD set, and a built
+CrystalReportWrapper.exe (see pythonScripts/report_service.py).
 """
 
 from __future__ import annotations
 
-import json
-import subprocess
-import tempfile
-import os
-from dataclasses import dataclass
+import argparse
+import sys
 from pathlib import Path
-from typing import Optional
+
+HERE = Path(__file__).resolve().parent
+if (HERE / "pythonScripts").is_dir():
+    sys.path.insert(0, str(HERE / "pythonScripts"))
+
+import report_service  # noqa: E402  (needs the path line above)
 
 
-class CrystalReportError(RuntimeError):
-    """Raised when the Crystal Reports worker process reports a failure
-    (bad report path, invalid parameter, licensing error, export failure,
-    etc). The message is passed through verbatim from the C# side.
-    """
+def parse_filter(pairs: list[str]) -> dict[str, str]:
+    """["sonumber=1234", ...] -> {"sonumber": "1234", ...}"""
+    result = {}
+    for pair in pairs:
+        column, separator, value = pair.partition("=")
+        if not separator or not column:
+            raise SystemExit(f"--filter takes column=value, got: {pair}")
+        result[column] = value
+    return result
 
 
-@dataclass
-class ReportResult:
-    """Structured result of a single report generation call."""
-    success: bool
-    output_path: Optional[str]
-    error: Optional[str]
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Render one report to a PDF file.")
+    parser.add_argument("--list", action="store_true", help="print every menu and report name, then exit")
+    parser.add_argument("--port", type=int, help="Postgres port of the database to render from")
+    parser.add_argument("--menu", help='e.g. "Supply"')
+    parser.add_argument("--report", help='e.g. "Work Order Traveler"')
+    parser.add_argument("--filter", action="append", default=[], metavar="COLUMN=VALUE",
+                        help="repeat for more than one column")
+    parser.add_argument("--out", default="test_render.pdf", help="where to save the PDF (default: test_render.pdf)")
+    args = parser.parse_args()
+
+    if args.list:
+        for menu, names in report_service.menus().items():
+            print(menu)
+            for name in names:
+                print(f"    {name}")
+        return 0
+
+    if args.port is None or not args.menu or not args.report:
+        parser.error("--port, --menu and --report are required (or use --list)")
+
+    try:
+        pdf = report_service.render(args.port, args.menu, args.report, parse_filter(args.filter))
+    except (report_service.ReportNotFound, report_service.BadRequest, report_service.RenderFailed) as exc:
+        print(f"{type(exc).__name__}: {exc.args[0]}", file=sys.stderr)
+        return 1
+
+    Path(args.out).write_bytes(pdf)
+    print(f"{len(pdf):,} bytes -> {Path(args.out).resolve()}")
+    return 0
 
 
-class CrystalReportsPipeline:
-    """
-    Thin Python-side client for the CrystalReportWrapper worker process.
-
-    Usage:
-        pipeline = CrystalReportsPipeline(worker_exe="C:/tools/CrystalReportWrapper.exe")
-        result = pipeline.generate_report(
-            report_path="C:/reports/sales.rpt",
-            output_path="C:/out/sales.pdf",
-            export_format="PDF",
-            parameters={"Region": "West", "Year": 2026},
-        )
-        print(result.output_path)
-    """
-
-    def __init__(self, worker_exe: str, timeout_seconds: int = 120):
-        """
-        Args:
-            worker_exe: Absolute path to the published CrystalReportWrapper.exe.
-            timeout_seconds: How long to wait for a single report export
-                before treating it as hung and raising a TimeoutExpired.
-        """
-        self.worker_exe = worker_exe
-        self.timeout_seconds = timeout_seconds
-
-        if not Path(worker_exe).exists():
-            # Fail fast and clearly rather than letting subprocess raise a
-            # less-obvious "file not found" error later.
-            raise FileNotFoundError(
-                f"Crystal Reports worker not found at: {worker_exe}"
-            )
-
-    def generate_report(
-        self,
-        report_path: str,
-        output_path: str,
-        export_format: str = "PDF",
-        parameters: Optional[dict] = None,
-        record_filters: Optional[dict] = None,
-        db_env: Optional[dict] = None,
-        sql_file: Optional[str] = None,
-    ) -> ReportResult:
-        """
-        Run a single Crystal Reports export end-to-end.
-
-        Args:
-            report_path: Path to the .rpt file to render.
-            output_path: Where the exported file should be written.
-            export_format: One of "PDF", "EXCEL"/"XLSX", "CSV", "WORD"/"DOCX"
-                (matched case-insensitively by the C# worker).
-            parameters: Optional dict of report parameter name -> value,
-                e.g. {"Region": "West", "Year": 2026}. Keys must match the
-                parameter names defined inside the .rpt file.
-            record_filters: Optional dict narrowing one or more of the
-                report's TableQueryCatalog tables down to a single record,
-                e.g. {"SOHeader": {"column": "SONumber", "value": "12345"},
-                "SODetail": {"column": "SONumber", "value": "12345"}} -
-                shaped for Program.cs's --record-filter (see
-                LoadRecordFilters/BuildReportDataSet there). Unlike
-                `parameters` (Crystal report parameters), this filters the
-                Postgres query itself, before Crystal ever sees the data.
-                report_service.render_report_for_record() is what builds
-                this dict; most callers should go through that rather than
-                constructing it by hand.
-            db_env: Optional PG_HOST/PG_PORT/PG_DATABASE/PG_USER/PG_PASSWORD
-                overrides for THIS worker process only (see
-                db_profiles.DbProfile.worker_env). Merged over os.environ
-                for the subprocess - never written into os.environ itself,
-                since concurrent renders for different databases share this
-                process. None = inherit this process's environment as-is.
-            sql_file: Optional path of the .sql file holding this report's
-                queries (reports_map.REPORT_SQL), passed as --sql-file. None =
-                the worker looks for SQLqueries/<report name>.sql itself.
-
-        Returns:
-            ReportResult with success=True and output_path set on success.
-
-        Raises:
-            CrystalReportError: if the worker process reports a failure.
-            subprocess.TimeoutExpired: if the worker hangs past timeout_seconds.
-        """
-        params_file = None
-        record_filter_file = None
-        try:
-            # Step 1: stage parameters/record filters as temp JSON files, if
-            # provided. A file (rather than inline args) sidesteps
-            # shell-quoting headaches with special characters/unicode values.
-            if parameters:
-                params_file = self._write_params_file(parameters)
-            if record_filters:
-                record_filter_file = self._write_params_file(record_filters)
-
-            # Step 2: build and run the subprocess command.
-            command = self._build_command(
-                report_path, output_path, export_format, params_file, record_filter_file,
-                sql_file,
-            )
-            completed = subprocess.run(
-                command,
-                capture_output=True,
-                text=True,
-                timeout=self.timeout_seconds,
-                env={**os.environ, **db_env} if db_env else None,
-            )
-
-            # Step 3: parse the single JSON line the worker printed.
-            return self._parse_worker_output(completed.stdout, completed.stderr)
-
-        finally:
-            # Step 4: always clean up the temp files, success or failure.
-            for f in (params_file, record_filter_file):
-                if f and os.path.exists(f):
-                    os.remove(f)
-
-    def inspect_report(self, report_path: str) -> dict:
-        """
-        Runs the worker in --inspect mode: loads report_path but never
-        touches Postgres or exports anything. Returns the parsed JSON
-        manifest describing the report's tables (name, location, and
-        each field's name/type), formula field text (so UFL-dependent
-        formulas like MFGFunctionsTranslationTranslate are visible),
-        and parameters - for the main report and every subreport.
-
-        Use this to build/verify a mock table's schema against what a
-        legacy report actually expects, instead of discovering column
-        name/case mismatches one export failure at a time.
-
-        Raises:
-            CrystalReportError: if the worker itself failed (e.g. bad
-                report path, corrupt .rpt). Note this is independent of
-                whether the report could actually be *exported* -
-                --inspect never attempts data binding/export.
-        """
-        command = [self.worker_exe, "--report", str(report_path), "--inspect"]
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=self.timeout_seconds,
-        )
-        return self._parse_json_line(completed.stdout, completed.stderr)
-
-    def extract_sql(self, report_path: str, sql_out_dir: Optional[str] = None) -> dict:
-        """
-        Runs the worker in --extract-sql mode: loads report_path (no
-        Postgres, no export) and writes the TableQueryCatalog query for
-        every table the report uses to <sql_out_dir>/<report name>.sql.
-        sql_out_dir defaults (worker-side) to a SQLqueries folder next to
-        the report's own folder.
-
-        Returns the worker's JSON payload: success, reportPath, sqlPath
-        (None for a report with no tables), tables, matchedTables,
-        missingTables (no catalog entry yet - a commented skeleton was
-        written for those), and backedUp (an existing, different .sql was
-        copied to .sql.bak first).
-
-        Raises:
-            CrystalReportError: if the worker failed (bad path, corrupt .rpt).
-        """
-        command = [self.worker_exe, "--report", str(report_path), "--extract-sql"]
-        if sql_out_dir:
-            command += ["--sql-out-dir", str(sql_out_dir)]
-        completed = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            timeout=self.timeout_seconds,
-        )
-        return self._parse_json_line(completed.stdout, completed.stderr)
-
-    def _parse_json_line(self, stdout: str, stderr: str) -> dict:
-        """Shared helper: takes the last non-empty stdout line, parses it
-        as JSON, and raises CrystalReportError on any failure signal.
-
-        _parse_worker_output() used to duplicate this logic (only
-        differing in that it also unpacked the dict into a ReportResult
-        dataclass) - collapsed into one implementation so a future fix to
-        the "how do we find the JSON line" logic only has to happen once.
-        """
-        lines = [line for line in stdout.strip().splitlines() if line.strip()]
-        if not lines:
-            raise CrystalReportError(
-                f"Worker produced no output. stderr: {stderr.strip()}"
-            )
-
-        try:
-            payload = json.loads(lines[-1])
-        except json.JSONDecodeError as exc:
-            raise CrystalReportError(
-                f"Could not parse worker output as JSON: {lines[-1]!r}. "
-                f"stderr: {stderr.strip()}"
-            ) from exc
-
-        if not payload.get("success", False):
-            raise CrystalReportError(payload.get("error") or "Unknown Crystal Reports worker error")
-
-        return payload
-
-    def _write_params_file(self, parameters: dict) -> str:
-        """Writes a dict (report parameters OR record filters - both are
-        just flat JSON on disk from the worker's point of view) to a temp
-        JSON file and returns its path. Name kept for parameters' sake even
-        though generate_report() also reuses it for record_filters.
-        """
-        fd, path = tempfile.mkstemp(suffix=".json", prefix="crystal_params_")
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(parameters, f)
-        return path
-
-    def _build_command(
-        self,
-        report_path: str,
-        output_path: str,
-        export_format: str,
-        params_file: Optional[str],
-        record_filter_file: Optional[str] = None,
-        sql_file: Optional[str] = None,
-    ) -> list[str]:
-        """Assembles the argv list passed to subprocess.run for the worker exe."""
-        command = [
-            self.worker_exe,
-            "--report", report_path,
-            "--output", output_path,
-            "--format", export_format,
-        ]
-        if params_file:
-            command += ["--params", params_file]
-        if record_filter_file:
-            command += ["--record-filter", record_filter_file]
-        if sql_file:
-            command += ["--sql-file", str(sql_file)]
-        return command
-
-    def _parse_worker_output(self, stdout: str, stderr: str) -> ReportResult:
-        """
-        Parses the worker's stdout JSON line into a ReportResult, raising
-        CrystalReportError if the worker signaled failure (or produced no
-        parseable JSON at all, e.g. it crashed before reaching its own
-        try/catch). Delegates the actual "find and parse the JSON line"
-        work to _parse_json_line so that logic exists in exactly one place.
-        """
-        payload = self._parse_json_line(stdout, stderr)
-        # _parse_json_line already raised if payload["success"] was falsy,
-        # so by this point result.success is always True - still read it
-        # from the payload rather than hardcoding True, in case that
-        # invariant ever changes.
-        return ReportResult(
-            success=payload.get("success", False),
-            output_path=payload.get("outputPath"),
-            error=payload.get("error"),
-        )
-
-
-# -----------------------------------------------------------------------
-# Example usage / manual smoke test.
-# Run directly with: python crystal_reports_pipeline.py
-# -----------------------------------------------------------------------
 if __name__ == "__main__":
-    parent_folder_path = Path(__file__).parents[0]
-
-    worker_path = parent_folder_path / "CrystalReportWrapper"/"bin"/"Release"/"net48" / "CrystalReportWrapper.exe"
-    report_path = parent_folder_path / "CrystalReportWrapper" / "2016-RegionCodes.rpt"
-    out_path = parent_folder_path / "out" / "output.json"
-    
-    pipeline = CrystalReportsPipeline(
-        worker_path
-    )
-    manifest = pipeline.inspect_report(report_path)
-    print(json.dumps(manifest, indent=2))
-
-    # out_path was "output.json" with export_format="PDF" - mismatched
-    # extension, fixed to match the actual export format below.
-    out_path = parent_folder_path / "out" / "output.pdf"
-
-    result = pipeline.generate_report(
-        report_path,
-        out_path,
-        export_format="PDF",
-       
-        parameters={"Month_req": "March", "Month_ordered": "August", "Year_ordered": 2026}
-    )
-
-    print(f"Report generated at: {result.output_path}")
+    raise SystemExit(main())

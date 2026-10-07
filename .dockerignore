@@ -15,8 +15,9 @@ jsonInspections/inspect-sales.json
 # accidentally COPYed in even if the volume mount is removed later.
 report_api_certs/
 
-# Rendered output - also volume-mounted, not part of the image.
+# Test output from main.py.
 out/
+*.pdf
 
 # CrystalReportWrapper build cruft: intermediate obj/ files, the Debug
 # build (the image uses the Release publish/ output instead - see
@@ -33,6 +34,8 @@ docker-compose.yml
 .env
 .env.example
 
-# Database profiles - volume-mounted by docker-compose.yml (./config) so
-# edits apply without a rebuild; keep a stale copy out of the image.
+# Old code set aside by the stateless rewrite, and other dev-only folders.
+_to_delete/
 config/
+CrystalReportAPI/
+CrystalReportAPI.zip

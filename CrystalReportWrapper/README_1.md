@@ -1,66 +1,48 @@
-# Crystal Reports <-> Python Pipeline
+# CrystalReportWrapper
 
-Crystal Reports' SDK is C#/.NET-only. This pipeline bridges it into Python
-via a subprocess worker instead of trying to run Crystal Reports in-process
-inside Python (which isn't supported).
+Crystal Reports only has a .NET SDK, so the Python report service
+(`pythonScripts/report_service.py`) starts this exe once per request.
 
 ```
-Python code
-   │  generate_report(report_path, output_path, params)
-   ▼
-crystal_reports_pipeline.py  ──spawns──►  CrystalReportWrapper.exe (C#)
-   ▲                                            │
-   │        JSON on stdout: {success, outputPath, error}
-   └────────────────────────────────────────────┘
+POST /render {port, menu, report, filter}
+   |
+report_api_server.py -> report_service.render()
+   |   one JSON request on stdin
+   v
+CrystalReportWrapper.exe      (Program.cs)
+   |   PDF bytes on stdout
+   v
+HTTP response: application/pdf
 ```
 
-## 1. Build the C# worker
+Nothing is written to disk and nothing is kept between requests.
 
-Requires Windows + the Crystal Reports SDK installed (the SDK is Windows-only,
-so this step can't be done on Linux/macOS).
+## Files
 
-```bash
-cd CrystalReportWrapper
-# Point the <Reference HintPath> entries in CrystalReportWrapper.csproj at
-# your local Crystal Reports SDK DLLs first, then:
-dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true
+| File | What it does |
+| --- | --- |
+| `Program.cs` | The render flow: load report, read SQL, query Postgres, bind, set parameters, export. |
+| `ReportSql.cs` | Reads a report's `.sql` file (one query per Crystal table). |
+| `DevTools.cs` | `--inspect` and `--extract-sql`, run by hand when setting up a report. Not used by the service. |
+
+## Worker contract
+
+- **stdin**: `{"reportPath", "sqlPath", "port", "filter": {column: value}, "parameters": {name: value}}`
+- **stdout**: the PDF (exit code 0), or `{"error": "..."}` (exit code 1 or 2)
+- **stderr**: diagnostics only
+- **exit code**: 0 rendered, 1 failed, 2 bad request (a filter column no table in the report has)
+- **environment**: `PG_HOST`, `PG_DATABASE`, `PG_USER`, `PG_PASSWORD`. The port comes from the request.
+
+## Build
+
+Windows, .NET Framework 4.8 and the 32-bit SAP Crystal Reports runtime (13.0.4000):
+
+```
+dotnet publish CrystalReportWrapper\CrystalReportWrapper.csproj -c Release
 ```
 
-This produces `CrystalReportWrapper.exe` under
-`bin/Release/net48/win-x64/publish/`.
+## Try one report
 
-## 2. Call it from Python
-
-```python
-from crystal_reports_pipeline import CrystalReportsPipeline
-
-pipeline = CrystalReportsPipeline(worker_exe=r"C:\tools\CrystalReportWrapper.exe")
-
-result = pipeline.generate_report(
-    report_path=r"C:\reports\sales_summary.rpt",
-    output_path=r"C:\out\sales_summary.pdf",
-    export_format="PDF",
-    parameters={"Region": "West", "Year": 2026},
-)
-
-print(result.output_path)  # -> C:\out\sales_summary.pdf
 ```
-
-## Why this shape
-
-- **Isolation**: a crash inside the Crystal Reports SDK kills the worker
-  process, not your Python app.
-- **Simple contract**: one JSON line on stdout is the entire interface -
-  changing internal C# logic never breaks the Python side.
-- **No COM/pythonnet dependency**: avoids matching bitness/threading model
-  between Python and the .NET runtime.
-
-## Trade-offs to be aware of
-
-- Each call pays for process startup - fine for scheduled/batch reporting,
-  less ideal for high-frequency, low-latency calls (in that case, consider
-  turning the C# worker into a long-lived local HTTP service instead of a
-  per-call subprocess, and having Python call it with `requests`).
-- The worker (and therefore Crystal Reports itself) only runs on Windows.
-  Your Python code can run anywhere, but wherever `generate_report()`
-  actually executes needs Windows + the CR runtime redistributable installed.
+python main.py --port 5430 --menu Supply --report "Work Order Traveler" --filter wonumber=WO00080002
+```
