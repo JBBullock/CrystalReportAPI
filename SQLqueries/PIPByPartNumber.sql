@@ -1,8 +1,11 @@
 -- ============================================================================
 -- PIPByPartNumber.sql
 -- Extracted from PIPByPartNumber.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: PIPByPartNumber_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -13,29 +16,31 @@
 -- ----------------------------------------------------------------------------
 -- Table: PIPByPartNumber_TTX
 -- Original data source: PIPByPartNumber
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- Purchases in process: material issued to open (subcontract) PO lines.
+-- INFERRED: open lines only; TotalPIPIssues = quantity issued x its unit
+-- cost (the part's current cost when the issue carries none); POPercentCompleted = received / ordered, as 0-100; the value still
+-- in process = TotalPIPIssues x the share not yet received.
 SELECT
-    NULL AS "PONumber", -- StringField -> text
-    NULL AS "POLine", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "PIPIssues_QuantityReleased", -- NumberField -> numeric
-    NULL AS "UOMCode", -- StringField -> text
-    NULL AS "SNLOTNumber", -- StringField -> text
-    NULL AS "PO_QuantityReleased", -- NumberField -> numeric
-    NULL AS "QuantityReceived", -- NumberField -> numeric
-    NULL AS "ClosedFlag", -- BooleanField -> boolean
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "Cost", -- NumberField -> numeric
-    NULL AS "DensityCode", -- StringField -> text
-    NULL AS "InventoryCost", -- NumberField -> numeric
-    NULL AS "TotalPIPIssues", -- NumberField -> numeric
-    NULL AS "POPercentCompleted", -- NumberField -> numeric
-    NULL AS "CalculatePIPValue" -- NumberField -> numeric
-FROM ???;
-*/
+    pi.ponumber AS "PONumber",
+    pi.poline AS "POLine",
+    pi.partnumber AS "PartNumber",
+    pi.quantityreleased AS "PIPIssues_QuantityReleased",
+    pi.uomcode AS "UOMCode",
+    pi.snlotnumber AS "SNLOTNumber",
+    pd.quantityreleased AS "PO_QuantityReleased",
+    pd.quantityreceived AS "QuantityReceived",
+    pd.closedflag AS "ClosedFlag",
+    pm.desctext AS "DescText",
+    pm.stockuom AS "StockUOM",
+    pm.cost AS "Cost",
+    pm.densitycode AS "DensityCode",
+    coalesce(nullif(pi.materialcost, 0), pm.cost, 0) AS "InventoryCost",
+    (coalesce(pi.quantityreleased, 0) * coalesce(nullif(pi.materialcost, 0), pm.cost, 0)) AS "TotalPIPIssues",
+    (CASE WHEN coalesce(pd.quantityordered, 0) > 0 THEN least(100, 100.0 * coalesce(pd.quantityreceived, 0) / pd.quantityordered) ELSE 0 END)::float8 AS "POPercentCompleted",
+    ((coalesce(pi.quantityreleased, 0) * coalesce(nullif(pi.materialcost, 0), pm.cost, 0)) * (1 - (CASE WHEN coalesce(pd.quantityordered, 0) > 0 THEN least(100, 100.0 * coalesce(pd.quantityreceived, 0) / pd.quantityordered) ELSE 0 END) / 100.0))::float8 AS "CalculatePIPValue"
+FROM pipissues pi
+JOIN podetail pd ON upper(pd.ponumber) = upper(pi.ponumber) AND pd.poline = pi.poline
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(pi.partnumber)
+WHERE NOT pd.closedflag
+ORDER BY pi.partnumber, pi.ponumber, pi.poline, pi.issueid;

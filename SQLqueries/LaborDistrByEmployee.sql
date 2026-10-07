@@ -1,8 +1,11 @@
 -- ============================================================================
 -- LaborDistrByEmployee.sql
 -- Extracted from LaborDistrByEmployee.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: LaborDistrByEmployee_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,28 +14,25 @@
 -- ----------------------------------------------------------------------------
 -- Table: LaborDistrByEmployee_TTX
 -- Original data source: LaborDistrByEmployee
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "WONumber", -- StringField -> text
-    NULL AS "EmployeeID", -- StringField -> text
-    NULL AS "SequenceID", -- Int32sField -> integer
-    NULL AS "StartDate", -- DateTimeField -> timestamp
-    NULL AS "StopDate", -- DateTimeField -> timestamp
-    NULL AS "QuantityCompleted", -- NumberField -> numeric
-    NULL AS "LaborDistribution_AccountNumber", -- StringField -> text
-    NULL AS "WageRate", -- NumberField -> numeric
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "LastName", -- StringField -> text
-    NULL AS "FirstName", -- StringField -> text
-    NULL AS "MiddleInitial", -- StringField -> text
-    NULL AS "Suffix", -- StringField -> text
-    NULL AS "DepartmentCodes_AccountNumber", -- StringField -> text
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "ActualTime" -- NumberField -> numeric
-FROM ???;
-*/
+    ld.wonumber AS "WONumber",
+    ld.employeeid AS "EmployeeID",
+    ld.sequenceid AS "SequenceID",
+    ld.startdate AS "StartDate",
+    ld.stopdate AS "StopDate",
+    ld.quantitycompleted AS "QuantityCompleted",
+    ld.accountnumber AS "LaborDistribution_AccountNumber",
+    ld.wagerate AS "WageRate",
+    e.departmentcode AS "DepartmentCode",
+    e.lastname AS "LastName",
+    e.firstname AS "FirstName",
+    e.middleinitial AS "MiddleInitial",
+    e.suffix AS "Suffix",
+    dc.accountnumber AS "DepartmentCodes_AccountNumber",
+    dc.desctext AS "DescText", -- INFERRED: the employee's department description
+    (extract(epoch FROM (ld.stopdate - ld.startdate)) / 3600.0)::float8 AS "ActualTime" -- INFERRED: hours between start and stop
+FROM labordistribution ld
+LEFT JOIN employees e ON upper(e.employeeid) = upper(ld.employeeid)
+LEFT JOIN departmentcodes dc ON upper(dc.departmentcode) = upper(e.departmentcode)
+ORDER BY ld.employeeid, ld.startdate;

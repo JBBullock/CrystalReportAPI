@@ -1,8 +1,11 @@
 -- ============================================================================
 -- ShortageReport.sql
 -- Extracted from ShortageReport.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: ShortageReport_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,24 +14,27 @@
 -- ----------------------------------------------------------------------------
 -- Table: ShortageReport_TTX
 -- Original data source: ShortageReport
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- Shortages recorded against purchase orders and against work orders.
 SELECT
-    NULL AS "POWONumber", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "LineNumber", -- StringField -> text
-    NULL AS "TransactionDate", -- DateTimeField -> timestamp
-    NULL AS "Quantity", -- NumberField -> numeric
-    NULL AS "PartMaster_DescText", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "StockroomCode", -- StringField -> text
-    NULL AS "ISC", -- StringField -> text
-    NULL AS "OMC", -- StringField -> text
-    NULL AS "Stockroom_DescText", -- StringField -> text
-    NULL AS "LastName" -- StringField -> text
-FROM ???;
-*/
+    x.powonumber AS "POWONumber",
+    x.partnumber AS "PartNumber",
+    x.linenumber AS "LineNumber",
+    x.transactiondate AS "TransactionDate",
+    x.quantity AS "Quantity",
+    pm.desctext AS "PartMaster_DescText",
+    pm.departmentcode AS "DepartmentCode",
+    pm.stockroomcode AS "StockroomCode",
+    pm.isc AS "ISC",
+    pm.omc AS "OMC",
+    dc.desctext AS "Stockroom_DescText", -- INFERRED: description of the part's stockroom department
+    e.lastname AS "LastName" -- INFERRED: the employee who entered the part
+FROM (
+    SELECT ponumber AS powonumber, partnumber, linenumber, transactiondate, quantity FROM poshortages
+    UNION ALL
+    SELECT wonumber, partnumber, ''::varchar, transactiondate, quantity FROM woshortages
+) x
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(x.partnumber)
+LEFT JOIN departmentcodes dc ON upper(dc.departmentcode) = upper(pm.stockroomcode)
+LEFT JOIN employees e ON upper(e.employeeid) = upper(pm.enteredby)
+ORDER BY x.partnumber, x.transactiondate, x.powonumber;

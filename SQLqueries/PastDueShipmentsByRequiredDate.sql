@@ -1,8 +1,11 @@
 -- ============================================================================
 -- PastDueShipmentsByRequiredDate.sql
 -- Extracted from PastDueShipmentsByRequiredDate.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: BackOrderListing_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -17,25 +20,28 @@
 -- ----------------------------------------------------------------------------
 -- Table: BackOrderListing_TTX
 -- Original data source: PastDueShipmentsByRequiredDate
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- Open sales order lines with a quantity still to ship. The report's own
+-- record selection keeps the ones scheduled before today.
+-- INFERRED: BackOrderQuantity = ordered - shipped + returned;
+-- BackOrderCost = that quantity x the customer price.
 SELECT
-    NULL AS "SONumber", -- StringField -> text
-    NULL AS "SOLine", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "CustomerID", -- StringField -> text
-    NULL AS "ScheduledShipDate", -- DateTimeField -> timestamp
-    NULL AS "QuantityOrdered", -- NumberField -> numeric
-    NULL AS "QuantityShipped", -- NumberField -> numeric
-    NULL AS "QuantityReturned", -- NumberField -> numeric
-    NULL AS "CustomerPrice", -- NumberField -> numeric
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "ActualShipDate", -- DateTimeField -> timestamp
-    NULL AS "BackOrderQuantity", -- NumberField -> numeric
-    NULL AS "BackOrderCost" -- NumberField -> numeric
-FROM ???;
-*/
+    sd.sonumber AS "SONumber",
+    sd.soline AS "SOLine",
+    sd.partnumber AS "PartNumber",
+    sh.customerid AS "CustomerID",
+    sd.scheduledshipdate AS "ScheduledShipDate",
+    sd.quantityordered AS "QuantityOrdered",
+    sd.quantityshipped AS "QuantityShipped",
+    sd.quantityreturned AS "QuantityReturned",
+    sd.customerprice AS "CustomerPrice",
+    pm.desctext AS "DescText",
+    sd.actualshipdate AS "ActualShipDate",
+    (coalesce(sd.quantityordered, 0) - coalesce(sd.quantityshipped, 0) + coalesce(sd.quantityreturned, 0)) AS "BackOrderQuantity",
+    ((coalesce(sd.quantityordered, 0) - coalesce(sd.quantityshipped, 0) + coalesce(sd.quantityreturned, 0)) * coalesce(sd.customerprice, 0)) AS "BackOrderCost"
+FROM sodetail sd
+JOIN soheader sh ON upper(sh.sonumber) = upper(sd.sonumber)
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(sd.partnumber)
+WHERE NOT sd.closedflag AND NOT sh.closedflag
+  AND (coalesce(sd.quantityordered, 0) - coalesce(sd.quantityshipped, 0) + coalesce(sd.quantityreturned, 0)) > 0
+ORDER BY sd.scheduledshipdate, sd.sonumber, sd.soline;

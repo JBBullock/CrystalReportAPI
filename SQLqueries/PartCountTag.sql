@@ -1,8 +1,11 @@
 -- ============================================================================
 -- PartCountTag.sql
 -- Extracted from PartCountTag.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: PartCountTag_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,22 +14,18 @@
 -- ----------------------------------------------------------------------------
 -- Table: PartCountTag_TTX
 -- Original data source: PartCountTag
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "TagNumber", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "LocationCode", -- StringField -> text
-    NULL AS "SNLotNumber", -- StringField -> text
-    NULL AS "InventoryQuantity", -- NumberField -> numeric
-    NULL AS "JobNumber", -- StringField -> text
-    NULL AS "Revision", -- StringField -> text
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "StockUOM" -- StringField -> text
-FROM ???;
-*/
+    it.tagnumber AS "TagNumber",
+    it.partnumber AS "PartNumber",
+    it.departmentcode AS "DepartmentCode",
+    it.locationcode AS "LocationCode",
+    it.snlotnumber AS "SNLotNumber",
+    it.inventoryquantity AS "InventoryQuantity",
+    it.jobnumber AS "JobNumber",
+    pm.revision AS "Revision",
+    pm.desctext AS "DescText",
+    pm.stockuom AS "StockUOM"
+FROM inventorytags it
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(it.partnumber)
+ORDER BY it.tagnumber;

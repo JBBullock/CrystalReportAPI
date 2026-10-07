@@ -1,8 +1,11 @@
 -- ============================================================================
 -- SalesOrder.sql
 -- Extracted from SalesOrder.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: SalesOrder_TTX, company, commoditycodes
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -135,16 +138,10 @@ FROM company;
 
 -- ----------------------------------------------------------------------------
 -- Table: commoditycodes
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "commoditycode", -- StringField -> text
-    NULL AS "desctext", -- StringField -> text
-    NULL AS "employeeid", -- StringField -> text
-    NULL AS "commoditycodes_pkey" -- Int32sField -> integer
-FROM ???;
-*/
+    commoditycode AS "commoditycode",
+    desctext AS "desctext",
+    employeeid AS "employeeid",
+    commoditycodes_pkey AS "commoditycodes_pkey"
+FROM commoditycodes;

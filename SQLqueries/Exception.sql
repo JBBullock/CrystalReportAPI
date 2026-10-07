@@ -1,8 +1,11 @@
 -- ============================================================================
 -- Exception.sql
 -- Extracted from Exception.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: ExceptionReport_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,41 +14,43 @@
 -- ----------------------------------------------------------------------------
 -- Table: ExceptionReport_TTX
 -- Original data source: Exception
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- INFERRED: the exception report lists the MRP lines that carry an action
+-- message (mrpplanning.action is set).
 SELECT
-    NULL AS "MRPJobID", -- Int32sField -> integer
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "JobNumber", -- StringField -> text
-    NULL AS "Priority", -- Int16sField -> integer
-    NULL AS "Revision", -- StringField -> text
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "LastName", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "StockroomCode", -- StringField -> text
-    NULL AS "ISC", -- StringField -> text
-    NULL AS "OMC", -- StringField -> text
-    NULL AS "SafetyStock", -- NumberField -> numeric
-    NULL AS "LeadTime", -- NumberField -> numeric
-    NULL AS "OrderQuantity", -- NumberField -> numeric
-    NULL AS "OrderMultiple", -- NumberField -> numeric
-    NULL AS "YieldFactor", -- NumberField -> numeric
-    NULL AS "StartDate", -- DateTimeField -> timestamp
-    NULL AS "StartQuantity", -- NumberField -> numeric
-    NULL AS "RequiredDate", -- DateTimeField -> timestamp
-    NULL AS "RequiredQuantity", -- NumberField -> numeric
-    NULL AS "Balance", -- NumberField -> numeric
-    NULL AS "Reference", -- StringField -> text
-    NULL AS "Pegging", -- StringField -> text
-    NULL AS "MoveDate", -- DateTimeField -> timestamp
-    NULL AS "ReferenceLine", -- StringField -> text
-    NULL AS "MRP_Action", -- Int16sField -> integer
-    NULL AS "OnHand", -- NumberField -> numeric
-    NULL AS "BalanceSortOrder" -- Int32sField -> integer
-FROM ???;
-*/
+    mp.mrpjobid AS "MRPJobID",
+    mp.partnumber AS "PartNumber",
+    mp.jobnumber AS "JobNumber",
+    mp.priority AS "Priority",
+    pm.revision AS "Revision",
+    pm.desctext AS "DescText",
+    pm.stockuom AS "StockUOM",
+    e.lastname AS "LastName", -- the part's MRP planner
+    pm.departmentcode AS "DepartmentCode",
+    pm.stockroomcode AS "StockroomCode",
+    mpp.isc AS "ISC",
+    mpp.omc AS "OMC",
+    mpp.safetystock AS "SafetyStock",
+    mpp.leadtime AS "LeadTime",
+    mpp.orderquantity AS "OrderQuantity",
+    mpp.ordermultiple AS "OrderMultiple",
+    mpp.yieldfactor AS "YieldFactor",
+    mp.startdate AS "StartDate",
+    mp.startquantity AS "StartQuantity",
+    mp.requireddate AS "RequiredDate",
+    mp.requiredquantity AS "RequiredQuantity",
+    mp.balance AS "Balance",
+    mp.reference AS "Reference",
+    mp.pegging AS "Pegging",
+    mp.movedate AS "MoveDate",
+    mp.referenceline AS "ReferenceLine",
+    mp.action AS "MRP_Action",
+    mj.onhand AS "OnHand",
+    mp.balancesortorder AS "BalanceSortOrder"
+FROM mrpplanning mp
+LEFT JOIN mrpparts mpp ON mpp.mrpheaderid = mp.mrpheaderid
+LEFT JOIN mrpjobs mj ON mj.mrpheaderid = mp.mrpheaderid AND mj.mrpjobid = mp.mrpjobid
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(mp.partnumber)
+LEFT JOIN employees e ON upper(e.employeeid) = upper(mpp.planner)
+WHERE mp.action IS NOT NULL
+ORDER BY mp.partnumber, mp.mrpjobid, mp.balancesortorder;

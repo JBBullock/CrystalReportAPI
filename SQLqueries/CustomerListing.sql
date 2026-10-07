@@ -1,8 +1,11 @@
 -- ============================================================================
 -- CustomerListing.sql
 -- Extracted from CustomerListing.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: CustomerListing_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -12,47 +15,48 @@
 -- ----------------------------------------------------------------------------
 -- Table: CustomerListing_TTX
 -- Original data source: CustomerListing
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- INFERRED: one row per customer address, with that address's contacts.
 SELECT
-    NULL AS "CustomerID", -- StringField -> text
-    NULL AS "AddressID", -- StringField -> text
-    NULL AS "ContactID", -- StringField -> text
-    NULL AS "CustomerName", -- StringField -> text
-    NULL AS "RegionCode", -- StringField -> text
-    NULL AS "ActiveFlag", -- BooleanField -> boolean
-    NULL AS "VATRegNumber", -- StringField -> text
-    NULL AS "VATBranchID", -- StringField -> text
-    NULL AS "ShipViaCode", -- StringField -> text
-    NULL AS "DateAdded", -- DateTimeField -> timestamp
-    NULL AS "CreditLimit", -- NumberField -> numeric
-    NULL AS "CurrencyCode", -- StringField -> text
-    NULL AS "TermsCode", -- StringField -> text
-    NULL AS "PriceDiscType", -- NumberField -> numeric
-    NULL AS "ExchangeRate", -- NumberField -> numeric
-    NULL AS "AddressLine1", -- StringField -> text
-    NULL AS "AddressLine2", -- StringField -> text
-    NULL AS "AddressLine3", -- StringField -> text
-    NULL AS "AddressLine4", -- StringField -> text
-    NULL AS "City", -- StringField -> text
-    NULL AS "State", -- StringField -> text
-    NULL AS "ZIPCode", -- StringField -> text
-    NULL AS "Postal", -- StringField -> text
-    NULL AS "Country", -- StringField -> text
-    NULL AS "ShipToFlag", -- BooleanField -> boolean
-    NULL AS "BillToFlag", -- BooleanField -> boolean
-    NULL AS "DiscountPercentage", -- NumberField -> numeric
-    NULL AS "PriceDiscountCodes_DescText", -- StringField -> text
-    NULL AS "CustomerDiscLevel_DescText", -- StringField -> text
-    NULL AS "Name", -- StringField -> text
-    NULL AS "Email", -- StringField -> text
-    NULL AS "Phone", -- StringField -> text
-    NULL AS "PhoneFMT", -- StringField -> text
-    NULL AS "FAX", -- StringField -> text
-    NULL AS "FAXFMT" -- StringField -> text
-FROM ???;
-*/
+    c.customerid AS "CustomerID",
+    ca.addressid AS "AddressID",
+    cc.contactid AS "ContactID",
+    c.customername AS "CustomerName",
+    c.regioncode AS "RegionCode",
+    c.activeflag AS "ActiveFlag",
+    c.vatregnumber AS "VATRegNumber",
+    c.vatbranchid AS "VATBranchID",
+    c.shipviacode AS "ShipViaCode",
+    c.dateadded AS "DateAdded",
+    c.creditlimit AS "CreditLimit",
+    c.currencycode AS "CurrencyCode",
+    c.termscode AS "TermsCode",
+    c.pricedisctype AS "PriceDiscType",
+    cur.exchangerate AS "ExchangeRate",
+    ca.addressline1 AS "AddressLine1",
+    ca.addressline2 AS "AddressLine2",
+    ca.addressline3 AS "AddressLine3",
+    ca.addressline4 AS "AddressLine4",
+    ca.city AS "City",
+    ca.state AS "State",
+    ca.zipcode AS "ZIPCode",
+    ca.postal AS "Postal",
+    ca.country AS "Country",
+    coalesce(ca.shiptoflag, false) AS "ShipToFlag",
+    coalesce(ca.billtoflag, false) AS "BillToFlag",
+    pdc.discountpercentage AS "DiscountPercentage",
+    pdc.desctext AS "PriceDiscountCodes_DescText",
+    cdl.desctext AS "CustomerDiscLevel_DescText",
+    cc.name AS "Name",
+    cc.email AS "Email",
+    cc.phone AS "Phone",
+    cc.phonefmt AS "PhoneFMT",
+    cc.fax AS "FAX",
+    cc.faxfmt AS "FAXFMT"
+FROM customers c
+LEFT JOIN customeraddress ca ON upper(ca.customerid) = upper(c.customerid)
+LEFT JOIN customercontacts cc ON upper(cc.customerid) = upper(ca.customerid) AND upper(cc.addressid) = upper(ca.addressid)
+LEFT JOIN currencycodes cur ON upper(cur.currencycode) = upper(c.currencycode)
+LEFT JOIN pricediscountcodes pdc ON upper(pdc.pricecode) = upper(c.pricecode)
+LEFT JOIN customerdisclevel cdl ON upper(cdl.customerdisclevel) = upper(c.customerdisclevel)
+ORDER BY c.customerid, ca.addressid, cc.contactid;

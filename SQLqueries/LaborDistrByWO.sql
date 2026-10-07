@@ -1,8 +1,11 @@
 -- ============================================================================
 -- LaborDistrByWO.sql
 -- Extracted from LaborDistrByWO.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: LaborDistrByWO_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,31 +14,30 @@
 -- ----------------------------------------------------------------------------
 -- Table: LaborDistrByWO_TTX
 -- Original data source: LaborDistrByWO
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "LaborDistribution_WONumber", -- StringField -> text
-    NULL AS "WOHeader_WONumber", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "EmployeeID", -- StringField -> text
-    NULL AS "LaborDistribution_StartDate", -- DateTimeField -> timestamp
-    NULL AS "LaborDistribution_StopDate", -- DateTimeField -> timestamp
-    NULL AS "LaborDistribution_QuantityCompleted", -- NumberField -> numeric
-    NULL AS "LaborDistribution_AccountNumber", -- StringField -> text
-    NULL AS "WageRate", -- NumberField -> numeric
-    NULL AS "SequenceID", -- Int32sField -> integer
-    NULL AS "WOHeader_StartDate", -- DateTimeField -> timestamp
-    NULL AS "WOHeader_RequiredDate", -- DateTimeField -> timestamp
-    NULL AS "QuantityToStart", -- NumberField -> numeric
-    NULL AS "QuantityReleased", -- NumberField -> numeric
-    NULL AS "QuantityRequired", -- NumberField -> numeric
-    NULL AS "WOHeader_QuantityCompleted", -- NumberField -> numeric
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "DepartmentCodes_AccountNumber", -- StringField -> text
-    NULL AS "ActualTime" -- NumberField -> numeric
-FROM ???;
-*/
+    ld.wonumber AS "LaborDistribution_WONumber",
+    wh.wonumber AS "WOHeader_WONumber",
+    wh.partnumber AS "PartNumber",
+    ld.employeeid AS "EmployeeID",
+    ld.startdate AS "LaborDistribution_StartDate",
+    ld.stopdate AS "LaborDistribution_StopDate",
+    ld.quantitycompleted AS "LaborDistribution_QuantityCompleted",
+    ld.accountnumber AS "LaborDistribution_AccountNumber",
+    ld.wagerate AS "WageRate",
+    ld.sequenceid AS "SequenceID",
+    wh.startdate AS "WOHeader_StartDate",
+    wh.requireddate AS "WOHeader_RequiredDate",
+    wh.quantitytostart AS "QuantityToStart",
+    wh.quantityreleased AS "QuantityReleased",
+    wh.quantityrequired AS "QuantityRequired",
+    wh.quantitycompleted AS "WOHeader_QuantityCompleted",
+    pm.desctext AS "DescText", -- the work order part's description
+    dc.accountnumber AS "DepartmentCodes_AccountNumber",
+    (extract(epoch FROM (ld.stopdate - ld.startdate)) / 3600.0)::float8 AS "ActualTime" -- INFERRED: hours between start and stop
+FROM labordistribution ld
+LEFT JOIN woheader wh ON upper(wh.wonumber) = upper(ld.wonumber)
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(wh.partnumber)
+LEFT JOIN employees e ON upper(e.employeeid) = upper(ld.employeeid)
+LEFT JOIN departmentcodes dc ON upper(dc.departmentcode) = upper(e.departmentcode)
+ORDER BY ld.wonumber, ld.sequenceid, ld.startdate;

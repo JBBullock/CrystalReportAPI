@@ -1,8 +1,11 @@
 -- ============================================================================
 -- PartCrossReference.sql
 -- Extracted from PartCrossReference.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: PartCrossReference_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -12,25 +15,22 @@
 -- ----------------------------------------------------------------------------
 -- Table: PartCrossReference_TTX
 -- Original data source: PartCrossReference
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "PartXReference", -- StringField -> text
-    NULL AS "SupplierID", -- StringField -> text
-    NULL AS "XRefDescText", -- StringField -> text
-    NULL AS "SupplierRating", -- NumberField -> numeric
-    NULL AS "SupplierLeadtime", -- NumberField -> numeric
-    NULL AS "ApprovedSource", -- BooleanField -> boolean
-    NULL AS "SupplierPrice", -- NumberField -> numeric
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "Revision", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "DefaultPOCost", -- NumberField -> numeric
-    NULL AS "SupplierName" -- StringField -> text
-FROM ???;
-*/
+    px.partnumber AS "PartNumber",
+    px.partxreference AS "PartXReference",
+    px.supplierid AS "SupplierID",
+    px.xrefdesctext AS "XRefDescText",
+    px.supplierrating AS "SupplierRating",
+    px.supplierleadtime AS "SupplierLeadtime",
+    px.approvedsource AS "ApprovedSource",
+    px.supplierprice AS "SupplierPrice",
+    pm.desctext AS "DescText",
+    pm.revision AS "Revision",
+    pm.stockuom AS "StockUOM",
+    pm.defaultpocost AS "DefaultPOCost",
+    s.suppliername AS "SupplierName"
+FROM partxreference px
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(px.partnumber)
+LEFT JOIN suppliers s ON upper(s.supplierid) = upper(px.supplierid)
+ORDER BY px.partnumber, px.partxreference, px.supplierid;

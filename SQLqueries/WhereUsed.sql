@@ -1,8 +1,11 @@
 -- ============================================================================
 -- WhereUsed.sql
 -- Extracted from WhereUsed.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: WhereUsed_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,25 +14,22 @@
 -- ----------------------------------------------------------------------------
 -- Table: WhereUsed_TTX
 -- Original data source: WhereUsed
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "Assembly", -- StringField -> text
-    NULL AS "Component", -- StringField -> text
-    NULL AS "ItemSequence", -- StringField -> text
-    NULL AS "QuantityPer", -- NumberField -> numeric
-    NULL AS "ObsoleteDate", -- DateTimeField -> timestamp
-    NULL AS "EffectiveDate", -- DateTimeField -> timestamp
-    NULL AS "BOMUOMCode", -- StringField -> text
-    NULL AS "Assembly_DescText", -- StringField -> text
-    NULL AS "Assembly_Revision", -- StringField -> text
-    NULL AS "Assembly_StockUOM", -- StringField -> text
-    NULL AS "Component_DescText", -- StringField -> text
-    NULL AS "Component_Revision", -- StringField -> text
-    NULL AS "Component_StockUOM" -- StringField -> text
-FROM ???;
-*/
+    b.assembly AS "Assembly",
+    b.component AS "Component",
+    b.itemsequence AS "ItemSequence",
+    b.quantityper AS "QuantityPer",
+    b.obsoletedate AS "ObsoleteDate",
+    b.effectivedate AS "EffectiveDate",
+    b.bomuomcode AS "BOMUOMCode",
+    am.desctext AS "Assembly_DescText",
+    am.revision AS "Assembly_Revision",
+    am.stockuom AS "Assembly_StockUOM",
+    cm.desctext AS "Component_DescText",
+    cm.revision AS "Component_Revision",
+    cm.stockuom AS "Component_StockUOM"
+FROM bom b
+LEFT JOIN partmaster am ON upper(am.partnumber) = upper(b.assembly)
+LEFT JOIN partmaster cm ON upper(cm.partnumber) = upper(b.component)
+ORDER BY b.component, b.assembly;

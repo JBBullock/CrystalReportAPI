@@ -1,8 +1,11 @@
 -- ============================================================================
 -- StockStatus.sql
 -- Extracted from StockStatus.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: StockStatus_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -13,32 +16,32 @@
 -- ----------------------------------------------------------------------------
 -- Table: StockStatus_TTX
 -- Original data source: StockStatus
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "ISC", -- StringField -> text
-    NULL AS "OMC", -- StringField -> text
-    NULL AS "ABCCode", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "StockroomCode", -- StringField -> text
-    NULL AS "LeadTime", -- NumberField -> numeric
-    NULL AS "SUOCode", -- StringField -> text
-    NULL AS "CommodityCode", -- StringField -> text
-    NULL AS "SafetyStock", -- NumberField -> numeric
-    NULL AS "OrderQuantity", -- NumberField -> numeric
-    NULL AS "OrderMultiple", -- NumberField -> numeric
-    NULL AS "YieldFactor", -- NumberField -> numeric
-    NULL AS "ListPrice", -- NumberField -> numeric
-    NULL AS "QuantityOnHand", -- NumberField -> numeric
-    NULL AS "YTDUsage", -- NumberField -> numeric
-    NULL AS "LastXactionDate", -- DateTimeField -> timestamp
-    NULL AS "DateAdded", -- DateTimeField -> timestamp
-    NULL AS "Cost" -- NumberField -> numeric
-FROM ???;
-*/
+    pm.partnumber AS "PartNumber",
+    pm.stockuom AS "StockUOM",
+    pm.isc AS "ISC",
+    pm.omc AS "OMC",
+    pm.abccode AS "ABCCode",
+    pm.departmentcode AS "DepartmentCode",
+    pm.stockroomcode AS "StockroomCode",
+    pm.leadtime AS "LeadTime",
+    pm.suocode AS "SUOCode",
+    pm.commoditycode AS "CommodityCode",
+    pm.safetystock AS "SafetyStock",
+    pm.orderquantity AS "OrderQuantity",
+    pm.ordermultiple AS "OrderMultiple",
+    pm.yieldfactor AS "YieldFactor",
+    pm.listprice AS "ListPrice",
+    coalesce(oh.quantity, 0) AS "QuantityOnHand", -- total of the part's inventory lots, all locations
+    pm.ytdusage AS "YTDUsage",
+    pm.lastxactiondate AS "LastXactionDate",
+    pm.dateadded AS "DateAdded",
+    pm.cost AS "Cost"
+FROM partmaster pm
+LEFT JOIN (
+    SELECT upper(partnumber) AS partnumber, sum(quantity) AS quantity
+    FROM inventorylots
+    GROUP BY upper(partnumber)
+) oh ON oh.partnumber = upper(pm.partnumber)
+ORDER BY pm.partnumber;

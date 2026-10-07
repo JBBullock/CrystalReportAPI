@@ -1,8 +1,11 @@
 -- ============================================================================
 -- ManualPartsList.sql
 -- Extracted from ManualPartsList.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: ManualPartsList_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,35 +14,36 @@
 -- ----------------------------------------------------------------------------
 -- Table: ManualPartsList_TTX
 -- Original data source: ManualPartsList
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- INFERRED: MRP lines for parts whose order method code (OMC) is 'M' (manual).
 SELECT
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "JobNumber", -- StringField -> text
-    NULL AS "RequiredDate", -- DateTimeField -> timestamp
-    NULL AS "RequiredQuantity", -- NumberField -> numeric
-    NULL AS "Balance", -- NumberField -> numeric
-    NULL AS "Reference", -- StringField -> text
-    NULL AS "Pegging", -- StringField -> text
-    NULL AS "ReferenceLine", -- StringField -> text
-    NULL AS "ISC", -- StringField -> text
-    NULL AS "OMC", -- StringField -> text
-    NULL AS "LeadTime", -- NumberField -> numeric
-    NULL AS "SafetyStock", -- NumberField -> numeric
-    NULL AS "OrderQuantity", -- NumberField -> numeric
-    NULL AS "OrderMultiple", -- NumberField -> numeric
-    NULL AS "YieldFactor", -- NumberField -> numeric
-    NULL AS "Revision", -- StringField -> text
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "StockroomCode", -- StringField -> text
-    NULL AS "MRPJobID", -- Int32sField -> integer
-    NULL AS "Priority", -- Int16sField -> integer
-    NULL AS "LastName" -- StringField -> text
-FROM ???;
-*/
+    mp.partnumber AS "PartNumber",
+    mp.jobnumber AS "JobNumber",
+    mp.requireddate AS "RequiredDate",
+    mp.requiredquantity AS "RequiredQuantity",
+    mp.balance AS "Balance",
+    mp.reference AS "Reference",
+    mp.pegging AS "Pegging",
+    mp.referenceline AS "ReferenceLine",
+    mpp.isc AS "ISC",
+    mpp.omc AS "OMC",
+    mpp.leadtime AS "LeadTime",
+    mpp.safetystock AS "SafetyStock",
+    mpp.orderquantity AS "OrderQuantity",
+    mpp.ordermultiple AS "OrderMultiple",
+    mpp.yieldfactor AS "YieldFactor",
+    pm.revision AS "Revision",
+    pm.desctext AS "DescText",
+    pm.stockuom AS "StockUOM",
+    pm.departmentcode AS "DepartmentCode",
+    pm.stockroomcode AS "StockroomCode",
+    mp.mrpjobid AS "MRPJobID",
+    mp.priority AS "Priority",
+    e.lastname AS "LastName" -- the part's MRP planner
+FROM mrpplanning mp
+LEFT JOIN mrpparts mpp ON mpp.mrpheaderid = mp.mrpheaderid
+LEFT JOIN mrpjobs mj ON mj.mrpheaderid = mp.mrpheaderid AND mj.mrpjobid = mp.mrpjobid
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(mp.partnumber)
+LEFT JOIN employees e ON upper(e.employeeid) = upper(mpp.planner)
+WHERE upper(mpp.omc) = 'M'
+ORDER BY mp.partnumber, mp.mrpjobid, mp.balancesortorder;

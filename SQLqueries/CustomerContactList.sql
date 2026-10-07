@@ -1,39 +1,43 @@
 -- ============================================================================
 -- CustomerContactList.sql
 -- Extracted from CustomerContactList.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: CustomerContactList_TTX
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- Table: CustomerContactList_TTX
 -- Original data source: CustomerContactList
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- INFERRED: one row per customer address, with that address's contacts
+-- (customers with no address or no contact still appear).
 SELECT
-    NULL AS "CustomerID", -- StringField -> text
-    NULL AS "AddressID", -- StringField -> text
-    NULL AS "CustomerName", -- StringField -> text
-    NULL AS "ShipHoldFlag", -- BooleanField -> boolean
-    NULL AS "ActiveFlag", -- BooleanField -> boolean
-    NULL AS "RegionCode", -- StringField -> text
-    NULL AS "PriceDiscType", -- NumberField -> numeric
-    NULL AS "City", -- StringField -> text
-    NULL AS "State", -- StringField -> text
-    NULL AS "ContactID", -- StringField -> text
-    NULL AS "Name", -- StringField -> text
-    NULL AS "Phone", -- StringField -> text
-    NULL AS "FAX", -- StringField -> text
-    NULL AS "PhoneFMT", -- StringField -> text
-    NULL AS "FAXFMT", -- StringField -> text
-    NULL AS "Email", -- StringField -> text
-    NULL AS "DiscountPercentage", -- NumberField -> numeric
-    NULL AS "PriceDiscountCodes_DescText", -- StringField -> text
-    NULL AS "CustomerDiscLevel_DescText" -- StringField -> text
-FROM ???;
-*/
+    c.customerid AS "CustomerID",
+    ca.addressid AS "AddressID",
+    c.customername AS "CustomerName",
+    c.shipholdflag AS "ShipHoldFlag",
+    c.activeflag AS "ActiveFlag",
+    c.regioncode AS "RegionCode",
+    c.pricedisctype AS "PriceDiscType",
+    ca.city AS "City",
+    ca.state AS "State",
+    cc.contactid AS "ContactID",
+    cc.name AS "Name",
+    cc.phone AS "Phone",
+    cc.fax AS "FAX",
+    cc.phonefmt AS "PhoneFMT",
+    cc.faxfmt AS "FAXFMT",
+    cc.email AS "Email",
+    pdc.discountpercentage AS "DiscountPercentage",
+    pdc.desctext AS "PriceDiscountCodes_DescText",
+    cdl.desctext AS "CustomerDiscLevel_DescText"
+FROM customers c
+LEFT JOIN customeraddress ca ON upper(ca.customerid) = upper(c.customerid)
+LEFT JOIN customercontacts cc ON upper(cc.customerid) = upper(ca.customerid) AND upper(cc.addressid) = upper(ca.addressid)
+LEFT JOIN pricediscountcodes pdc ON upper(pdc.pricecode) = upper(c.pricecode)
+LEFT JOIN customerdisclevel cdl ON upper(cdl.customerdisclevel) = upper(c.customerdisclevel)
+ORDER BY c.customerid, ca.addressid, cc.contactid;

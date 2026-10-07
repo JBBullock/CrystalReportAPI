@@ -1,8 +1,11 @@
 -- ============================================================================
 -- SOListByPartNumber.sql
 -- Extracted from SOListByPartNumber.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: SOListByPartNumber_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -13,20 +16,16 @@
 -- ----------------------------------------------------------------------------
 -- Table: SOListByPartNumber_TTX
 -- Original data source: SOListByPartNumber
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "SONumber", -- StringField -> text
-    NULL AS "SOLine", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "QuantityOrdered", -- NumberField -> numeric
-    NULL AS "CustomerPrice", -- NumberField -> numeric
-    NULL AS "ScheduledShipDate", -- DateTimeField -> timestamp
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "LineAmount" -- NumberField -> numeric
-FROM ???;
-*/
+    sd.sonumber AS "SONumber",
+    sd.soline AS "SOLine",
+    sd.partnumber AS "PartNumber",
+    sd.quantityordered AS "QuantityOrdered",
+    sd.customerprice AS "CustomerPrice",
+    sd.scheduledshipdate AS "ScheduledShipDate",
+    pm.desctext AS "DescText",
+    (sd.quantityordered * sd.customerprice) AS "LineAmount"
+FROM sodetail sd
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(sd.partnumber)
+ORDER BY sd.partnumber, sd.sonumber, sd.soline;

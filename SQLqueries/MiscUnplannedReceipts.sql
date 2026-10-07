@@ -1,8 +1,11 @@
 -- ============================================================================
 -- MiscUnplannedReceipts.sql
 -- Extracted from MiscUnplannedReceipts.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: MiscUnplannedReceipts_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -13,26 +16,24 @@
 -- ----------------------------------------------------------------------------
 -- Table: MiscUnplannedReceipts_TTX
 -- Original data source: MiscUnplannedReceipts
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "TransactionGroup", -- NumberField -> numeric
-    NULL AS "TransactionID", -- NumberField -> numeric
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "FromDepartment", -- StringField -> text
-    NULL AS "ToDepartment", -- StringField -> text
-    NULL AS "SNLotNumber", -- StringField -> text
-    NULL AS "Cost", -- NumberField -> numeric
-    NULL AS "Quantity", -- NumberField -> numeric
-    NULL AS "LineNumber", -- StringField -> text
-    NULL AS "ToLocation", -- StringField -> text
-    NULL AS "TransactionDate", -- DateTimeField -> timestamp
-    NULL AS "Reference", -- StringField -> text
-    NULL AS "EnteredBy", -- StringField -> text
-    NULL AS "DescText" -- StringField -> text
-FROM ???;
-*/
+    td.transactiongroup AS "TransactionGroup",
+    td.transactionid AS "TransactionID",
+    td.partnumber AS "PartNumber",
+    td.fromdepartment AS "FromDepartment",
+    td.todepartment AS "ToDepartment",
+    td.snlotnumber AS "SNLotNumber",
+    td.cost AS "Cost",
+    td.quantity AS "Quantity",
+    td.linenumber AS "LineNumber",
+    td.tolocation AS "ToLocation",
+    th.transactiondate AS "TransactionDate",
+    th.reference AS "Reference",
+    th.enteredby AS "EnteredBy",
+    pm.desctext AS "DescText"
+FROM transactiondetail td
+JOIN transactionheader th ON th.transactiongroup = td.transactiongroup
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(td.partnumber)
+WHERE th.transactiontype = 'UPR'
+ORDER BY td.partnumber, th.transactiondate, td.transactionid;

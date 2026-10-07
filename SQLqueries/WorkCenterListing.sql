@@ -1,38 +1,41 @@
 -- ============================================================================
 -- WorkCenterListing.sql
 -- Extracted from WorkCenterListing.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: WorkCenterListing_TTX
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
 -- Table: WorkCenterListing_TTX
 -- Original data source: WorkCenterListing
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- One row per work center shift (and per recorded downtime of that shift);
+-- a work center with no shifts appears once with the shift columns empty.
 SELECT
-    NULL AS "WorkCenterID", -- StringField -> text
-    NULL AS "ShiftID", -- StringField -> text
-    NULL AS "WorkCenterName", -- StringField -> text
-    NULL AS "DefaultWageRate", -- NumberField -> numeric
-    NULL AS "WCAccountNumber", -- StringField -> text
-    NULL AS "UseShifts", -- BooleanField -> boolean
-    NULL AS "StartTime", -- DateTimeField -> timestamp
-    NULL AS "StopTime", -- DateTimeField -> timestamp
-    NULL AS "Capacity", -- NumberField -> numeric
-    NULL AS "Monday", -- BooleanField -> boolean
-    NULL AS "Tuesday", -- BooleanField -> boolean
-    NULL AS "Wednesday", -- BooleanField -> boolean
-    NULL AS "Thursday", -- BooleanField -> boolean
-    NULL AS "Friday", -- BooleanField -> boolean
-    NULL AS "Saturday", -- BooleanField -> boolean
-    NULL AS "Sunday", -- BooleanField -> boolean
-    NULL AS "StartDate", -- DateTimeField -> timestamp
-    NULL AS "ReasonDown" -- StringField -> text
-FROM ???;
-*/
+    wc.workcenterid AS "WorkCenterID",
+    ws.shiftid AS "ShiftID",
+    wc.workcentername AS "WorkCenterName",
+    wc.defaultwagerate AS "DefaultWageRate",
+    wc.wcaccountnumber AS "WCAccountNumber",
+    wc.useshifts AS "UseShifts",
+    ws.starttime AS "StartTime",
+    ws.stoptime AS "StopTime",
+    coalesce(ws.capacity, wc.capacity) AS "Capacity", -- INFERRED: the shift's capacity, else the work center's
+    coalesce(ws.monday, false) AS "Monday",
+    coalesce(ws.tuesday, false) AS "Tuesday",
+    coalesce(ws.wednesday, false) AS "Wednesday",
+    coalesce(ws.thursday, false) AS "Thursday",
+    coalesce(ws.friday, false) AS "Friday",
+    coalesce(ws.saturday, false) AS "Saturday",
+    coalesce(ws.sunday, false) AS "Sunday",
+    sd.startdate AS "StartDate",
+    sd.reasondown AS "ReasonDown"
+FROM workcenters wc
+LEFT JOIN workcentershifts ws ON upper(ws.workcenterid) = upper(wc.workcenterid)
+LEFT JOIN shiftdowntime sd ON upper(sd.workcenterid) = upper(ws.workcenterid) AND upper(sd.shiftid) = upper(ws.shiftid)
+ORDER BY wc.workcenterid, ws.shiftid, sd.startdate;
+

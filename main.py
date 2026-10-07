@@ -17,6 +17,12 @@ nothing.
 
     python main.py --list          # every menu and report name
 
+    python main.py --all --port 5434
+    Renders every report once, unfiltered, and prints one pass/fail line
+    each with the error for a failure. Saves nothing. Reports with very many
+    rows unfiltered (the indented BOMs above all) will show as timed out -
+    test those with a --filter instead.
+
 Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD in the project root's
 .env file (report_service.py loads it), and a built CrystalReportWrapper.exe.
 """
@@ -27,6 +33,7 @@ import argparse
 import logging
 import re
 import sys
+import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -51,9 +58,39 @@ def parse_filter(items: list[str]) -> dict:
     return {c: (ops["="] if list(ops) == ["="] else ops) for c, ops in result.items()}
 
 
+def render_all(port: int) -> int:
+    """Render every report in reports_map once; print pass/fail per report."""
+    reports_map = report_service.reports_map
+    failed = 0
+    total = 0
+    not_set_up = []
+    for menu, names in report_service.menus().items():
+        for name in names:
+            # A menu entry whose .rpt has no .sql file yet is not a failure.
+            if reports_map.sql_for(reports_map.REPORTS[(menu, name)]) is None:
+                not_set_up.append(f"{menu} / {name}")
+                continue
+            total += 1
+            started = time.time()
+            try:
+                pdf = report_service.render(port, menu, name)
+                print(f"ok    {time.time() - started:6.1f}s  {len(pdf):>10,} bytes  {menu} / {name}", flush=True)
+            except (report_service.ReportNotFound, report_service.BadRequest, report_service.RenderFailed) as exc:
+                failed += 1
+                print(f"FAIL  {time.time() - started:6.1f}s  {menu} / {name}\n      {exc.args[0]}", flush=True)
+    print(f"\n{total - failed} of {total} rendered, {failed} failed")
+    if not_set_up:
+        print(f"{len(not_set_up)} menu entries skipped (no REPORT_SQL entry in reports_map.py):")
+        for entry in not_set_up:
+            print(f"      {entry}")
+    return 1 if failed else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Render one report to a PDF file.")
     parser.add_argument("--list", action="store_true", help="print every menu and report name, then exit")
+    parser.add_argument("--all", action="store_true",
+                        help="render every report once (needs --port); prints pass/fail, saves nothing")
     parser.add_argument("--port", type=int, help="Postgres port of the database to render from")
     parser.add_argument("--menu", help='e.g. "Supply"')
     parser.add_argument("--report", help='e.g. "Work Order Traveler"')
@@ -73,8 +110,13 @@ def main() -> int:
                 print(f"    {name}")
         return 0
 
+    if args.all:
+        if args.port is None:
+            parser.error("--all needs --port")
+        return render_all(args.port)
+
     if args.port is None or not args.menu or not args.report:
-        parser.error("--port, --menu and --report are required (or use --list)")
+        parser.error("--port, --menu and --report are required (or use --list or --all)")
 
     try:
         pdf = report_service.render(args.port, args.menu, args.report, parse_filter(args.filter))

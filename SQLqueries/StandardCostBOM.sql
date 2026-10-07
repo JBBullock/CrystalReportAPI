@@ -1,8 +1,11 @@
 -- ============================================================================
 -- StandardCostBOM.sql
 -- Extracted from StandardCostBOM.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: StandardCostBOM_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -14,43 +17,51 @@
 -- ----------------------------------------------------------------------------
 -- Table: StandardCostBOM_TTX
 -- Original data source: StandardCostBOM
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "Assembly", -- StringField -> text
-    NULL AS "Component", -- StringField -> text
-    NULL AS "ItemSequence", -- StringField -> text
-    NULL AS "QuantityPer", -- NumberField -> numeric
-    NULL AS "BOMUOMCode", -- StringField -> text
-    NULL AS "EffectiveDate", -- DateTimeField -> timestamp
-    NULL AS "ObsoleteDate", -- DateTimeField -> timestamp
-    NULL AS "Assembly_Revision", -- StringField -> text
-    NULL AS "Assembly_DescText", -- StringField -> text
-    NULL AS "Assembly_StockUOM", -- StringField -> text
-    NULL AS "Assembly_STDMaterialCost", -- NumberField -> numeric
-    NULL AS "Assembly_STDBurdenCost", -- NumberField -> numeric
-    NULL AS "Assembly_STDLaborCost", -- NumberField -> numeric
-    NULL AS "Assembly_STDSetUpCost", -- NumberField -> numeric
-    NULL AS "Assembly_STDSubContCost", -- NumberField -> numeric
-    NULL AS "Assembly_Cost", -- NumberField -> numeric
-    NULL AS "Assembly_ISC", -- StringField -> text
-    NULL AS "Component_Revision", -- StringField -> text
-    NULL AS "Component_DescText", -- StringField -> text
-    NULL AS "Component_StockUOM", -- StringField -> text
-    NULL AS "Component_STDMaterialCost", -- NumberField -> numeric
-    NULL AS "Component_STDBurdenCost", -- NumberField -> numeric
-    NULL AS "Component_STDLaborCost", -- NumberField -> numeric
-    NULL AS "Component_STDSetUpCost", -- NumberField -> numeric
-    NULL AS "Component_STDSubContCost", -- NumberField -> numeric
-    NULL AS "Component_Cost", -- NumberField -> numeric
-    NULL AS "Component_ISC", -- StringField -> text
-    NULL AS "DensityCode", -- StringField -> text
-    NULL AS "OrderQuantity", -- NumberField -> numeric
-    NULL AS "TestConversion", -- NumberField -> numeric
-    NULL AS "Component_TotalCost" -- NumberField -> numeric
-FROM ???;
-*/
+    b.assembly AS "Assembly",
+    b.component AS "Component",
+    b.itemsequence AS "ItemSequence",
+    b.quantityper AS "QuantityPer",
+    b.bomuomcode AS "BOMUOMCode",
+    b.effectivedate AS "EffectiveDate",
+    b.obsoletedate AS "ObsoleteDate",
+    am.revision AS "Assembly_Revision",
+    am.desctext AS "Assembly_DescText",
+    am.stockuom AS "Assembly_StockUOM",
+    am.stdmaterialcost AS "Assembly_STDMaterialCost",
+    am.stdburdencost AS "Assembly_STDBurdenCost",
+    am.stdlaborcost AS "Assembly_STDLaborCost",
+    am.stdsetupcost AS "Assembly_STDSetUpCost",
+    am.stdsubcontcost AS "Assembly_STDSubContCost",
+    (coalesce(am.stdmaterialcost, 0) + coalesce(am.stdlaborcost, 0) + coalesce(am.stdburdencost, 0)
+        + coalesce(am.stdsetupcost, 0) + coalesce(am.stdsubcontcost, 0)) AS "Assembly_Cost", -- INFERRED: sum of the standard cost elements
+    am.isc AS "Assembly_ISC",
+    cm.revision AS "Component_Revision",
+    cm.desctext AS "Component_DescText",
+    cm.stockuom AS "Component_StockUOM",
+    cm.stdmaterialcost AS "Component_STDMaterialCost",
+    cm.stdburdencost AS "Component_STDBurdenCost",
+    cm.stdlaborcost AS "Component_STDLaborCost",
+    cm.stdsetupcost AS "Component_STDSetUpCost",
+    cm.stdsubcontcost AS "Component_STDSubContCost",
+    (coalesce(cm.stdmaterialcost, 0) + coalesce(cm.stdlaborcost, 0) + coalesce(cm.stdburdencost, 0)
+        + coalesce(cm.stdsetupcost, 0) + coalesce(cm.stdsubcontcost, 0)) AS "Component_Cost", -- INFERRED: sum of the standard cost elements
+    cm.isc AS "Component_ISC",
+    cm.densitycode AS "DensityCode",
+    am.orderquantity AS "OrderQuantity", -- INFERRED: the assembly's order quantity
+    -- INFERRED: factor that converts the BOM quantity (BOM UOM) to the
+    -- component's stock UOM; 1 when the two UOMs are of different types.
+    (CASE WHEN bu.uomtype = su.uomtype AND su.conversionfactor <> 0
+          THEN bu.conversionfactor / su.conversionfactor ELSE 1 END) AS "TestConversion",
+    -- INFERRED: quantity per, in stock UOM, times the component's standard cost.
+    (b.quantityper * (CASE WHEN bu.uomtype = su.uomtype AND su.conversionfactor <> 0
+          THEN bu.conversionfactor / su.conversionfactor ELSE 1 END)
+        * (coalesce(cm.stdmaterialcost, 0) + coalesce(cm.stdlaborcost, 0) + coalesce(cm.stdburdencost, 0)
+           + coalesce(cm.stdsetupcost, 0) + coalesce(cm.stdsubcontcost, 0))) AS "Component_TotalCost"
+FROM bom b
+LEFT JOIN partmaster am ON upper(am.partnumber) = upper(b.assembly)
+LEFT JOIN partmaster cm ON upper(cm.partnumber) = upper(b.component)
+LEFT JOIN uomcodes bu ON upper(bu.uomcode) = upper(b.bomuomcode)
+LEFT JOIN uomcodes su ON upper(su.uomcode) = upper(cm.stockuom)
+ORDER BY b.assembly, b.itemsequence, b.component;

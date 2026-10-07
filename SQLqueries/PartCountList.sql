@@ -1,8 +1,11 @@
 -- ============================================================================
 -- PartCountList.sql
 -- Extracted from PartCountList.rpt by CrystalReportWrapper --extract-sql.
--- Source of truth: TableQueryCatalog in CrystalReportWrapper\Program.cs -
--- edit the query there, then re-run --extract-sql to refresh this file.
+-- CrystalReportWrapper runs the queries in this file at render time - edit
+-- them here. One query per '-- Table: <name>' line; column aliases must match
+-- the report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: PartCountList_TTX
 -- Report parameters:
 --   QuantityDecimals (NumberParameter)
@@ -11,25 +14,22 @@
 -- ----------------------------------------------------------------------------
 -- Table: PartCountList_TTX
 -- Original data source: PartCountList
--- NO TableQueryCatalog ENTRY - TODO: write this query, add it to
--- TableQueryCatalog in Program.cs, then re-run --extract-sql.
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "TagNumber", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "LocationCode", -- StringField -> text
-    NULL AS "SNLotNumber", -- StringField -> text
-    NULL AS "InventoryQuantity", -- NumberField -> numeric
-    NULL AS "CountQuantity", -- NumberField -> numeric
-    NULL AS "ClosedFlag", -- BooleanField -> boolean
-    NULL AS "PartMaster_DescText", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "DepartmentCodes_DescText", -- StringField -> text
-    NULL AS "AccountNumber", -- StringField -> text
-    NULL AS "NettableFlag" -- BooleanField -> boolean
-FROM ???;
-*/
+    it.tagnumber AS "TagNumber",
+    it.partnumber AS "PartNumber",
+    it.departmentcode AS "DepartmentCode",
+    it.locationcode AS "LocationCode",
+    it.snlotnumber AS "SNLotNumber",
+    it.inventoryquantity AS "InventoryQuantity",
+    it.countquantity AS "CountQuantity",
+    it.closedflag AS "ClosedFlag",
+    pm.desctext AS "PartMaster_DescText",
+    pm.stockuom AS "StockUOM",
+    dc.desctext AS "DepartmentCodes_DescText",
+    dc.accountnumber AS "AccountNumber",
+    coalesce(dc.nettableflag, false) AS "NettableFlag"
+FROM inventorytags it
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(it.partnumber)
+LEFT JOIN departmentcodes dc ON upper(dc.departmentcode) = upper(it.departmentcode)
+ORDER BY it.departmentcode, it.locationcode, it.partnumber, it.tagnumber;
