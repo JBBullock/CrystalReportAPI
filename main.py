@@ -11,13 +11,16 @@ nothing.
 
     python main.py --list          # every menu and report name
 
-Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD set, and a built
-CrystalReportWrapper.exe (see pythonScripts/report_service.py).
+Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD, and a built
+CrystalReportWrapper.exe (see pythonScripts/report_service.py). The four
+variables are read from the .env file beside this script; one already set in
+your shell wins over the file. (In Docker, Compose loads .env instead.)
 """
 
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -25,7 +28,16 @@ HERE = Path(__file__).resolve().parent
 if (HERE / "pythonScripts").is_dir():
     sys.path.insert(0, str(HERE / "pythonScripts"))
 
-import report_service  # noqa: E402  (needs the path line above)
+# Load .env into this process's environment. The worker is started by
+# report_service and inherits it.
+ENV_FILE = HERE / ".env"
+if ENV_FILE.is_file():
+    for line in ENV_FILE.read_text(encoding="utf-8-sig").splitlines():
+        name, separator, value = line.strip().partition("=")
+        if separator and name and not name.startswith("#"):
+            os.environ.setdefault(name.strip(), value.strip().strip('"'))
+
+import report_service  # noqa: E402  (needs the path and .env lines above)
 
 
 def parse_filter(pairs: list[str]) -> dict[str, str]:

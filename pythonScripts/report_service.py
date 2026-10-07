@@ -68,7 +68,12 @@ REPORT_PARAMETERS: dict[str, Any] = json.loads(PARAMETERS_PATH.read_text(encodin
 # Worker exit codes - see Program.cs.
 _EXIT_RENDERED = 0
 _EXIT_BAD_REQUEST = 2
-
+env_file = HERE / ".env"
+if env_file.is_file():
+    for line in env_file.read_text(encoding="utf-8-sig").splitlines():
+        name, separator, value = line.strip().partition("=")
+        if separator and name and not name.startswith("#"):
+            os.environ.setdefault(name.strip(), value.strip().strip('"'))
 
 class ReportNotFound(KeyError):
     """No report with that (menu, name) in reports_map.REPORTS."""
