@@ -146,8 +146,13 @@ REPORT_SQL: dict[str, str] = {
     "CustomerContactList.rpt": "CustomerContactList.sql",
     "CustomerDiscLevel.rpt": "CustomerDiscLevel.sql",
     "CustomerListing.rpt": "CustomerListing.sql",
+    "CreditMemo.rpt": "CreditMemo.sql",
+    "CreditMemoTransaction.rpt": "CreditMemoTransaction.sql",
+
     "EngineeringChangeNotice.rpt": "EngineeringChangeNotice.sql",
     "EngineeringPartMaster.rpt": "EngineeringPartMaster.sql",
+    "ECNSummary.rpt": "ECNSummary.sql",
+
     "Exception.rpt": "Exception.sql",
     "Forecast.rpt": "Forecast.sql",
     "IndentedBOM.rpt": "IndentedBOM.sql",
@@ -156,10 +161,15 @@ REPORT_SQL: dict[str, str] = {
     "IntrastatRates.rpt": "IntrastatRates.sql",
     
     "InventoryPartCost.rpt": "InventoryPartCost.sql",
+    "Invoice.rpt": "Invoice.sql",
+    "InvoiceTransaction.rpt": "InvoiceTransaction.sql",
+    "InventoryVariance.rpt": "InventoryVariance.sql",
+
     "JobSummary.rpt": "JobSummary.sql",
     "LaborDistrByEmployee.rpt": "LaborDistrByEmployee.sql",
     "LaborDistrByWO.rpt": "LaborDistrByWO.sql",
     "LaborRouter.rpt": "LaborRouter.sql",
+    "LaborUtilization.rpt": "LaborUtilization.sql",
     "ManualPartsList.rpt": "ManualPartsList.sql",
     "MiscUnplannedIssues.rpt": "MiscUnplannedIssues.sql",
     "MiscUnplannedReceipts.rpt": "MiscUnplannedReceipts.sql",
@@ -183,6 +193,7 @@ REPORT_SQL: dict[str, str] = {
     "POPickList.rpt": "POPickList.sql",
     "POReceipt.rpt": "POReceipt.sql",
     "POTotalsGraph.rpt": "POTotalsGraph.sql",
+    "ProductionBacklog.rpt": "ProductionBacklog.sql",
     "ProductionSchedule.rpt": "ProductionSchedule.sql",
     "PurchaseCommitment.rpt": "PurchaseCommitment.sql",
     "PurchaseOrder.rpt": "PurchaseOrder.sql",
