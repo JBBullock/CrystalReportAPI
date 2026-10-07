@@ -4,6 +4,8 @@
 -- CrystalReportWrapper runs the queries in this file at render time - edit
 -- them here. One query per '-- Table: <name>' line; aliases must match the
 -- report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: InventoryVarianceReport_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -14,26 +16,22 @@
 -- ----------------------------------------------------------------------------
 -- Table: InventoryVarianceReport_TTX
 -- Original data source: InventoryVariance
--- NO QUERY YET - TODO: replace the commented-out skeleton below with the
--- real query (remove the /* and */ lines).
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
 SELECT
-    NULL AS "TagNumber", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "DepartmentCode", -- StringField -> text
-    NULL AS "SNLotNumber", -- StringField -> text
-    NULL AS "JobNumber", -- StringField -> text
-    NULL AS "LocationCode", -- StringField -> text
-    NULL AS "EmployeeID", -- StringField -> text
-    NULL AS "InventoryQuantity", -- NumberField -> numeric
-    NULL AS "CountQuantity", -- NumberField -> numeric
-    NULL AS "DescText", -- StringField -> text
-    NULL AS "Cost", -- NumberField -> numeric
-    NULL AS "ClosedFlag", -- BooleanField -> boolean
-    NULL AS "QuantityVariance", -- NumberField -> numeric
-    NULL AS "CostVariance" -- NumberField -> numeric
-FROM ???;
-*/
+    it.tagnumber AS "TagNumber",
+    it.partnumber AS "PartNumber",
+    it.departmentcode AS "DepartmentCode",
+    it.snlotnumber AS "SNLotNumber",
+    it.jobnumber AS "JobNumber",
+    it.locationcode AS "LocationCode",
+    it.employeeid AS "EmployeeID",
+    it.inventoryquantity AS "InventoryQuantity",
+    it.countquantity AS "CountQuantity",
+    pm.desctext AS "DescText",
+    pm.cost AS "Cost",
+    it.closedflag AS "ClosedFlag",
+    (coalesce(it.countquantity, 0) - coalesce(it.inventoryquantity, 0)) AS "QuantityVariance", -- INFERRED: counted minus on record
+    ((coalesce(it.countquantity, 0) - coalesce(it.inventoryquantity, 0)) * coalesce(pm.cost, 0)) AS "CostVariance"
+FROM inventorytags it
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(it.partnumber)
+ORDER BY it.departmentcode, it.locationcode, it.partnumber, it.tagnumber;

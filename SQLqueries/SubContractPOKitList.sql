@@ -28,8 +28,11 @@ SELECT
     td.quantity AS "Quantity",
     th.auditdate AS "AuditDate",
     td.snlotnumber AS "SNLotNumber",
-    pd.ponumber AS "PONumber",
-    pd.poline AS "POLine",
+    -- The transaction's own spelling of the PO number and line: the report
+    -- hides a row where these differ from Reference / LineNumber, and the
+    -- database stores some PO numbers in mixed case.
+    th.reference AS "PONumber",
+    td.linenumber AS "POLine",
     coalesce(pd.jobnumber, '') AS "JobNumber",
     coalesce(pd.partxreference, '') AS "PartXReference",
     pd.requireddate AS "RequiredDate",

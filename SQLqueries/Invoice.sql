@@ -4,6 +4,8 @@
 -- CrystalReportWrapper runs the queries in this file at render time - edit
 -- them here. One query per '-- Table: <name>' line; aliases must match the
 -- report's field names exactly (case-sensitive).
+-- Lines marked INFERRED are best guesses at what the legacy program put in
+-- that column - check them against a known-good printout.
 -- Tables: InvoiceReport_TTX
 -- Report parameters:
 --   CostDecimals (NumberParameter)
@@ -16,74 +18,87 @@
 -- ----------------------------------------------------------------------------
 -- Table: InvoiceReport_TTX
 -- Original data source: Invoice
--- NO QUERY YET - TODO: replace the commented-out skeleton below with the
--- real query (remove the /* and */ lines).
--- Skeleton below lists every column the report expects; aliases must
--- match exactly (case-sensitive) for Crystal to bind them.
 -- ----------------------------------------------------------------------------
-/*
+-- INFERRED: the customer address is the sales order's bill-to address, and
+-- the line notes are the sales order line's notes (invoice lines have none).
 SELECT
-    NULL AS "InvoiceNumber", -- StringField -> text
-    NULL AS "TrackingNumber", -- StringField -> text
-    NULL AS "Carrier", -- StringField -> text
-    NULL AS "FreightAmount", -- NumberField -> numeric
-    NULL AS "ShipmentDate", -- DateTimeField -> timestamp
-    NULL AS "InvoiceLine", -- StringField -> text
-    NULL AS "PartNumber", -- StringField -> text
-    NULL AS "SOLine", -- StringField -> text
-    NULL AS "Quantity", -- NumberField -> numeric
-    NULL AS "Price", -- NumberField -> numeric
-    NULL AS "SalesUOM", -- StringField -> text
-    NULL AS "TaxableFlag", -- BooleanField -> boolean
-    NULL AS "BaseTaxCode", -- StringField -> text
-    NULL AS "BaseTaxRate", -- NumberField -> numeric
-    NULL AS "TaxFlag2", -- BooleanField -> boolean
-    NULL AS "TaxCode2", -- StringField -> text
-    NULL AS "TaxRate2", -- NumberField -> numeric
-    NULL AS "TaxFlag3", -- BooleanField -> boolean
-    NULL AS "TaxCode3", -- StringField -> text
-    NULL AS "TaxRate3", -- NumberField -> numeric
-    NULL AS "ExtendedAmount", -- NumberField -> numeric
-    NULL AS "BaseTaxAmount", -- NumberField -> numeric
-    NULL AS "Tax2Amount", -- NumberField -> numeric
-    NULL AS "Tax3Amount", -- NumberField -> numeric
-    NULL AS "LineSubtotal", -- NumberField -> numeric
-    NULL AS "LineTotal", -- NumberField -> numeric
-    NULL AS "SONumber", -- StringField -> text
-    NULL AS "JobNumber", -- StringField -> text
-    NULL AS "CustomerPO", -- StringField -> text
-    NULL AS "CurrencyCode", -- StringField -> text
-    NULL AS "CurrencyRate", -- NumberField -> numeric
-    NULL AS "PartXReference", -- StringField -> text
-    NULL AS "Customer_AddressLine1", -- StringField -> text
-    NULL AS "Customer_AddressLine2", -- StringField -> text
-    NULL AS "Customer_AddressLine3", -- StringField -> text
-    NULL AS "Customer_AddressLine4", -- StringField -> text
-    NULL AS "Customer_City", -- StringField -> text
-    NULL AS "Customer_State", -- StringField -> text
-    NULL AS "Customer_ZIPCode", -- StringField -> text
-    NULL AS "Customer_Country", -- StringField -> text
-    NULL AS "Customer_Postal", -- StringField -> text
-    NULL AS "Company_AddressLine1", -- StringField -> text
-    NULL AS "Company_AddressLine2", -- StringField -> text
-    NULL AS "Company_AddressLine3", -- StringField -> text
-    NULL AS "Company_AddressLine4", -- StringField -> text
-    NULL AS "Company_City", -- StringField -> text
-    NULL AS "Company_State", -- StringField -> text
-    NULL AS "Company_ZipCode", -- StringField -> text
-    NULL AS "Company_Country", -- StringField -> text
-    NULL AS "Company_Postal", -- StringField -> text
-    NULL AS "CustomerID", -- StringField -> text
-    NULL AS "CustomerName", -- StringField -> text
-    NULL AS "PartMaster_DescText", -- StringField -> text
-    NULL AS "StockUOM", -- StringField -> text
-    NULL AS "CurrencySymbol", -- StringField -> text
-    NULL AS "FOBCodes_DescText", -- StringField -> text
-    NULL AS "TermsCodes_DescText", -- StringField -> text
-    NULL AS "InvoiceHeader_Notes", -- PersistentMemoField -> ?
-    NULL AS "InvoiceDetail_Notes", -- PersistentMemoField -> ?
-    NULL AS "BillOfLading", -- StringField -> text
-    NULL AS "IsNull_InvoiceHeaderNotes", -- Int16sField -> integer
-    NULL AS "IsNull_InvoiceDetailNotes" -- Int16sField -> integer
-FROM ???;
-*/
+    ih.invoicenumber AS "InvoiceNumber",
+    ih.trackingnumber AS "TrackingNumber",
+    ih.carrier AS "Carrier",
+    ih.freightamount AS "FreightAmount",
+    ih.shipmentdate AS "ShipmentDate",
+    idt.invoiceline AS "InvoiceLine",
+    idt.partnumber AS "PartNumber",
+    idt.soline AS "SOLine",
+    idt.quantity AS "Quantity",
+    idt.price AS "Price",
+    idt.salesuom AS "SalesUOM",
+    idt.taxableflag AS "TaxableFlag",
+    idt.basetaxcode AS "BaseTaxCode",
+    idt.basetaxrate AS "BaseTaxRate",
+    idt.taxflag2 AS "TaxFlag2",
+    idt.taxcode2 AS "TaxCode2",
+    idt.taxrate2 AS "TaxRate2",
+    idt.taxflag3 AS "TaxFlag3",
+    idt.taxcode3 AS "TaxCode3",
+    idt.taxrate3 AS "TaxRate3",
+    (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) AS "ExtendedAmount",
+    (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END) AS "BaseTaxAmount",
+    (CASE WHEN idt.taxflag2 THEN ((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) * coalesce(idt.taxrate2, 0) / 100 ELSE 0 END) AS "Tax2Amount",
+    (CASE WHEN idt.taxflag3 THEN ((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) * coalesce(idt.taxrate3, 0) / 100 ELSE 0 END) AS "Tax3Amount",
+    ((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) AS "LineSubtotal",
+    (((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) + (CASE WHEN idt.taxflag2 THEN ((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) * coalesce(idt.taxrate2, 0) / 100 ELSE 0 END) + (CASE WHEN idt.taxflag3 THEN ((coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) + (CASE WHEN idt.taxableflag THEN (coalesce(idt.quantity, 0) * coalesce(idt.price, 0)) * coalesce(idt.basetaxrate, 0) / 100 ELSE 0 END)) * coalesce(idt.taxrate3, 0) / 100 ELSE 0 END)) AS "LineTotal",
+    ih.sonumber AS "SONumber",
+    sh.jobnumber AS "JobNumber",
+    sh.customerpo AS "CustomerPO",
+    sh.currencycode AS "CurrencyCode",
+    sh.currencyrate AS "CurrencyRate",
+    sd.partxreference AS "PartXReference",
+    cua.addressline1 AS "Customer_AddressLine1",
+    coalesce(cua.addressline2, '') AS "Customer_AddressLine2",
+    coalesce(cua.addressline3, '') AS "Customer_AddressLine3",
+    coalesce(cua.addressline4, '') AS "Customer_AddressLine4",
+    cua.city AS "Customer_City",
+    cua.state AS "Customer_State",
+    cua.zipcode AS "Customer_ZIPCode",
+    cua.country AS "Customer_Country",
+    cua.postal AS "Customer_Postal",
+    coa.addressline1 AS "Company_AddressLine1",
+    coalesce(coa.addressline2, '') AS "Company_AddressLine2",
+    coalesce(coa.addressline3, '') AS "Company_AddressLine3",
+    coalesce(coa.addressline4, '') AS "Company_AddressLine4",
+    coa.city AS "Company_City",
+    coa.state AS "Company_State",
+    coa.zipcode AS "Company_ZipCode",
+    coa.country AS "Company_Country",
+    coa.postal AS "Company_Postal",
+    ih.customerid AS "CustomerID",
+    c.customername AS "CustomerName",
+    pm.desctext AS "PartMaster_DescText",
+    pm.stockuom AS "StockUOM",
+    cur.currencysymbol AS "CurrencySymbol",
+    fc.desctext AS "FOBCodes_DescText",
+    tc.desctext AS "TermsCodes_DescText",
+    ih.notes AS "InvoiceHeader_Notes",
+    sd.notes AS "InvoiceDetail_Notes",
+    ih.billoflading AS "BillOfLading",
+    (CASE WHEN ih.notes IS NULL OR ih.notes = '' THEN -1 ELSE 0 END) AS "IsNull_InvoiceHeaderNotes",
+    (CASE WHEN sd.notes IS NULL OR sd.notes = '' THEN -1 ELSE 0 END) AS "IsNull_InvoiceDetailNotes"
+FROM invoiceheader ih
+JOIN invoicedetail idt ON upper(idt.invoicenumber) = upper(ih.invoicenumber)
+LEFT JOIN soheader sh ON upper(sh.sonumber) = upper(ih.sonumber)
+LEFT JOIN sodetail sd ON upper(sd.sonumber) = upper(idt.sonumber) AND sd.soline = idt.soline
+LEFT JOIN customers c ON upper(c.customerid) = upper(ih.customerid)
+LEFT JOIN partmaster pm ON upper(pm.partnumber) = upper(idt.partnumber)
+LEFT JOIN currencycodes cur ON upper(cur.currencycode) = upper(sh.currencycode)
+LEFT JOIN fobcodes fc ON upper(fc.fobcode) = upper(sh.fobcode)
+LEFT JOIN termscodes tc ON upper(tc.termscode) = upper(sh.termscode)
+LEFT JOIN customeraddress cua ON upper(cua.customerid) = upper(ih.customerid) AND upper(cua.addressid) = upper(sh.billtoaddress)
+LEFT JOIN LATERAL (
+    SELECT ca.*
+    FROM companyaddress ca
+    ORDER BY (upper(ca.addressid) = upper((SELECT p.invoiceremittoaddress FROM preferences p LIMIT 1))) DESC NULLS LAST,
+             ca.billtoflag DESC, ca.addressid
+    LIMIT 1
+) coa ON true
+ORDER BY ih.invoicenumber, idt.invoiceline;
