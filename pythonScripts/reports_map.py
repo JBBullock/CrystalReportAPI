@@ -82,7 +82,7 @@ REPORTS: dict[tuple[str, str], str] = {
     ("Supply", "Purchase Order"): "PurchaseOrder.rpt",
     ("Supply", "Return To Vendor List"): "ReturnToVendorList.rpt",  # menu guessed
     ("Supply", "Shortage Report"): "ShortageReport.rpt",
-    ("Supply", "Sub Contract P O Kit List"): "SubContractPOKitList.rpt",
+    ("Supply", "Sub Contract PO Kit List"): "SubContractPOKitList.rpt",
     ("Supply", "Supplier Listing"): "SupplierListing.rpt",
     ("Supply", "Work Order Traveler"): "WorkOrderTraveler.rpt",
     # ---- MRP ---------------------------------------------------------
@@ -153,6 +153,8 @@ REPORT_SQL: dict[str, str] = {
     "IndentedBOM.rpt": "IndentedBOM.sql",
     "IndentedSTDCostedBOM.rpt": "IndentedSTDCostedBOM.sql",
     "IntrastatReporting.rpt": "IntrastatReporting.sql",
+    "IntrastatRates.rpt": "IntrastatRates.sql",
+    
     "InventoryPartCost.rpt": "InventoryPartCost.sql",
     "JobSummary.rpt": "JobSummary.sql",
     "LaborDistrByEmployee.rpt": "LaborDistrByEmployee.sql",

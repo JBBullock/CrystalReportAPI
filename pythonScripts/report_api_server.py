@@ -7,6 +7,11 @@ a PDF (or an error) goes out, and nothing is stored.
     POST /render      X-API-Key: <key>
         {"port": 5430, "menu": "Demand", "report": "Sales Order",
          "filter": {"sonumber": 1234}}
+        filter forms (see CrystalReportWrapper/ReportFilter.cs):
+            {"sonumber": 1234}                            equals
+            {"partnumber": "CA03*"}                       * any, ? one character
+            {"orderdate": {">=": "2026-01-01",            =  !=  <  <=  >  >=
+                           "<=": "2026-01-31"}}
         -> 200 application/pdf
         -> 400 bad port / bad filter     -> 404 no such (menu, report)
         -> 401 bad API key               -> 500 the render failed

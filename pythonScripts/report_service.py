@@ -22,6 +22,7 @@ CONFIGURATION (environment variables, read once at startup)
         The Postgres server and the report service's own login. Read by the
         worker, which inherits this process's environment. The port is the
         only connection value that comes from the request.
+        Outside Docker these are read from the .env file in the project root.
     RPTCONVERT_ALLOWED_PORTS
         Optional. Comma-separated ports the service may connect to, e.g.
         "5430,5431". Unset = any port.
@@ -50,6 +51,17 @@ HERE = Path(__file__).resolve().parent
 # pythonScripts/ on the host; flattened into the app root in the Docker image.
 ROOT = HERE.parent if (HERE.parent / "reports").is_dir() else HERE
 
+# Outside Docker nothing loads .env for us, so read the project root's .env
+# here. A variable that is already set wins over the file. In Docker, Compose
+# has set everything already and the image contains no .env, so this does
+# nothing there. The worker inherits this process's environment.
+ENV_FILE = ROOT / ".env"
+if ENV_FILE.is_file():
+    for _line in ENV_FILE.read_text(encoding="utf-8-sig").splitlines():
+        _name, _separator, _value = _line.strip().partition("=")
+        if _separator and _name and not _name.startswith("#"):
+            os.environ.setdefault(_name.strip(), _value.strip().strip('"'))
+
 REPORTS_DIR = ROOT / "reports"
 SQL_DIR = ROOT / "SQLqueries"
 PARAMETERS_PATH = ROOT / "jsonInspections" / "global_report_parameters.json"
@@ -65,15 +77,12 @@ ALLOWED_PORTS = frozenset(
 # utf-8-sig: tolerate a BOM if the file was saved from a Windows editor.
 REPORT_PARAMETERS: dict[str, Any] = json.loads(PARAMETERS_PATH.read_text(encoding="utf-8-sig"))
 
+FILTER_OPERATORS = ("=", "!=", "<", "<=", ">", ">=")
+
 # Worker exit codes - see Program.cs.
 _EXIT_RENDERED = 0
 _EXIT_BAD_REQUEST = 2
-env_file = HERE / ".env"
-if env_file.is_file():
-    for line in env_file.read_text(encoding="utf-8-sig").splitlines():
-        name, separator, value = line.strip().partition("=")
-        if separator and name and not name.startswith("#"):
-            os.environ.setdefault(name.strip(), value.strip().strip('"'))
+
 
 class ReportNotFound(KeyError):
     """No report with that (menu, name) in reports_map.REPORTS."""
@@ -94,9 +103,14 @@ def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]
     port:   the Postgres port of the database to render from.
     menu, report: the report's menu and display name, as in reports_map.REPORTS
             (e.g. "Products", "Bill of Materials").
-    filter: {column name: value}, e.g. {"sonumber": 1234}. Narrows every table
-            in the report that has that column. More than one key means AND.
-            Empty or None renders the whole report.
+    filter: {column name: what to match}. Narrows every table in the report
+            that has that column; different columns are combined with AND.
+            Empty or None renders the whole report. What to match is one of:
+              1234 or "WO0008"           equals
+              "CA03*"                    wildcard: * any characters, ? one
+              {">=": "2026-01-01",       operators =  !=  <  <=  >  >=
+               "<=": "2026-01-31"}       (several = AND; dates as YYYY-MM-DD)
+            Full rules: CrystalReportWrapper/ReportFilter.cs.
     """
     filter = dict(filter or {})
 
@@ -105,9 +119,8 @@ def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]
         raise BadRequest(f"port must be a whole number from 1 to 65535, got {port!r}")
     if ALLOWED_PORTS and port not in ALLOWED_PORTS:
         raise BadRequest(f"port {port} is not one of this service's databases")
-    for column, value in filter.items():
-        if not isinstance(value, (str, int, float, bool)):
-            raise BadRequest(f"filter value for '{column}' must be text, a number or true/false")
+    for column, match in filter.items():
+        _check_filter(column, match)
 
     # 2. Which files is this report?
     try:
@@ -148,6 +161,22 @@ def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]
     if worker.returncode == _EXIT_BAD_REQUEST:
         raise BadRequest(message)
     raise RenderFailed(message)
+
+
+def _check_filter(column: str, match: Any) -> None:
+    """Shape only - a scalar, or {operator: scalar}. What the value means for
+    the column's type (date, number, text) is decided by the worker."""
+    comparisons = match if isinstance(match, dict) else {"=": match}
+    if not comparisons:
+        raise BadRequest(f"filter on '{column}' is empty")
+    for operator, value in comparisons.items():
+        if operator not in FILTER_OPERATORS:
+            raise BadRequest(
+                f"filter on '{column}' uses unknown operator '{operator}'. "
+                f"Use one of: {'  '.join(FILTER_OPERATORS)}"
+            )
+        if not isinstance(value, (str, int, float, bool)):
+            raise BadRequest(f"filter value for '{column}' must be text, a number or true/false")
 
 
 def menus() -> dict[str, list[str]]:

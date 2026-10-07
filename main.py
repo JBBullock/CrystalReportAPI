@@ -9,18 +9,23 @@ nothing.
     python main.py --port 5430 --menu Supply --report "Work Order Traveler" ^
                    --filter wonumber=WO00080002
 
+    python main.py --port 5430 --menu Demand --report "Sales Order" ^
+                   --filter "orderdate>=2026-01-01" --filter "orderdate<=2026-01-31" ^
+                   --filter partnumber=CA03*
+    (quote any filter that uses < or >, or the command prompt treats it as
+    a file redirect)
+
     python main.py --list          # every menu and report name
 
-Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD, and a built
-CrystalReportWrapper.exe (see pythonScripts/report_service.py). The four
-variables are read from the .env file beside this script; one already set in
-your shell wins over the file. (In Docker, Compose loads .env instead.)
+Needs PG_HOST, PG_DATABASE, PG_USER and PG_PASSWORD in the project root's
+.env file (report_service.py loads it), and a built CrystalReportWrapper.exe.
 """
 
 from __future__ import annotations
 
 import argparse
-import os
+import logging
+import re
 import sys
 from pathlib import Path
 
@@ -28,27 +33,22 @@ HERE = Path(__file__).resolve().parent
 if (HERE / "pythonScripts").is_dir():
     sys.path.insert(0, str(HERE / "pythonScripts"))
 
-# Load .env into this process's environment. The worker is started by
-# report_service and inherits it.
-ENV_FILE = HERE / ".env"
-if ENV_FILE.is_file():
-    for line in ENV_FILE.read_text(encoding="utf-8-sig").splitlines():
-        name, separator, value = line.strip().partition("=")
-        if separator and name and not name.startswith("#"):
-            os.environ.setdefault(name.strip(), value.strip().strip('"'))
-
-import report_service  # noqa: E402  (needs the path and .env lines above)
+import report_service  # noqa: E402  (needs the path line above)
 
 
-def parse_filter(pairs: list[str]) -> dict[str, str]:
-    """["sonumber=1234", ...] -> {"sonumber": "1234", ...}"""
-    result = {}
-    for pair in pairs:
-        column, separator, value = pair.partition("=")
-        if not separator or not column:
-            raise SystemExit(f"--filter takes column=value, got: {pair}")
-        result[column] = value
-    return result
+def parse_filter(items: list[str]) -> dict:
+    """["sonumber=1234", "orderdate>=2026-01-01", "orderdate<=2026-01-31"]
+    -> {"sonumber": "1234", "orderdate": {">=": "2026-01-01", "<=": "2026-01-31"}}
+    """
+    result: dict = {}
+    for item in items:
+        found = re.match(r"^([^<>=!]+)(<=|>=|!=|=|<|>)(.*)$", item)
+        if not found:
+            raise SystemExit(f"--filter takes COLUMN then one of = != < <= > >= then VALUE, got: {item}")
+        column, operator, value = found.group(1).strip(), found.group(2), found.group(3)
+        result.setdefault(column, {})[operator] = value
+    # A lone "=" is sent in the short form, {"sonumber": "1234"}.
+    return {c: (ops["="] if list(ops) == ["="] else ops) for c, ops in result.items()}
 
 
 def main() -> int:
@@ -58,9 +58,13 @@ def main() -> int:
     parser.add_argument("--menu", help='e.g. "Supply"')
     parser.add_argument("--report", help='e.g. "Work Order Traveler"')
     parser.add_argument("--filter", action="append", default=[], metavar="COLUMN=VALUE",
-                        help="repeat for more than one column")
+                        help='repeatable. Also != < <= > >=, and * ? wildcards. '
+                             'Put quotes around one that uses < or >: "orderdate>=2026-01-01"')
     parser.add_argument("--out", default="test_render.pdf", help="where to save the PDF (default: test_render.pdf)")
     args = parser.parse_args()
+
+    # Show the worker's diagnostics (rows fetched per table, filter applied).
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
 
     if args.list:
         for menu, names in report_service.menus().items():

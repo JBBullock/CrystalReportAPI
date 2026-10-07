@@ -22,15 +22,16 @@ Nothing is written to disk and nothing is kept between requests.
 | File | What it does |
 | --- | --- |
 | `Program.cs` | The render flow: load report, read SQL, query Postgres, bind, set parameters, export. |
+| `ReportFilter.cs` | Turns the request's filter (equals, `*`/`?` wildcards, operators, dates) into SQL conditions. |
 | `ReportSql.cs` | Reads a report's `.sql` file (one query per Crystal table). |
 | `DevTools.cs` | `--inspect` and `--extract-sql`, run by hand when setting up a report. Not used by the service. |
 
 ## Worker contract
 
-- **stdin**: `{"reportPath", "sqlPath", "port", "filter": {column: value}, "parameters": {name: value}}`
+- **stdin**: `{"reportPath", "sqlPath", "port", "filter": {column: match}, "parameters": {name: value}}`
 - **stdout**: the PDF (exit code 0), or `{"error": "..."}` (exit code 1 or 2)
 - **stderr**: diagnostics only
-- **exit code**: 0 rendered, 1 failed, 2 bad request (a filter column no table in the report has)
+- **exit code**: 0 rendered, 1 failed, 2 bad request (a malformed filter, or a filter column no table in the report has)
 - **environment**: `PG_HOST`, `PG_DATABASE`, `PG_USER`, `PG_PASSWORD`. The port comes from the request.
 
 ## Build

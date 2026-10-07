@@ -10,14 +10,18 @@
 //               "reportPath": "C:\\app\\reports\\SalesOrder.rpt",
 //               "sqlPath":    "C:\\app\\SQLqueries\\SalesOrder.sql",
 //               "port":       5430,
-//               "filter":     {"sonumber": 1234},
+//               "filter":     {"sonumber": 1234, "orderdate": {">=": "2026-01-01"}},
 //               "parameters": {"CompanyName": "...", "QuantityDecimals": 2}
 //             }
 //   stdout  exit code 0: the PDF bytes, and nothing else.
 //           exit code 1 or 2: one JSON object, {"error": "..."}.
 //   stderr  diagnostics only. Never parsed by the caller.
 //   exit    0 = rendered, 1 = failed, 2 = the request itself was wrong
-//           (a filter column that no table in the report has).
+//           (a malformed filter, or a filter column that no table in the
+//           report has).
+//
+// The filter's forms - equals, wildcards, operators, dates - are described
+// in ReportFilter.cs.
 //
 // Postgres host, database, user and password come from this process's
 // environment (PG_HOST, PG_DATABASE, PG_USER, PG_PASSWORD). The port is the
@@ -44,7 +48,6 @@ using System.Text.Json;
 using CrystalDecisions.CrystalReports.Engine;
 using CrystalDecisions.Shared;
 using Npgsql;
-using NpgsqlTypes;
 using CrystalTable = CrystalDecisions.CrystalReports.Engine.Table;
 
 namespace CrystalReportWrapper
@@ -55,8 +58,8 @@ namespace CrystalReportWrapper
         public string ReportPath;
         public string SqlPath;
         public int Port;
-        // Column name -> value. Empty means "the whole report".
-        public Dictionary<string, JsonElement> Filter = new Dictionary<string, JsonElement>();
+        // Empty means "the whole report". See ReportFilter.cs.
+        public List<FilterCondition> Filter = new List<FilterCondition>();
         // Parameter name -> value, matched to the report's own parameters by name.
         public Dictionary<string, JsonElement> Parameters =
             new Dictionary<string, JsonElement>(StringComparer.OrdinalIgnoreCase);
@@ -164,14 +167,11 @@ namespace CrystalReportWrapper
                 }
                 request.Port = portNumber;
 
-                // Clone(): the values must outlive this JsonDocument.
                 if (root.TryGetProperty("filter", out JsonElement filter) && filter.ValueKind == JsonValueKind.Object)
                 {
-                    foreach (JsonProperty p in filter.EnumerateObject())
-                    {
-                        request.Filter[p.Name] = p.Value.Clone();
-                    }
+                    request.Filter = ReportFilter.Parse(filter);
                 }
+                // Clone(): the values must outlive this JsonDocument.
                 if (root.TryGetProperty("parameters", out JsonElement parameters) && parameters.ValueKind == JsonValueKind.Object)
                 {
                     foreach (JsonProperty p in parameters.EnumerateObject())
@@ -249,13 +249,13 @@ namespace CrystalReportWrapper
         /// <summary>
         /// Connects once, then for every table the report needs: asks
         /// Postgres which columns the table's query returns, applies the
-        /// filter keys that table has, and fetches the rows.
+        /// filter conditions that table has a column for, and fetches the rows.
         ///
-        /// A filter key applies to every table whose query returns a column
+        /// A condition applies to every table whose query returns a column
         /// of that name (compared without regard to case - callers send the
         /// database's lowercase name, the queries alias columns in the
         /// report's mixed case). Tables without the column are fetched whole.
-        /// A key that NO table has is an error: returning an unfiltered
+        /// A column that NO table has is an error: returning an unfiltered
         /// report for a filtered request would be a wrong answer.
         /// </summary>
         private static DataSet FetchData(
@@ -263,7 +263,7 @@ namespace CrystalReportWrapper
             List<string> tableNames,
             Dictionary<string, string> queries,
             string sqlPath,
-            Dictionary<string, JsonElement> filter)
+            List<FilterCondition> filter)
         {
             var connectionString = new NpgsqlConnectionStringBuilder
             {
@@ -281,7 +281,11 @@ namespace CrystalReportWrapper
                 // Plan every table before fetching any, so a bad filter is
                 // reported without first pulling whole tables.
                 var fetches = new List<TableFetch>();
-                var unmatched = new HashSet<string>(filter.Keys, StringComparer.OrdinalIgnoreCase);
+                var unmatched = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (FilterCondition condition in filter)
+                {
+                    unmatched.Add(condition.Column);
+                }
                 foreach (string tableName in tableNames)
                 {
                     if (!queries.TryGetValue(tableName, out string query))
@@ -336,16 +340,16 @@ namespace CrystalReportWrapper
         }
 
         /// <summary>
-        /// Builds the SQL for one table. With no applicable filter key that is
-        /// the query as written. Otherwise the query is wrapped as a subquery
-        /// with a parameterized WHERE, so its own text is never edited and a
-        /// filter value can never become part of the SQL.
+        /// Builds the SQL for one table. With no applicable filter condition
+        /// that is the query as written. Otherwise the query is wrapped as a
+        /// subquery with a parameterized WHERE, so its own text is never
+        /// edited and a filter value can never become part of the SQL.
         /// </summary>
         private static TableFetch PlanFetch(
             NpgsqlConnection connection,
             string tableName,
             string query,
-            Dictionary<string, JsonElement> filter)
+            List<FilterCondition> filter)
         {
             var fetch = new TableFetch { TableName = tableName, Sql = query };
             if (filter.Count == 0)
@@ -353,38 +357,20 @@ namespace CrystalReportWrapper
                 return fetch;
             }
 
-            Dictionary<string, Type> columns = QueryColumns(connection, query);
+            List<KeyValuePair<string, Type>> columns = QueryColumns(connection, query);
             var conditions = new List<string>();
-            foreach (KeyValuePair<string, JsonElement> entry in filter)
+            foreach (FilterCondition condition in filter)
             {
-                if (!columns.TryGetValue(entry.Key, out Type columnType))
+                foreach (KeyValuePair<string, Type> column in columns)
                 {
-                    continue;   // this table doesn't have the column
+                    if (!string.Equals(column.Key, condition.Column, StringComparison.OrdinalIgnoreCase))
+                    {
+                        continue;
+                    }
+                    conditions.Add(ReportFilter.ToSql(condition, column.Key, column.Value, fetch.SqlParameters));
+                    if (!fetch.FilteredOn.Contains(column.Key)) fetch.FilteredOn.Add(column.Key);
+                    break;
                 }
-
-                // The column's real spelling, as the query returns it.
-                string column = entry.Key;
-                foreach (string name in columns.Keys)
-                {
-                    if (string.Equals(name, entry.Key, StringComparison.OrdinalIgnoreCase)) { column = name; break; }
-                }
-                string quoted = "\"" + column.Replace("\"", "\"\"") + "\"";
-                string parameterName = "f" + conditions.Count;
-
-                // Numeric column and a numeric value: compare as numbers, so
-                // 1234 matches 1234.00. Anything else: compare as text, so
-                // 1234 and "1234" both match a text column holding '1234'.
-                if (IsNumeric(columnType) && TryGetDecimal(entry.Value, out decimal number))
-                {
-                    conditions.Add(quoted + " = @" + parameterName);
-                    fetch.SqlParameters.Add(new NpgsqlParameter(parameterName, NpgsqlDbType.Numeric) { Value = number });
-                }
-                else
-                {
-                    conditions.Add("CAST(" + quoted + " AS text) = @" + parameterName);
-                    fetch.SqlParameters.Add(new NpgsqlParameter(parameterName, NpgsqlDbType.Text) { Value = FilterText(entry.Key, entry.Value) });
-                }
-                fetch.FilteredOn.Add(column);
             }
 
             if (conditions.Count > 0)
@@ -397,56 +383,21 @@ namespace CrystalReportWrapper
         }
 
         /// <summary>
-        /// Column name -> CLR type for a query's result, asked of Postgres
-        /// itself (schema only - no rows are read). Keys compare without
-        /// regard to case.
+        /// The columns a query returns - name as spelled, and CLR type - asked
+        /// of Postgres itself (schema only: no rows are read).
         /// </summary>
-        private static Dictionary<string, Type> QueryColumns(NpgsqlConnection connection, string query)
+        private static List<KeyValuePair<string, Type>> QueryColumns(NpgsqlConnection connection, string query)
         {
-            var columns = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+            var columns = new List<KeyValuePair<string, Type>>();
             using (var command = new NpgsqlCommand(query, connection))
             using (NpgsqlDataReader reader = command.ExecuteReader(CommandBehavior.SchemaOnly))
             {
                 for (int i = 0; i < reader.FieldCount; i++)
                 {
-                    columns[reader.GetName(i)] = reader.GetFieldType(i);
+                    columns.Add(new KeyValuePair<string, Type>(reader.GetName(i), reader.GetFieldType(i)));
                 }
             }
             return columns;
-        }
-
-        private static bool IsNumeric(Type type)
-        {
-            return type == typeof(short) || type == typeof(int) || type == typeof(long)
-                || type == typeof(decimal) || type == typeof(float) || type == typeof(double);
-        }
-
-        private static bool TryGetDecimal(JsonElement value, out decimal number)
-        {
-            if (value.ValueKind == JsonValueKind.Number)
-            {
-                return value.TryGetDecimal(out number);
-            }
-            if (value.ValueKind == JsonValueKind.String)
-            {
-                return decimal.TryParse(value.GetString(), NumberStyles.Number, CultureInfo.InvariantCulture, out number);
-            }
-            number = 0;
-            return false;
-        }
-
-        private static string FilterText(string column, JsonElement value)
-        {
-            switch (value.ValueKind)
-            {
-                case JsonValueKind.String: return value.GetString();
-                case JsonValueKind.Number: return value.GetRawText();
-                case JsonValueKind.True: return "true";
-                case JsonValueKind.False: return "false";
-                default:
-                    throw new BadRequestException(
-                        "Filter value for '" + column + "' must be text, a number or true/false.");
-            }
         }
 
         // ====================================================================
