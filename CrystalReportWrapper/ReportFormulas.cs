@@ -3,10 +3,14 @@
 //
 // Removes the reports' dependency on the legacy program's Crystal add-on.
 //
-// The original Alliance/MFG reports get their column headings and captions
-// from formulas like
+// The original Alliance/MFG reports get their titles, column headings and
+// captions from formulas like
 //
-//     LANG_Part_Number:   MFGFunctionsTranslationTranslate (26)
+//     LANG_PART_NUMBER:   MFGFunctionsTranslationTranslate (26)
+//     LANG_SUBTOTAL_C:    MFGFunctionsTranslationTranslate (509) + ": "
+//     TaxableString:      IF ({PurchaseOrder_TTX.TaxableFlag}) THEN
+//                             MFGFunctionsTranslationTranslate (1888)
+//                         ELSE MFGFunctionsTranslationTranslate (1889)
 //
 // MFGFunctionsTranslationTranslate lives in CRUFLMFGFunctions.dll, a VB6
 // library that ships with the legacy program and looks label 26 up through
@@ -16,14 +20,16 @@
 // render fails with "The remaining text does not appear to be part of the
 // formula."
 //
-// So, right after a report is loaded, every call to that function is replaced
-// with the label as plain text. The label is taken from the formula's own
-// name: LANG_Part_Number -> "Part Number".
+// So, right after a report is loaded, every call to that function - wherever
+// it sits in a formula - is replaced with the label as a plain string. The
+// wording comes from LegacyLabels.cs, which holds what the legacy add-on
+// itself answers for each number. It is the only function of that library
+// the reports use (checked across every .rpt by dump_formulas.py).
 //
-// Any OTHER function from that library (MFGFunctionsPreferences...,
-// MFGFunctionsUOMConversions..., MFGFunctionsCompanyInfo...) is left alone
-// and reported on stderr by formula name, so the next failure says exactly
-// which formula needs a replacement written here.
+// A label number missing from LegacyLabels.cs (a report added later) falls
+// back to the formula's own name, LANG_Part_Number -> "Part Number"; if the
+// formula is not a LANG_ one the call is left alone and reported on stderr
+// by formula name. Re-run dump_formulas.py to pick new numbers up.
 // ============================================================================
 
 using System;
@@ -43,11 +49,6 @@ namespace CrystalReportWrapper
             @"MFGFunctionsTranslationTranslate\s*\(\s*(\d+)\s*\)",
             RegexOptions.IgnoreCase);
 
-        // A formula that is that one call and nothing else.
-        private static readonly Regex OnlyATranslateCall = new Regex(
-            @"^\s*MFGFunctionsTranslationTranslate\s*\(\s*(\d+)\s*\)\s*;?\s*$",
-            RegexOptions.IgnoreCase);
-
         /// <summary>
         /// Rewrites, in the loaded report and its subreports, every formula
         /// that calls the legacy translation function. Nothing is saved back
@@ -55,69 +56,50 @@ namespace CrystalReportWrapper
         /// </summary>
         internal static void ReplaceLegacyFunctions(ReportDocument report)
         {
-            var formulas = new List<FormulaFieldDefinition>();
-            foreach (FormulaFieldDefinition formula in report.DataDefinition.FormulaFields)
-            {
-                formulas.Add(formula);
-            }
+            // Formulas that stand alone go first: others may refer to them
+            // ({@LANG_TITLE}), and Crystal checks a formula when its text is set.
+            var standAlone = new List<FormulaFieldDefinition>();
+            var referring = new List<FormulaFieldDefinition>();
+            Collect(report, standAlone, referring);
             foreach (ReportDocument subreport in report.Subreports)
             {
-                foreach (FormulaFieldDefinition formula in subreport.DataDefinition.FormulaFields)
-                {
-                    formulas.Add(formula);
-                }
+                Collect(subreport, standAlone, referring);
             }
 
-            // Label number -> text, learned from the formulas that are nothing
-            // but one call: LANG_Part_Number = Translate (26) says 26 is
-            // "Part Number". Used for calls buried inside longer formulas.
-            var labels = new Dictionary<string, string>();
-            var labelFormulas = new List<FormulaFieldDefinition>();
-            var otherFormulas = new List<FormulaFieldDefinition>();
-            foreach (FormulaFieldDefinition formula in formulas)
+            foreach (FormulaFieldDefinition formula in standAlone)
+            {
+                Rewrite(formula);
+            }
+            foreach (FormulaFieldDefinition formula in referring)
+            {
+                Rewrite(formula);
+            }
+        }
+
+        private static void Collect(
+            ReportDocument document,
+            List<FormulaFieldDefinition> standAlone,
+            List<FormulaFieldDefinition> referring)
+        {
+            foreach (FormulaFieldDefinition formula in document.DataDefinition.FormulaFields)
             {
                 string text = formula.Text ?? string.Empty;
                 if (text.IndexOf(LibraryPrefix, StringComparison.OrdinalIgnoreCase) < 0)
                 {
                     continue;
                 }
-                Match only = OnlyATranslateCall.Match(text);
-                if (only.Success && IsLabelFormula(formula.Name))
-                {
-                    labels[only.Groups[1].Value] = LabelFromName(formula.Name);
-                    labelFormulas.Add(formula);
-                }
-                else
-                {
-                    otherFormulas.Add(formula);
-                }
-            }
-
-            // The plain labels first: longer formulas may refer to them, and
-            // Crystal checks a formula when its text is set.
-            foreach (FormulaFieldDefinition formula in labelFormulas)
-            {
-                Rewrite(formula, labels);
-            }
-            foreach (FormulaFieldDefinition formula in otherFormulas)
-            {
-                Rewrite(formula, labels);
+                (text.Contains("{@") ? referring : standAlone).Add(formula);
             }
         }
 
-        private static void Rewrite(FormulaFieldDefinition formula, Dictionary<string, string> labels)
+        private static void Rewrite(FormulaFieldDefinition formula)
         {
             string text = formula.Text ?? string.Empty;
-            string ownLabel = IsLabelFormula(formula.Name) ? LabelFromName(formula.Name) : null;
 
             string rewritten = TranslateCall.Replace(text, call =>
             {
-                string label;
-                if (!labels.TryGetValue(call.Groups[1].Value, out label))
-                {
-                    label = ownLabel;
-                }
-                return label == null ? call.Value : Quote(label);
+                string label = LabelFor(call.Groups[1].Value, formula.Name);
+                return label == null ? call.Value : Literal(label);
             });
 
             if (rewritten != text)
@@ -132,15 +114,42 @@ namespace CrystalReportWrapper
             }
         }
 
-        private static bool IsLabelFormula(string name)
+        /// <summary>The text for one label number, or null if nothing is known.</summary>
+        private static string LabelFor(string number, string formulaName)
         {
-            return name != null && name.StartsWith(LabelFormulaPrefix, StringComparison.OrdinalIgnoreCase);
+            int id;
+            string label;
+            if (int.TryParse(number, out id) && LegacyLabels.Text.TryGetValue(id, out label))
+            {
+                return label;
+            }
+            if (formulaName != null && formulaName.StartsWith(LabelFormulaPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                // LANG_Part_Number -> Part Number
+                return formulaName.Substring(LabelFormulaPrefix.Length).Replace('_', ' ').Trim();
+            }
+            return null;
         }
 
-        /// <summary>LANG_Part_Number -> Part Number</summary>
-        private static string LabelFromName(string name)
+        /// <summary>
+        /// The label as a Crystal string expression. A two-line label
+        /// ("Yield" / "Factor") becomes ("Yield" + Chr (13) + Chr (10) +
+        /// "Factor"), in brackets so it stays one value inside a longer
+        /// formula.
+        /// </summary>
+        private static string Literal(string label)
         {
-            return name.Substring(LabelFormulaPrefix.Length).Replace('_', ' ').Trim();
+            string[] lines = label.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n');
+            if (lines.Length == 1)
+            {
+                return Quote(lines[0]);
+            }
+            var quoted = new List<string>();
+            foreach (string line in lines)
+            {
+                quoted.Add(Quote(line));
+            }
+            return "(" + string.Join(" + Chr (13) + Chr (10) + ", quoted) + ")";
         }
 
         /// <summary>A Crystal string literal; a quote inside it is doubled.</summary>
