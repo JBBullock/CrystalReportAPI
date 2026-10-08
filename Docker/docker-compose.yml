@@ -53,7 +53,7 @@ services:
       # are the same for all of them. Optionally list the ports the service
       # may connect to (e.g. RPTCONVERT_ALLOWED_PORTS=5430,5431 in .env);
       # empty = any port.
-      RPTCONVERT_ALLOWED_PORTS: "${RPTCONVERT_ALLOWED_PORTS:-}"
+      RPTCONVERT_ALLOWED_PORTS: "${RPTCONVERT_ALLOWED_PORTS:-5430,5431,5432,5433,5434,5435,5436,5437,5438,5439,5440,5441, 5442, 5443, 5444}"
     volumes:
       # TLS cert/key - generate these on the host first with
       # generate_cert.py (see that script's docstring), then mount

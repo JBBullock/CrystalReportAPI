@@ -87,8 +87,46 @@ RUN if (Test-Path C:\crruntime\oledlg.dll) { \
         } \
     }
 
-WORKDIR C:/app
+# -- Fonts ----------------------------------------------------------------
+# Server Core ships almost no fonts - no Arial, which every report uses. With
+# Arial missing, Crystal substituted the only other font it could find, the
+# Code 39 BARCODE font its own runtime installs, so reports rendered with
+# every letter drawn as a barcode. These come from the same full-Windows
+# image that donates oledlg.dll above. Copying a font into C:\Windows\Fonts
+# is not enough on its own: Windows only loads the ones listed in the
+# registry, and reads that list when the container starts.
+# One file per line, no wildcards: a wildcard in COPY --from fails on Windows
+# containers with 'GetFileInformationByHandle ... Incorrect function'.
+COPY --from=fullwin C:/Windows/Fonts/arial.ttf C:/fonts/arial.ttf
+COPY --from=fullwin C:/Windows/Fonts/arialbd.ttf C:/fonts/arialbd.ttf
+COPY --from=fullwin C:/Windows/Fonts/arialbi.ttf C:/fonts/arialbi.ttf
+COPY --from=fullwin C:/Windows/Fonts/ariali.ttf C:/fonts/ariali.ttf
+COPY --from=fullwin C:/Windows/Fonts/times.ttf C:/fonts/times.ttf
+COPY --from=fullwin C:/Windows/Fonts/timesbd.ttf C:/fonts/timesbd.ttf
+COPY --from=fullwin C:/Windows/Fonts/timesbi.ttf C:/fonts/timesbi.ttf
+COPY --from=fullwin C:/Windows/Fonts/timesi.ttf C:/fonts/timesi.ttf
+COPY --from=fullwin C:/Windows/Fonts/cour.ttf C:/fonts/cour.ttf
+COPY --from=fullwin C:/Windows/Fonts/courbd.ttf C:/fonts/courbd.ttf
+COPY --from=fullwin C:/Windows/Fonts/courbi.ttf C:/fonts/courbi.ttf
+COPY --from=fullwin C:/Windows/Fonts/couri.ttf C:/fonts/couri.ttf
+COPY --from=fullwin C:/Windows/Fonts/tahoma.ttf C:/fonts/tahoma.ttf
+COPY --from=fullwin C:/Windows/Fonts/tahomabd.ttf C:/fonts/tahomabd.ttf
+COPY --from=fullwin C:/Windows/Fonts/verdana.ttf C:/fonts/verdana.ttf
+COPY --from=fullwin C:/Windows/Fonts/verdanab.ttf C:/fonts/verdanab.ttf
+COPY --from=fullwin C:/Windows/Fonts/verdanai.ttf C:/fonts/verdanai.ttf
+COPY --from=fullwin C:/Windows/Fonts/verdanaz.ttf C:/fonts/verdanaz.ttf
 
+
+WORKDIR C:/app
+RUN $key = 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts'; \
+    $fonts = @(Get-ChildItem C:\fonts\*.ttf); \
+    if ($fonts.Count -eq 0) { throw 'No fonts were copied from the full Windows image' }; \
+    foreach ($f in $fonts) { \
+        Copy-Item $f.FullName C:\Windows\Fonts -Force; \
+        New-ItemProperty -Path $key -Name ($f.BaseName + ' (TrueType)') -Value $f.Name -PropertyType String -Force | Out-Null \
+    }; \
+    Write-Host ('Installed ' + $fonts.Count + ' fonts'); \
+    Remove-Item C:\fonts -Recurse -Force
 # ── Python dependencies ────────────────────────────────────────────────
 # fastapi/uvicorn per report_api_server.py's own RUNNING section
 # (Scratch/requirements_report_api.txt) - pydantic comes in as fastapi's

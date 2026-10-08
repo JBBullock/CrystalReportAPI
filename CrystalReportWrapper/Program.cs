@@ -29,6 +29,8 @@
 //
 // FLOW (see Render)
 //   1. Load the .rpt.
+//      Replace calls to the legacy program's label function with plain
+//      text (see ReportFormulas.cs).
 //   2. Read the report's .sql file: one query per Crystal table.
 //   3. Run each query against Postgres, narrowed by the filter.
 //   4. Hand the rows to Crystal.
@@ -124,6 +126,8 @@ namespace CrystalReportWrapper
             {
                 // 1. Load the .rpt. It names the tables it needs.
                 report.Load(request.ReportPath);
+                // The labels come from a legacy add-on this machine may not have.
+                ReportFormulas.ReplaceLegacyFunctions(report);
                 List<string> tableNames = TableNames(report);
 
                 // 2. One query per table, from the report's .sql file.
