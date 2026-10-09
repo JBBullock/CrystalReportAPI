@@ -290,6 +290,9 @@ GROUPS: dict[tuple[str, str], str] = {
 #               From -> column >= From, To -> column <= To (whole day).
 #   CHECKBOX    ticked -> column = true. Unticked -> no condition, or
 #               column = <"unchecked"> when the prompt sets that key.
+#               "checked" changes what ticked means; "checked": None = no
+#               condition. So "Include Closed" on closedflag is
+#               "checked": None, "unchecked": False.
 TEXT = "text"
 NUMBER = "number"
 DATE_RANGE = "date_range"
@@ -326,6 +329,9 @@ PROMPT_KINDS = (TEXT, NUMBER, DATE_RANGE, CHECKBOX)
 #   SHP sales order shipment                  RMA sales order return
 #   POR purchase order receipt                RTV return to vendor
 _TRANSACTION_DATE = {"label": "Transaction Date", "column": "transactiondate", "kind": DATE_RANGE}
+
+_INCLUDE_CLOSED = {"label": "Include Closed", "column": "closedflag", "kind": CHECKBOX,
+                   "checked": None, "unchecked": False}
 
 _ASSEMBLY = [
     {"label": "Query By Assembly",
@@ -392,12 +398,20 @@ QUERIES: dict[tuple[str, str], list[dict]] = {
          "prompts": [{"label": "SO Number", "column": "sonumber", "kind": TEXT}]}
     ],
     ("Demand", "SO Totals Graph"): [
+        # The graph draws one bar per day, so it is only readable over a date
+        # range: Start/End Date are on the date the chart plots.
         {"label": "Query By Customer ID",
-         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]}
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT},
+                     _INCLUDE_CLOSED,
+                     {"label": "Scheduled Ship Date", "column": "scheduledshipdate", "kind": DATE_RANGE}]},
+         {"label": "Query By Order Date",
+         "prompts": [{"label": "Order Date", "column": "orderdate", "kind": DATE_RANGE}]}
     ],
     ("Supply", "PO Totals Graph"): [
         {"label": "Query By Supplier ID",
-         "prompts": [{"label": "Supplier ID", "column": "supplierid", "kind": TEXT}]}
+         "prompts": [{"label": "Supplier ID", "column": "supplierid", "kind": TEXT},
+                     _INCLUDE_CLOSED,
+                     {"label": "Required Date", "column": "requireddate", "kind": DATE_RANGE}]}
     ],
     ("Inventory", "Transaction Report"): [
         {"label": "Completions", "fixed": {"transactiontype": "CMP"}, "prompts": [_TRANSACTION_DATE]},
@@ -485,10 +499,10 @@ def query_filter(menu: str, name: str, query_label: str, values: dict) -> dict:
             if comparisons:
                 result[column] = comparisons
         elif kind == CHECKBOX:
-            if answer is True or str(answer).lower() in ("true", "1", "yes"):
-                result[column] = True
-            elif "unchecked" in prompt:
-                result[column] = prompt["unchecked"]
+            ticked = answer is True or str(answer).lower() in ("true", "1", "yes")
+            value = prompt.get("checked", True) if ticked else prompt.get("unchecked")
+            if value is not None:
+                result[column] = value
         else:
             raise QueryInputError(f"Prompt '{label}' has unknown kind '{kind}'.")
     result.update(query.get("fixed", {}))

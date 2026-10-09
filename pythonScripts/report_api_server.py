@@ -48,6 +48,7 @@ SECURITY
 from __future__ import annotations
 
 import hmac
+import logging
 import os
 from pathlib import Path
 from typing import Any, Optional
@@ -56,6 +57,11 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Response
 from pydantic import BaseModel
 
 import report_service
+
+# Without this, report_service's INFO lines - the worker's own diagnostics for
+# every render (rows fetched, formulas replaced, warnings) - are dropped. With
+# it they show in `.\start_report_api.ps1 -Logs`.
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s: %(message)s")
 
 API_KEY = os.environ.get("RPTCONVERT_API_KEY")
 HOST = os.environ.get("RPTCONVERT_API_HOST", "0.0.0.0")

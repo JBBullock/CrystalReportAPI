@@ -17,9 +17,11 @@ SELECT
     ph.supplierid AS "SupplierID",
     pd.quantityordered AS "QuantityOrdered",
     pd.pounitprice AS "POUnitPrice",
-    pd.requireddate AS "RequiredDate",
+    -- Stored as text. Cast so the report gets a real date: its chart groups
+    -- by date, and with text it drew one bar for every distinct value.
+    pd.requireddate::timestamp AS "RequiredDate",
     pd.closedflag AS "ClosedFlag",
     (pd.quantityordered * pd.pounitprice) AS "LineTotalNoTax"
 FROM podetail pd
 JOIN poheader ph ON upper(ph.ponumber) = upper(pd.ponumber)
-ORDER BY pd.requireddate, ph.supplierid;
+ORDER BY pd.requireddate::timestamp, ph.supplierid;

@@ -17,9 +17,11 @@ SELECT
     sh.customerid AS "CustomerID",
     sd.quantityordered AS "QuantityOrdered",
     sd.customerprice AS "CustomerPrice",
-    sd.scheduledshipdate AS "ScheduledShipDate",
+    -- Stored as text. Cast so the report gets a real date: its chart groups
+    -- by date, and with text it drew one bar for every distinct value.
+    sd.scheduledshipdate::timestamp AS "ScheduledShipDate",
     sd.closedflag AS "ClosedFlag",
     (sd.quantityordered * sd.customerprice) AS "LineTotalNoTax"
 FROM sodetail sd
 JOIN soheader sh ON upper(sh.sonumber) = upper(sd.sonumber)
-ORDER BY sd.scheduledshipdate, sh.customerid;
+ORDER BY sd.scheduledshipdate::timestamp, sh.customerid;

@@ -61,12 +61,8 @@ namespace CrystalReportWrapper
     {
         private const string LibraryPrefix = "MFGFunctions";
         private const string RasVersion = ", Version=13.0.4000.0, Culture=neutral, PublicKeyToken=692fbea5521e1304";
-        private const string SectionConditionEnum =
-            "CrystalDecisions.ReportAppServer.ReportDefModel.CrSectionAreaConditionFormulaTypeEnum, " +
-            "CrystalDecisions.ReportAppServer.ReportDefModel" + RasVersion;
-        private const string SectionPropertyEnum =
-            "CrystalDecisions.ReportAppServer.Controllers.CrReportSectionPropertyEnum, " +
-            "CrystalDecisions.ReportAppServer.Controllers" + RasVersion;
+        private const string DefModelAssembly = "CrystalDecisions.ReportAppServer.ReportDefModel" + RasVersion;
+        private const string ControllersAssembly = "CrystalDecisions.ReportAppServer.Controllers" + RasVersion;
 
         // RAS ReportDefinition members that hold an Area (or a collection of
         // them, for the group areas). Tried one by one; a name the runtime
@@ -167,9 +163,31 @@ namespace CrystalReportWrapper
         [MethodImpl(MethodImplOptions.NoInlining)]
         private static void WalkSectionConditions(ReportDocument report, string colorExpression, List<SectionRule> found)
         {
-            Type conditionEnum = Type.GetType(SectionConditionEnum, throwOnError: true);
-            Type propertyEnum = Type.GetType(SectionPropertyEnum, throwOnError: true);
-            object formatProperty = Enum.Parse(propertyEnum, "crReportSectionPropertyFormat");
+            // The two RAS enums are found by what they hold, not by an exact
+            // type name: the first version of this asked for
+            // "CrSectionAreaConditionFormulaTypeEnum", which this runtime does
+            // not have, and so never got as far as looking at a section.
+            Type conditionEnum = FindEnum(
+                DefModelAssembly, "the section condition formula types",
+                type => Has(type.Name, "SectionArea") && Has(type.Name, "ConditionFormula"));
+            Type propertyEnum = FindEnum(
+                ControllersAssembly, "the report section properties",
+                type => Has(type.Name, "ReportSectionProperty"));
+            object formatProperty = null;
+            foreach (string name in Enum.GetNames(propertyEnum))
+            {
+                if (name.EndsWith("Format", StringComparison.OrdinalIgnoreCase))
+                {
+                    formatProperty = Enum.Parse(propertyEnum, name);
+                    break;
+                }
+            }
+            if (formatProperty == null)
+            {
+                throw new InvalidOperationException(
+                    propertyEnum.FullName + " has no ...Format member (it has: " +
+                    string.Join(", ", Enum.GetNames(propertyEnum)) + ")");
+            }
 
             // ReportClientDocument's declared type lives in the RAS ClientDoc
             // assembly, which this project doesn't reference - hence reflection.
@@ -192,6 +210,11 @@ namespace CrystalReportWrapper
             string colorExpression, List<SectionRule> found)
         {
             dynamic definition = defController.ReportDefinition;
+            // Reading a condition can fail for a type that does not apply to
+            // sections, which is fine - but if NOT ONE could be read, the way
+            // this code reaches them is wrong and that must not pass silently.
+            int conditionsRead = 0;
+            string firstReadError = null;
             foreach (dynamic area in Areas(definition))
             {
                 foreach (dynamic section in (IEnumerable)area.Sections)
@@ -210,12 +233,17 @@ namespace CrystalReportWrapper
                         string text;
                         try
                         {
-                            condition = copy.ConditionFormulas[type];
+                            condition = ConditionOf(copy, type);
+                            conditionsRead++;
                             if (condition == null) continue;
                             text = Convert.ToString(condition.Text, CultureInfo.InvariantCulture) ?? string.Empty;
                         }
-                        catch (Exception)
+                        catch (Exception ex)
                         {
+                            if (firstReadError == null)
+                            {
+                                firstReadError = typeName + ": " + Program.FlattenExceptionChain(ex);
+                            }
                             continue;  // this condition type doesn't apply to sections
                         }
                         if (text.Trim().Length == 0)
@@ -251,10 +279,72 @@ namespace CrystalReportWrapper
 
                     if (changed)
                     {
-                        defController.ReportSectionController.SetProperty(section, formatProperty, copy);
+                        dynamic property = formatProperty;
+                        defController.ReportSectionController.SetProperty(section, property, copy);
                     }
                 }
             }
+            if (conditionsRead == 0 && firstReadError != null)
+            {
+                throw new InvalidOperationException(
+                    "could not read any section condition formula" +
+                    (subreportName.Length > 0 ? " in subreport '" + subreportName + "'" : string.Empty) +
+                    ". First failure - " + firstReadError);
+            }
+        }
+
+        /// <summary>
+        /// One condition formula of a section format. The key goes in as
+        /// `dynamic` so the call is bound with its real (enum) type; the
+        /// number is the fallback for a runtime that wants it that way.
+        /// </summary>
+        private static dynamic ConditionOf(dynamic format, object type)
+        {
+            dynamic formulas = format.ConditionFormulas;
+            try
+            {
+                dynamic key = type;
+                return formulas[key];
+            }
+            catch (Exception)
+            {
+                return formulas[Convert.ToInt32(type, CultureInfo.InvariantCulture)];
+            }
+        }
+
+        /// <summary>
+        /// The enum in a RAS assembly that <paramref name="isWanted"/> picks.
+        /// If there is none, the error lists the enums the assembly does have.
+        /// </summary>
+        private static Type FindEnum(string assemblyName, string what, Func<Type, bool> isWanted)
+        {
+            Assembly assembly = Assembly.Load(assemblyName);
+            Type[] types;
+            try
+            {
+                types = assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                types = ex.Types;
+            }
+            var enums = new List<string>();
+            foreach (Type type in types)
+            {
+                if (type == null || !type.IsEnum)
+                {
+                    continue;
+                }
+                if (isWanted(type))
+                {
+                    return type;
+                }
+                enums.Add(type.Name);
+            }
+            enums.Sort(StringComparer.Ordinal);
+            throw new InvalidOperationException(
+                "found no enum for " + what + " in " + assembly.GetName().Name +
+                ". Its enums: " + string.Join(", ", enums));
         }
 
         /// <summary>Every Area of a RAS ReportDefinition, whatever members this runtime names them by.</summary>
