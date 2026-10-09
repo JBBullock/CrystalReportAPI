@@ -116,27 +116,27 @@ REPORTS: dict[tuple[str, str], str] = {
     ("Shop", "WO Pick List"): "WOPickList.rpt",
     # ---- Codes -------------------------------------------------------
     # "Codes" is a holding menu for lookup lists whose real menu is unknown.
-    ("Codes", "Commodity Codes"): "CommodityCodes.rpt",  # menu guessed
-    ("Codes", "Currency Codes"): "CurrencyCodes.rpt",  # menu guessed
-    ("Codes", "Density Codes"): "DensityCodes.rpt",  # menu guessed
-    ("Codes", "Department Codes"): "DepartmentCodes.rpt",  # menu guessed
-    ("Codes", "ECN Class Codes"): "ECNClassCodes.rpt",  # menu guessed
-    ("Codes", "Employee Information List"): "EmployeeInformationList.rpt",  # menu guessed
-    ("Codes", "Employee List"): "EmployeeList.rpt",  # menu guessed
-    ("Codes", "F.O.B Codes"): "FOBCodes.rpt",  # menu guessed
-    ("Codes", "Holiday List"): "HolidayList.rpt",  # menu guessed
-    ("Codes", "Intrastat Codes"): "IntrastatCodes.rpt",  # menu guessed
-    ("Codes", "Intrastat Rates"): "IntrastatRates.rpt",  # menu guessed
-    ("Codes", "Operation Codes"): "OperationCodes.rpt",  # menu guessed
-    ("Codes", "Price Discount Codes"): "PriceDiscountCodes.rpt",  # menu guessed
-    ("Codes", "Product Discount Codes"): "ProductDiscountCodes.rpt",  # menu guessed
-    ("Codes", "Product Revenue Codes"): "ProductRevenueCodes.rpt",  # menu guessed
-    ("Codes", "Region Codes"): "RegionCodes.rpt",  # menu guessed
-    ("Codes", "Ship Via Codes"): "ShipViaCodes.rpt",  # menu guessed
-    ("Codes", "System Used On Codes"): "SystemUsedOnCodes.rpt",  # menu guessed
-    ("Codes", "Tax Codes"): "TaxCodes.rpt",  # menu guessed
-    ("Codes", "Terms Codes"): "TermsCodes.rpt",  # menu guessed
-    ("Codes", "UOM Codes"): "UOMCodes.rpt",  # menu guessed
+    # ("Codes", "Commodity Codes"): "CommodityCodes.rpt",  # menu guessed
+    # ("Codes", "Currency Codes"): "CurrencyCodes.rpt",  # menu guessed
+    # ("Codes", "Density Codes"): "DensityCodes.rpt",  # menu guessed
+    # ("Codes", "Department Codes"): "DepartmentCodes.rpt",  # menu guessed
+    # ("Codes", "ECN Class Codes"): "ECNClassCodes.rpt",  # menu guessed
+    # ("Codes", "Employee Information List"): "EmployeeInformationList.rpt",  # menu guessed
+    # ("Codes", "Employee List"): "EmployeeList.rpt",  # menu guessed
+    # ("Codes", "F.O.B Codes"): "FOBCodes.rpt",  # menu guessed
+    # ("Codes", "Holiday List"): "HolidayList.rpt",  # menu guessed
+    # ("Codes", "Intrastat Codes"): "IntrastatCodes.rpt",  # menu guessed
+    # ("Codes", "Intrastat Rates"): "IntrastatRates.rpt",  # menu guessed
+    # ("Codes", "Operation Codes"): "OperationCodes.rpt",  # menu guessed
+    # ("Codes", "Price Discount Codes"): "PriceDiscountCodes.rpt",  # menu guessed
+    # ("Codes", "Product Discount Codes"): "ProductDiscountCodes.rpt",  # menu guessed
+    # ("Codes", "Product Revenue Codes"): "ProductRevenueCodes.rpt",  # menu guessed
+    # ("Codes", "Region Codes"): "RegionCodes.rpt",  # menu guessed
+    # ("Codes", "Ship Via Codes"): "ShipViaCodes.rpt",  # menu guessed
+    # ("Codes", "System Used On Codes"): "SystemUsedOnCodes.rpt",  # menu guessed
+    # ("Codes", "Tax Codes"): "TaxCodes.rpt",  # menu guessed
+    # ("Codes", "Terms Codes"): "TermsCodes.rpt",  # menu guessed
+    # ("Codes", "UOM Codes"): "UOMCodes.rpt",  # menu guessed
 }
 
 # .rpt file name -> .sql file name in SQLqueries/

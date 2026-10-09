@@ -759,11 +759,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\CrystalReportWrapper.csproj",
+      "projectUniqueName": "C:\\Users\\jbullock\\PycharmProjects\\RPT Convert-Copy\\RPTConvert\\CrystalReportWrapper\\CrystalReportWrapper.csproj",
       "projectName": "CrystalReportWrapper",
-      "projectPath": "C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\CrystalReportWrapper.csproj",
+      "projectPath": "C:\\Users\\jbullock\\PycharmProjects\\RPT Convert-Copy\\RPTConvert\\CrystalReportWrapper\\CrystalReportWrapper.csproj",
       "packagesPath": "C:\\Users\\jbullock\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\jbullock\\OneDrive - Optical Zonu\\Desktop\\RPTConvert\\CrystalReportWrapper\\obj\\",
+      "outputPath": "C:\\Users\\jbullock\\PycharmProjects\\RPT Convert-Copy\\RPTConvert\\CrystalReportWrapper\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\jbullock\\AppData\\Roaming\\NuGet\\NuGet.Config"
