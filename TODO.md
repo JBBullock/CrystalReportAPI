@@ -9,10 +9,10 @@ Items marked **you** need a decision or an action on the work machine.
 
 | # | Task | Reports | Who | Notes |
 |---|---|---|---|---|
-| 1 | Fix the alternate-row shading rule (`Section_Back_Color`) | 12 | **you** decide, then either | If the Crystal designer is installed, edit the 12 `.rpt` files (Section Expert -> Color). If not, add it to the C# worker, which needs four more SDK references and likely a couple of build rounds. |
-| 2 | Supply `WorkCenterID` | 2 | Claude | Pass the filter's work center if present, otherwise blank. Waiting on go-ahead. |
+| 1 | Fix the alternate-row shading rule (`Section_Back_Color`) | 12 | **you**: build + smoke test | Code done in the worker (`ReportColors.cs`, late-bound RAS, no new SDK references). Rebuild the worker, re-run the smoke test. If a report still fails, run `CrystalReportWrapper.exe --report <file.rpt> --section-rules` and send the output. |
+| 2 | Supply `WorkCenterID` | 2 | done, needs rebuild | `Program.ApplyParameters`: a missing parameter takes an equals-filter value on the same column, else blank for `WorkCenterID` (and Tax Codes' `TaxCode` / `LiabilityAccount`). |
 | 3 | Write the query for Job Summary | 1 | either | `JobSummary.sql` has a table section but no working query. |
-| 4 | Map and write SQL for BOM with References | 1 | either | No entry in `REPORT_SQL`. |
+| 4 | Map and write SQL for BOM with References | 1 | done | Mapped; `ItemSequence` / dates cast to the types the report wants. |
 
 The 12 reports in item 1: Labor Router, Manual Parts List, SO Totals Graph,
 PO Totals Graph, Shortage Report, Exception, Planned Orders, Intrastat
@@ -41,7 +41,7 @@ The 12 reports in item 5:
 
 | # | Task | Who | Notes |
 |---|---|---|---|
-| 8 | The Codes menu, about 21 reports | either | In the first smoke run with no SQL mapped; not in the latest report list. Each needs a `.sql` file and a map entry. |
+| 8 | The Codes menu, 21 reports | **you**: copy the .rpt files | SQL written for all 21 (checked against `schema_only.sql`) and mapped. The `.rpt` files are not in `reports/` here - copy them from the original install; `python pythonScripts/reports_map.py` lists what's missing. |
 | 9 | `IntrastatRates.rpt` | **you** | Mapped, but the file is not in the `reports` folder. Copy it from the original install. |
 
 ## 4. Menu structure and query prompts
@@ -53,11 +53,11 @@ range, checkbox).
 
 | # | Task | Who | Notes |
 |---|---|---|---|
-| 10 | Answer two open questions | **you** | What the asterisk beside text prompts means (required, or wildcards allowed), and whether the date pickers can be left out. |
-| 11 | Add groups and query options to `reports_map.py` | Claude | Covers Costed BOM sub-items and the Queries drop-down with typed prompts. |
-| 12 | Extend `/menus` and `/render` | Claude | `/menus` returns the nesting and prompt list; `/render` accepts the chosen query. |
-| 13 | List every report's queries and prompts | **you** | Screenshots of each dialog, as done for the first four. |
-| 14 | Build the prompt dialog in ZMRP | Claude, with the ZMRP folder | Replaces the free-text column boxes in `ReportPromptDialog.py` with the Queries drop-down and typed fields. |
+| 10 | Answer two open questions | done | Asterisk = wildcards allowed. Date pickers left out (From/To text boxes, YYYY-MM-DD). |
+| 11 | Add groups and query options to `reports_map.py` | done | `GROUPS` (Costed BOM) and `QUERIES` (Part Cross Reference so far) with prompt kinds text / number / date_range / checkbox; `query_filter()` turns answers into a filter. |
+| 12 | Extend `/menus` and `/render` | done | `/menus` returns the tree (`?flat=1` for the old shape); `/render` takes `query` + `values`. |
+| 13 | List every report's queries and prompts | **you** | Screenshots of each dialog; each becomes a `QUERIES` entry (template in `reports_map.py`). |
+| 14 | Build the prompt dialog in ZMRP | done | Queries drop-down + typed fields for reports with `QUERIES`; the free-text rows stay for the rest until item 13 fills them in. ZMRP's `reports_map.py` is a copy of this one - keep them identical. |
 
 ## 5. Housekeeping
 

@@ -16,7 +16,12 @@
 //       place the exe writes a file. --sql-out-dir defaults to a SQLqueries
 //       folder beside the report's own folder.
 //
-// Both print one JSON line on stdout and exit 0 (success) or 1 (failure).
+//   CrystalReportWrapper.exe --report "C:\reports\sales.rpt" --section-rules
+//       Lists every section condition formula (Section Expert: suppress,
+//       colour, new page, ...) in the report and its subreports - where the
+//       alternate-row shading rule lives (see ReportColors.cs).
+//
+// All print one JSON line on stdout and exit 0 (success) or 1 (failure).
 // ============================================================================
 
 using System;
@@ -103,6 +108,7 @@ namespace CrystalReportWrapper
             string sqlOutDir = null;
             bool inspect = false;
             bool extractSql = false;
+            bool sectionRules = false;
 
             for (int i = 0; i < args.Length; i++)
             {
@@ -112,7 +118,13 @@ namespace CrystalReportWrapper
                     case "--sql-out-dir": sqlOutDir = i + 1 < args.Length ? args[++i] : null; break;
                     case "--inspect": inspect = true; break;
                     case "--extract-sql": extractSql = true; break;
+                    case "--section-rules": sectionRules = true; break;
                 }
+            }
+
+            if (!string.IsNullOrEmpty(reportPath) && sectionRules)
+            {
+                return RunSectionRules(reportPath);
             }
 
             if (string.IsNullOrEmpty(reportPath) || inspect == extractSql)
@@ -120,12 +132,50 @@ namespace CrystalReportWrapper
                 Console.Error.WriteLine(
                     "Usage: CrystalReportWrapper.exe --report <file.rpt> --inspect\n" +
                     "       CrystalReportWrapper.exe --report <file.rpt> --extract-sql [--sql-out-dir <folder>]\n" +
+                    "       CrystalReportWrapper.exe --report <file.rpt> --section-rules\n" +
                     "With no arguments the exe is the report service worker: it reads one JSON\n" +
                     "request on stdin and writes the PDF to stdout (see Program.cs).");
                 return 1;
             }
 
             return inspect ? RunInspect(reportPath) : RunExtractSql(reportPath, sqlOutDir);
+        }
+
+        // ====================================================================
+        // --section-rules
+        // ====================================================================
+
+        private sealed class SectionRulesResult
+        {
+            public bool Success { get; set; }
+            public string ReportPath { get; set; } = string.Empty;
+            public List<ReportColors.SectionRule> Rules { get; set; } = new List<ReportColors.SectionRule>();
+            public string Error { get; set; }
+        }
+
+        private static int RunSectionRules(string reportPath)
+        {
+            var result = new SectionRulesResult { ReportPath = reportPath };
+            try
+            {
+                if (!File.Exists(reportPath))
+                {
+                    throw new FileNotFoundException("Report file not found: " + reportPath);
+                }
+                using (var report = new ReportDocument())
+                {
+                    report.Load(reportPath);
+                    result.Rules = ReportColors.DescribeSectionConditions(report);
+                }
+                result.Success = true;
+            }
+            catch (Exception ex)
+            {
+                result.Success = false;
+                result.Error = Program.FlattenExceptionChain(ex);
+            }
+            WriteJsonLine(result);
+            return result.Success ? 0 : 1;
         }
 
         // ====================================================================

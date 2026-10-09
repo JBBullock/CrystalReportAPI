@@ -7,6 +7,9 @@ a PDF (or an error) goes out, and nothing is stored.
     POST /render      X-API-Key: <key>
         {"port": 5430, "menu": "Demand", "report": "Sales Order",
          "filter": {"sonumber": 1234}}
+        or, for a report with queries (reports_map.QUERIES):
+        {"port": 5430, "menu": "Products", "report": "Part Cross Reference",
+         "query": "Query By Part Number", "values": {"partnumber": "CA03*"}}
         filter forms (see CrystalReportWrapper/ReportFilter.cs):
             {"sonumber": 1234}                            equals
             {"partnumber": "CA03*"}                       * any, ? one character
@@ -18,7 +21,12 @@ a PDF (or an error) goes out, and nothing is stored.
            (errors are JSON: {"detail": "..."})
 
     GET /menus        X-API-Key: <key>
-        -> {"Demand": ["Sales Order", ...], ...}
+        -> {"Products": [{"report": "Bill of Materials", "queries": []},
+                         {"group": "Costed BOM", "reports": [{"report": ..., "queries": [...]}]},
+                         ...], ...}
+           each query: {"label": ..., "prompts": [{"label", "column", "kind"}]}
+           (reports_map.menu_tree())
+        ?flat=1 -> {"Demand": ["Sales Order", ...], ...}   (the old shape)
 
     GET /health       (no key)
         -> {"status": "ok"}
@@ -77,6 +85,8 @@ class RenderRequest(BaseModel):
     menu: str
     report: str
     filter: dict[str, Any] = {}
+    query: Optional[str] = None
+    values: dict[str, Any] = {}
 
 
 @app.get("/health")
@@ -85,14 +95,16 @@ def health() -> dict:
 
 
 @app.get("/menus", dependencies=_AUTH)
-def menus() -> dict:
-    return report_service.menus()
+def menus(flat: bool = False) -> dict:
+    return report_service.menus() if flat else report_service.menu_tree()
 
 
 @app.post("/render", dependencies=_AUTH)
 def render(body: RenderRequest) -> Response:
     try:
-        pdf = report_service.render(body.port, body.menu, body.report, body.filter)
+        pdf = report_service.render(
+            body.port, body.menu, body.report, body.filter, query=body.query, values=body.values,
+        )
     except report_service.ReportNotFound as exc:
         raise HTTPException(status_code=404, detail=exc.args[0]) from exc
     except report_service.BadRequest as exc:

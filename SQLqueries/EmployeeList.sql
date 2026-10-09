@@ -1,22 +1,26 @@
 -- ============================================================================
--- IntrastatRates.sql
--- Written for IntrastatRates.rpt (Codes menu). Checked against the schema dump
+-- EmployeeList.sql
+-- Written for EmployeeList.rpt (Codes menu). Checked against the schema dump
 -- (SQLFetches/schema_only.sql): it runs and returns exactly the report's
 -- columns. Not yet rendered through Crystal.
 -- One query per '-- Table: <name>' line; aliases must match the report's
 -- field names exactly (case-sensitive).
 -- Lines marked INFERRED are best guesses at legacy behaviour.
--- Tables: IntrastatRates_TTX
--- Source tables: intrastatrates
+-- Tables: EmployeeListReport_TTX
+-- Source tables: employees
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Table: IntrastatRates_TTX
--- Original data source: IntrastatRates
+-- Table: EmployeeListReport_TTX
+-- Original data source: EmployeeList
 -- ----------------------------------------------------------------------------
 SELECT
-    icncode AS "ICNCode",
-    regioncode AS "RegionCode",
-    taxcode AS "TaxCode"
-FROM intrastatrates
-ORDER BY icncode, regioncode;
+    employeeid AS "EmployeeID",
+    departmentcode AS "DepartmentCode",
+    firstname AS "FirstName",
+    lastname AS "LastName",
+    middleinitial AS "MiddleInitial",
+    ssn::text AS "SSN",
+    coalesce(active, false) AS "Active"
+FROM employees
+ORDER BY employeeid;

@@ -30,7 +30,8 @@
 // FLOW (see Render)
 //   1. Load the .rpt.
 //      Replace calls to the legacy program's label function with plain
-//      text (see ReportFormulas.cs).
+//      text (see ReportFormulas.cs), and its alternate-row colour rule with
+//      a plain one (see ReportColors.cs).
 //   2. Read the report's .sql file: one query per Crystal table.
 //   3. Run each query against Postgres, narrowed by the filter.
 //   4. Hand the rows to Crystal.
@@ -128,6 +129,8 @@ namespace CrystalReportWrapper
                 report.Load(request.ReportPath);
                 // The labels come from a legacy add-on this machine may not have.
                 ReportFormulas.ReplaceLegacyFunctions(report);
+                // ...and so does the alternate-row shading rule.
+                ReportColors.ReplaceLegacyColorRules(report, request.Parameters);
                 List<string> tableNames = TableNames(report);
 
                 // 2. One query per table, from the report's .sql file.
@@ -140,7 +143,7 @@ namespace CrystalReportWrapper
                     BindData(report, data);
 
                     // 5. Set the report's parameters.
-                    ApplyParameters(report, request.Parameters);
+                    ApplyParameters(report, request.Parameters, request.Filter);
 
                     // 6. Export.
                     return ExportPdf(report);
@@ -437,8 +440,15 @@ namespace CrystalReportWrapper
         /// vague "missing parameter values" from Crystal at export time.
         /// Subreport parameters linked to a main-report field are skipped -
         /// Crystal fills those itself.
+        ///
+        /// A parameter the request's parameters don't name is next looked up
+        /// in the filter: a plain "equals" condition on a column of the same
+        /// name (e.g. {"workcenterid": "WC01"} supplies ?WorkCenterID). If
+        /// that finds nothing either, a parameter listed in
+        /// BlankWhenAbsent gets an empty value instead of failing.
         /// </summary>
-        private static void ApplyParameters(ReportDocument report, Dictionary<string, JsonElement> values)
+        private static void ApplyParameters(
+            ReportDocument report, Dictionary<string, JsonElement> values, List<FilterCondition> filter)
         {
             var fields = new List<ParameterFieldDefinition>();
             foreach (ParameterFieldDefinition field in report.DataDefinition.ParameterFields)
@@ -462,7 +472,9 @@ namespace CrystalReportWrapper
                 }
 
                 string name = field.Name.TrimStart('?');
-                if (!values.TryGetValue(name, out JsonElement value))
+                if (!values.TryGetValue(name, out JsonElement value)
+                    && !TryValueFromFilter(filter, name, out value)
+                    && !TryBlankValue(name, out value))
                 {
                     if (!missing.Contains(name)) missing.Add(name);
                     continue;
@@ -480,6 +492,67 @@ namespace CrystalReportWrapper
                     "Report needs parameter(s) the service has no value for: " + string.Join(", ", missing) +
                     ". Add them to global_report_parameters.json.");
             }
+        }
+
+        /// <summary>
+        /// Report parameters only a person could choose, which the original
+        /// program asked for in a prompt. When neither the request's
+        /// parameters nor its filter supplies one, it is sent blank rather
+        /// than failing the render. (Work Center Loads / Loads Graph:
+        /// WorkCenterID - TODO.md item 2; Tax Codes: TaxCode and LiabilityAccount.)
+        /// </summary>
+        private static readonly HashSet<string> BlankWhenAbsent =
+            new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "WorkCenterID",                 // Work Center Loads (+ Graph)
+                "TaxCode", "LiabilityAccount",  // Tax Codes (Codes menu)
+            };
+
+        /// <summary>
+        /// The value of a single "equals" filter condition on a column named
+        /// like the parameter (case ignored). A wildcard or a range is not a
+        /// single value, so it doesn't count.
+        /// </summary>
+        private static bool TryValueFromFilter(List<FilterCondition> filter, string name, out JsonElement value)
+        {
+            value = default(JsonElement);
+            if (filter == null)
+            {
+                return false;
+            }
+            foreach (FilterCondition condition in filter)
+            {
+                if (condition.Operator != "="
+                    || !string.Equals(condition.Column, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+                if (condition.Value.ValueKind == JsonValueKind.String)
+                {
+                    string text = condition.Value.GetString() ?? string.Empty;
+                    if (text.IndexOf('*') >= 0 || text.IndexOf('?') >= 0)
+                    {
+                        continue;
+                    }
+                }
+                value = condition.Value;
+                return true;
+            }
+            return false;
+        }
+
+        private static bool TryBlankValue(string name, out JsonElement value)
+        {
+            value = default(JsonElement);
+            if (!BlankWhenAbsent.Contains(name))
+            {
+                return false;
+            }
+            using (JsonDocument blank = JsonDocument.Parse("\"\""))
+            {
+                value = blank.RootElement.Clone();
+            }
+            return true;
         }
 
         /// <summary>

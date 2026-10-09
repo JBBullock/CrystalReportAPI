@@ -78,6 +78,13 @@
       <Private>true</Private>
     </Reference>
 
+    <!-- The `dynamic` binder, for ReportColors.cs's late-bound walk over
+         the Report Application Server (RAS) section objects. Part of .NET
+         Framework itself - nothing to install. The RAS assemblies are NOT
+         referenced: they are loaded at run time from the Crystal runtime's
+         GAC install (see ReportColors.cs). -->
+    <Reference Include="Microsoft.CSharp" />
+
   </ItemGroup>
 
   <ItemGroup>

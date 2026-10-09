@@ -97,7 +97,14 @@ class RenderFailed(RuntimeError):
     """The request was fine but the report could not be rendered."""
 
 
-def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]] = None) -> bytes:
+def render(
+    port: int,
+    menu: str,
+    report: str,
+    filter: Optional[Mapping[str, Any]] = None,
+    query: Optional[str] = None,
+    values: Optional[Mapping[str, Any]] = None,
+) -> bytes:
     """Render one report to PDF and return the bytes.
 
     port:   the Postgres port of the database to render from.
@@ -111,8 +118,23 @@ def render(port: int, menu: str, report: str, filter: Optional[Mapping[str, Any]
               {">=": "2026-01-01",       operators =  !=  <  <=  >  >=
                "<=": "2026-01-31"}       (several = AND; dates as YYYY-MM-DD)
             Full rules: CrystalReportWrapper/ReportFilter.cs.
+    query, values: one of the report's queries (reports_map.QUERIES - the
+            original's "Queries" drop-down) by label, and the answers to its
+            prompts, {prompt column: answer}. Turned into filter conditions
+            by reports_map.query_filter() and combined with `filter`.
     """
     filter = dict(filter or {})
+    if query:
+        try:
+            from_query = reports_map.query_filter(menu, report, query, dict(values or {}))
+        except reports_map.QueryInputError as exc:
+            raise BadRequest(str(exc)) from None
+        clash = sorted(set(filter) & set(from_query))
+        if clash:
+            raise BadRequest(f"filter and query both set: {', '.join(clash)}")
+        filter.update(from_query)
+    elif values:
+        raise BadRequest("values were sent without a query")
 
     # 1. Check the request.
     if isinstance(port, bool) or not isinstance(port, int) or not 1 <= port <= 65535:
@@ -180,8 +202,14 @@ def _check_filter(column: str, match: Any) -> None:
 
 
 def menus() -> dict[str, list[str]]:
-    """{menu: [report names]} - what a client builds its Reports menus from."""
+    """{menu: [report names]} - every report, flat."""
     return reports_map.menus()
+
+
+def menu_tree() -> dict[str, list]:
+    """{menu: [entries]} with groups nested and each report's queries and
+    prompts - see reports_map.menu_tree(). What /menus serves."""
+    return reports_map.menu_tree()
 
 
 def _worker_error(worker: subprocess.CompletedProcess) -> str:

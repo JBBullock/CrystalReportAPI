@@ -1,22 +1,24 @@
 -- ============================================================================
--- IntrastatRates.sql
--- Written for IntrastatRates.rpt (Codes menu). Checked against the schema dump
+-- ProductRevenueCodes.sql
+-- Written for ProductRevenueCodes.rpt (Codes menu). Checked against the schema dump
 -- (SQLFetches/schema_only.sql): it runs and returns exactly the report's
 -- columns. Not yet rendered through Crystal.
 -- One query per '-- Table: <name>' line; aliases must match the report's
 -- field names exactly (case-sensitive).
 -- Lines marked INFERRED are best guesses at legacy behaviour.
--- Tables: IntrastatRates_TTX
--- Source tables: intrastatrates
+-- Tables: ProductRevenueCodes_TTX
+-- Source tables: productclasscodes
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
--- Table: IntrastatRates_TTX
--- Original data source: IntrastatRates
+-- Table: ProductRevenueCodes_TTX
+-- Original data source: ProductRevenueCodes
 -- ----------------------------------------------------------------------------
+-- The legacy "product revenue codes" are the product class codes.
 SELECT
-    icncode AS "ICNCode",
-    regioncode AS "RegionCode",
-    taxcode AS "TaxCode"
-FROM intrastatrates
-ORDER BY icncode, regioncode;
+    productclass AS "ProductClass",
+    revenueaccount::text AS "RevenueAccount",
+    expenseaccount::text AS "ExpenseAccount",
+    desctext AS "DescText"
+FROM productclasscodes
+ORDER BY productclass;
