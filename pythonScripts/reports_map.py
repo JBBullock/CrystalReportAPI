@@ -9,7 +9,8 @@ nothing generates or overwrites this file.
     GROUPS      (menu, report name) -> the sub-menu it sits in under Reports
                 (the original's "Costed BOM" -> Pending Cost / Standard Cost)
     QUERIES     (menu, report name) -> the original's "Queries" drop-down:
-                each query's label and its typed prompts (see PROMPT KINDS)
+                each query's label, its typed prompts (see PROMPT KINDS) and
+                any fixed column values it always applies
 
 A report can be rendered only if it has a REPORTS entry, and its .rpt has a
 REPORT_SQL entry. The same .rpt may appear under more than one menu or name.
@@ -28,6 +29,7 @@ import re
 from pathlib import Path
 from typing import Optional
 
+
 # (menu, report name in ZMRP) -> .rpt file name in reports/
 REPORTS: dict[tuple[str, str], str] = {
     # ---- Products ----------------------------------------------------
@@ -42,107 +44,105 @@ REPORTS: dict[tuple[str, str], str] = {
     ("Products", "Part Master List"): "PartList.rpt",
     ("Products", "Part Cross Reference"): "PartCrossReference.rpt",
     ("Products", "Where Used"): "WhereUsed.rpt",
-    # Names generated from the file name:
-    ("Products", "ECN Summary"): "ECNSummary.rpt",  # menu guessed
-    ("Products", "Engineering Part Master"): "EngineeringPartMaster.rpt",  # menu guessed
-    ("Products", "Labor Router"): "LaborRouter.rpt",  # menu guessed
-    ("Products", "Manual Parts List"): "ManualPartsList.rpt",  # menu guessed
-    # ---- Demand ------------------------------------------------------
-    # Names taken from the original program's menu:
+    # ---------------------- Demand --------------------------------
+    ("Demand", "Acknowledgement"): "Acknowledgement.rpt",
+    ("Demand", "Past Due Shipments By Part Number"): "PastDueShipmentsByPartNumber.rpt",
+    ("Demand", "Past Due Shipments By Required Date"): "PastDueShipmentsByRequiredDate.rpt",
+
     ("Demand", "Bookings Report"): "SOBookings.rpt",
     ("Demand", "Contact List"): "CustomerContactList.rpt",
     ("Demand", "Customer List"): "CustomerListing.rpt",
     ("Demand", "Forecast"): "Forecast.rpt",
     ("Demand", "Job Summary"): "JobSummary.rpt",
     ("Demand", "Output Report"): "OutputReport.rpt",
-    ("Demand", "SO List by Customer"): "SOListByCustomerID.rpt",
-    ("Demand", "Open SO List by Part"): "OpenSOListByPartNumber.rpt",
-    # Names generated from the file name:
-    ("Demand", "Acknowledgement"): "Acknowledgement.rpt",
-    ("Demand", "Credit Memo"): "CreditMemo.rpt",  # menu guessed
-    ("Demand", "Credit Memo Transaction"): "CreditMemoTransaction.rpt",  # menu guessed
-    ("Demand", "Customer Disc Level"): "CustomerDiscLevel.rpt",  # menu guessed
-    ("Demand", "Invoice"): "Invoice.rpt",  # menu guessed
-    ("Demand", "Invoice Transaction"): "InvoiceTransaction.rpt",  # menu guessed
-    ("Demand", "Past Due Shipments By Part Number"): "PastDueShipmentsByPartNumber.rpt",
-    ("Demand", "Past Due Shipments By Required Date"): "PastDueShipmentsByRequiredDate.rpt",
+    ("Demand", "Pick List"): "SOPickList.rpt",
     ("Demand", "Quotation"): "Quotation.rpt",
     ("Demand", "Sales Order"): "SalesOrder.rpt",
-    ("Demand", "Shipment List"): "ShipmentList.rpt",  # menu guessed
-    ("Demand", "SO List By Part Number"): "SOListByPartNumber.rpt",  # menu guessed
-    ("Demand", "SO Pick List"): "SOPickList.rpt",
+
+    ("Demand", "SO List by Customer"): "SOListByCustomerID.rpt",
+    ("Demand", "Open SO List by Part"): "OpenSOListByPartNumber.rpt",
     ("Demand", "SO Totals Graph"): "SOTotalsGraph.rpt",
+
     # ---- Supply ------------------------------------------------------
     ("Supply", "Open PO Line Items"): "OpenPOLineItems.rpt",
-    ("Supply", "Past Due PO Receipts"): "PastDuePOReceipts.rpt",  # menu guessed
+    ("Supply", "Past Due PO Receipts"): "PastDuePOReceipts.rpt", 
+    ("Supply", "PO List by Part Number"): "POByPartNumber.rpt",
+    ("Supply", "PO List by Supplier"): "POBySupplier.rpt",
+    ("Supply", "PO Totals Graph"): "POTotalsGraph.rpt",
+
     ("Supply", "PIP By Part Number"): "PIPByPartNumber.rpt",  # menu guessed
     ("Supply", "PIP By Purchase Order"): "PIPByPurchaseOrder.rpt",  # menu guessed
-    ("Supply", "PO By Part Number"): "POByPartNumber.rpt",
-    ("Supply", "PO By Supplier"): "POBySupplier.rpt",  # menu guessed
-    ("Supply", "PO Commitment Graph"): "POCommitmentGraph.rpt",  # menu guessed
-    ("Supply", "PO Pick List"): "POPickList.rpt",
-    ("Supply", "PO Receipt"): "POReceipt.rpt",
-    ("Supply", "PO Totals Graph"): "POTotalsGraph.rpt",  # menu guessed
     ("Supply", "Purchase Commitment"): "PurchaseCommitment.rpt",  # menu guessed
     ("Supply", "Purchase Order"): "PurchaseOrder.rpt",
-    ("Supply", "Return To Vendor List"): "ReturnToVendorList.rpt",  # menu guessed
-    ("Supply", "Shortage Report"): "ShortageReport.rpt",
+    ("Products", "Part Cross Reference"): "PartCrossReference.rpt",
+    
+    ("Supply", "Production Schedule"): "ProductionSchedule.rpt",  # menu guessed
+    ("Supply", "PO Pick List"): "POPickList.rpt",
+    ("Supply", "PO Receipt"): "POReceipt.rpt",
+
     ("Supply", "Sub Contract PO Kit List"): "SubContractPOKitList.rpt",
-    ("Supply", "Supplier Listing"): "SupplierListing.rpt",
+    ("Supply", "Supplier List"): "SupplierListing.rpt",
     ("Supply", "Work Order Traveler"): "WorkOrderTraveler.rpt",
     # ---- MRP ---------------------------------------------------------
     ("MRP", "Exception"): "Exception.rpt",  # menu guessed
     ("MRP", "Planned Orders"): "PlannedOrders.rpt",  # menu guessed
     # ---- Inventory ---------------------------------------------------
     ("Inventory", "Intrastat Reporting"): "IntrastatReporting.rpt",
-    ("Inventory", "Inventory Part Cost"): "InventoryPartCost.rpt",
+    ("Inventory", "Part Cost List"): "InventoryPartCost.rpt",
+    ("Inventory", "Stock Status"): "StockStatus.rpt",
+    ("Inventory", "Stockroom On Hand"): "StockroomOnHand.rpt",
+    ("Inventory", "Shortage Report"): "ShortageReport.rpt",
+    ("Inventory", "Stockroom Locations"): "StockroomLocations.rpt",
+    ("Inventory", "Transaction Report"): "TransactionReport.rpt",
+    
     ("Inventory", "Inventory Variance"): "InventoryVariance.rpt",  # menu guessed
     ("Inventory", "Misc Unplanned Issues"): "MiscUnplannedIssues.rpt",  # menu guessed
     ("Inventory", "Misc Unplanned Receipts"): "MiscUnplannedReceipts.rpt",  # menu guessed
     ("Inventory", "Part Count List"): "PartCountList.rpt",  # menu guessed
     ("Inventory", "Part Count Tag"): "PartCountTag.rpt",  # menu guessed
-    ("Inventory", "Stockroom Locations"): "StockroomLocations.rpt",  # menu guessed
-    ("Inventory", "Stockroom On Hand"): "StockroomOnHand.rpt",
-    ("Inventory", "Stock Status"): "StockStatus.rpt",
-    ("Inventory", "Transaction Report"): "TransactionReport.rpt",
+      # menu guessed
+    
+    
+    
     # ---- CRP ---------------------------------------------------------
     ("CRP", "Work Center Listing"): "WorkCenterListing.rpt",
     ("CRP", "Work Center Loads"): "WorkCenterLoads.rpt",
-    ("CRP", "Work Center Loads Graph"): "WorkCenterLoadsGraph.rpt",
+    ("CRP", "Labor Router"): "LaborRouter.rpt",  # menu guessed
+   
     # ---- Shop --------------------------------------------------------
     ("Shop", "Labor Distr By Employee"): "LaborDistrByEmployee.rpt",
-    ("Shop", "Labor Distr By WO"): "LaborDistrByWO.rpt",  # menu guessed
+    ("Shop", "Labor Distr By WO"): "LaborDistrByWO.rpt",
     ("Shop", "Labor Utilization"): "LaborUtilization.rpt",  # menu guessed
-    ("Shop", "Production Backlog"): "ProductionBacklog.rpt",  # menu guessed
-    ("Shop", "Production Schedule"): "ProductionSchedule.rpt",  # menu guessed
-    ("Shop", "WIP By Part Number"): "WIPByPartNumber.rpt",
-    ("Shop", "WIP By Work Order"): "WIPByWorkOrder.rpt",
-    ("Shop", "WO Kit List"): "WOKitList.rpt",
-    ("Shop", "WO Pick List"): "WOPickList.rpt",
+    ("Shop", "Production Backlog"): "ProductionBacklog.rpt"}  # menu guessed
+    # ("Shop", "Production Schedule"): "ProductionSchedule.rpt",  # menu guessed
+    # ("Shop", "WIP By Part Number"): "WIPByPartNumber.rpt",
+    # ("Shop", "WIP By Work Order"): "WIPByWorkOrder.rpt",
+    # ("Shop", "WO Kit List"): "WOKitList.rpt",
+    # ("Shop", "WO Pick List"): "WOPickList.rpt"}
     # ---- Codes -------------------------------------------------------
     # "Codes" is a holding menu for lookup lists whose real menu is unknown.
-    ("Codes", "Commodity Codes"): "CommodityCodes.rpt",  # menu guessed
-    ("Codes", "Currency Codes"): "CurrencyCodes.rpt",  # menu guessed
-    ("Codes", "Density Codes"): "DensityCodes.rpt",  # menu guessed
-    ("Codes", "Department Codes"): "DepartmentCodes.rpt",  # menu guessed
-    ("Codes", "ECN Class Codes"): "ECNClassCodes.rpt",  # menu guessed
-    ("Codes", "Employee Information List"): "EmployeeInformationList.rpt",  # menu guessed
-    ("Codes", "Employee List"): "EmployeeList.rpt",  # menu guessed
-    ("Codes", "F.O.B Codes"): "FOBCodes.rpt",  # menu guessed
-    ("Codes", "Holiday List"): "HolidayList.rpt",  # menu guessed
-    ("Codes", "Intrastat Codes"): "IntrastatCodes.rpt",  # menu guessed
-    ("Codes", "Intrastat Rates"): "IntrastatRates.rpt",  # menu guessed
-    ("Codes", "Operation Codes"): "OperationCodes.rpt",  # menu guessed
-    ("Codes", "Price Discount Codes"): "PriceDiscountCodes.rpt",  # menu guessed
-    ("Codes", "Product Discount Codes"): "ProductDiscountCodes.rpt",  # menu guessed
-    ("Codes", "Product Revenue Codes"): "ProductRevenueCodes.rpt",  # menu guessed
-    ("Codes", "Region Codes"): "RegionCodes.rpt",  # menu guessed
-    ("Codes", "Ship Via Codes"): "ShipViaCodes.rpt",  # menu guessed
-    ("Codes", "System Used On Codes"): "SystemUsedOnCodes.rpt",  # menu guessed
-    ("Codes", "Tax Codes"): "TaxCodes.rpt",  # menu guessed
-    ("Codes", "Terms Codes"): "TermsCodes.rpt",  # menu guessed
-    ("Codes", "UOM Codes"): "UOMCodes.rpt",  # menu guessed
-}
+    # ("Codes", "Commodity Codes"): "CommodityCodes.rpt",  # menu guessed
+    # ("Codes", "Currency Codes"): "CurrencyCodes.rpt",  # menu guessed
+    # ("Codes", "Density Codes"): "DensityCodes.rpt",  # menu guessed
+    # ("Codes", "Department Codes"): "DepartmentCodes.rpt",  # menu guessed
+    # ("Codes", "ECN Class Codes"): "ECNClassCodes.rpt",  # menu guessed
+    # ("Codes", "Employee Information List"): "EmployeeInformationList.rpt",  # menu guessed
+    # ("Codes", "Employee List"): "EmployeeList.rpt",  # menu guessed
+    # ("Codes", "F.O.B Codes"): "FOBCodes.rpt",  # menu guessed
+    # ("Codes", "Holiday List"): "HolidayList.rpt",  # menu guessed
+    # ("Codes", "Intrastat Codes"): "IntrastatCodes.rpt",  # menu guessed
+    # ("Codes", "Intrastat Rates"): "IntrastatRates.rpt",  # menu guessed
+    # ("Codes", "Operation Codes"): "OperationCodes.rpt",  # menu guessed
+    # ("Codes", "Price Discount Codes"): "PriceDiscountCodes.rpt",  # menu guessed
+    # ("Codes", "Product Discount Codes"): "ProductDiscountCodes.rpt",  # menu guessed
+    # ("Codes", "Product Revenue Codes"): "ProductRevenueCodes.rpt",  # menu guessed
+    # ("Codes", "Region Codes"): "RegionCodes.rpt",  # menu guessed
+    # ("Codes", "Ship Via Codes"): "ShipViaCodes.rpt",  # menu guessed
+    # ("Codes", "System Used On Codes"): "SystemUsedOnCodes.rpt",  # menu guessed
+    # ("Codes", "Tax Codes"): "TaxCodes.rpt",  # menu guessed
+    # ("Codes", "Terms Codes"): "TermsCodes.rpt",  # menu guessed
+    # ("Codes", "UOM Codes"): "UOMCodes.rpt",  # menu guessed
+
 
 # .rpt file name -> .sql file name in SQLqueries/
 REPORT_SQL: dict[str, str] = {
@@ -228,31 +228,31 @@ REPORT_SQL: dict[str, str] = {
     "WorkCenterListing.rpt": "WorkCenterListing.sql",
     "WorkCenterLoads.rpt": "WorkCenterLoads.sql",
     "WorkCenterLoadsGraph.rpt": "WorkCenterLoadsGraph.sql",
-    "WorkOrderTraveler.rpt": "WorkOrderTraveler.sql",
+    "WorkOrderTraveler.rpt": "WorkOrderTraveler.sql",}
 
     # ---- Codes menu (SQL written 2026-10-08; the .rpt files still need
     # copying from the original install's Reports folder) ----
-    "CommodityCodes.rpt": "CommodityCodes.sql",
-    "CurrencyCodes.rpt": "CurrencyCodes.sql",
-    "DensityCodes.rpt": "DensityCodes.sql",
-    "DepartmentCodes.rpt": "DepartmentCodes.sql",
-    "ECNClassCodes.rpt": "ECNClassCodes.sql",
-    "EmployeeInformationList.rpt": "EmployeeInformationList.sql",
-    "EmployeeList.rpt": "EmployeeList.sql",
-    "FOBCodes.rpt": "FOBCodes.sql",
-    "HolidayList.rpt": "HolidayList.sql",
-    "IntrastatCodes.rpt": "IntrastatCodes.sql",
-    "OperationCodes.rpt": "OperationCodes.sql",
-    "PriceDiscountCodes.rpt": "PriceDiscountCodes.sql",
-    "ProductDiscountCodes.rpt": "ProductDiscountCodes.sql",
-    "ProductRevenueCodes.rpt": "ProductRevenueCodes.sql",
-    "RegionCodes.rpt": "RegionCodes.sql",
-    "ShipViaCodes.rpt": "ShipViaCodes.sql",
-    "SystemUsedOnCodes.rpt": "SystemUsedOnCodes.sql",
-    "TaxCodes.rpt": "TaxCodes.sql",
-    "TermsCodes.rpt": "TermsCodes.sql",
-    "UOMCodes.rpt": "UOMCodes.sql",
-}
+    # "CommodityCodes.rpt": "CommodityCodes.sql",
+    # "CurrencyCodes.rpt": "CurrencyCodes.sql",
+    # "DensityCodes.rpt": "DensityCodes.sql",
+    # "DepartmentCodes.rpt": "DepartmentCodes.sql",
+    # "ECNClassCodes.rpt": "ECNClassCodes.sql",
+    # "EmployeeInformationList.rpt": "EmployeeInformationList.sql",
+    # "EmployeeList.rpt": "EmployeeList.sql",
+    # "FOBCodes.rpt": "FOBCodes.sql",
+    # "HolidayList.rpt": "HolidayList.sql",
+    # "IntrastatCodes.rpt": "IntrastatCodes.sql",
+    # "OperationCodes.rpt": "OperationCodes.sql",
+    # "PriceDiscountCodes.rpt": "PriceDiscountCodes.sql",
+    # "ProductDiscountCodes.rpt": "ProductDiscountCodes.sql",
+    # "ProductRevenueCodes.rpt": "ProductRevenueCodes.sql",
+    # "RegionCodes.rpt": "RegionCodes.sql",
+    # "ShipViaCodes.rpt": "ShipViaCodes.sql",
+    # "SystemUsedOnCodes.rpt": "SystemUsedOnCodes.sql",
+    # "TaxCodes.rpt": "TaxCodes.sql",
+    # "TermsCodes.rpt": "TermsCodes.sql",
+    # "UOMCodes.rpt": "UOMCodes.sql",
+
 
 
 # ============================================================================
@@ -261,16 +261,25 @@ REPORT_SQL: dict[str, str] = {
 # The original program's Reports menus come in three shapes:
 #   * a plain report        - click it, it prints (no entry below needed);
 #   * a group               - a sub-menu of related reports (GROUPS);
-#   * a report with queries - a "Queries" drop-down; each query asks for its
-#                             own prompts (QUERIES).
-# A report with no QUERIES entry yet still gets ZMRP's free-form filter rows,
-# so nothing is lost while the list below is filled in (TODO.md item 13).
+#   * a report with queries - a sub-menu of its queries; each query opens
+#                             a filter dialog asking for its own prompts
+#                             (QUERIES). A report with one query opens that
+#                             dialog directly.
+# A report can be narrowed only through its queries. A report with no
+# QUERIES entry prints every row.
 
 # (menu, report name) -> group label. Reports in one group appear together, in
 # the group's sub-menu, where the group's first report is listed in REPORTS.
 GROUPS: dict[tuple[str, str], str] = {
     ("Products", "Costed Bill of Materials (Pending Cost)"): "Costed BOM",
     ("Products", "Costed Bill of Materials (Standard Cost)"): "Costed BOM",
+    ("Demand", "Past Due Shipments By Part Number"): "Past Due Shipments",
+    ("Demand", "Past Due Shipments By Required Date"): "Past Due Shipments",
+    ("Shop", "Labor Distr By Employee"): "Labor Distribution",
+    ("Shop", "Labor Distr By WO"): "Labor Distribution",
+    # Off until these two are listed in REPORTS again:
+    # ("Shop", "WIP By Part Number"): "Work In Progress",
+    # ("Shop", "WIP By Work Order"): "Work In Progress",
 }
 
 # PROMPT KINDS - what a prompt asks for and how its answer becomes filter:
@@ -289,24 +298,120 @@ PROMPT_KINDS = (TEXT, NUMBER, DATE_RANGE, CHECKBOX)
 
 # (menu, report name) -> [query, ...]; a query is
 #   {"label": "<as in the drop-down>",
+#    "fixed": {"<filter column>": <value>, ...},        (optional)
 #    "prompts": [{"label": "<as on screen>", "column": "<filter column>",
 #                 "kind": TEXT | NUMBER | DATE_RANGE | CHECKBOX}, ...]}
 # "column" is a column of the report's SQL output (matched without regard
 # to case, like every filter column). Order = drop-down order; the first
 # query is the default.
+# "fixed" values always apply when that query is chosen. The user is not
+# asked for them and cannot change them: Transaction Report's "Kitting" is
+# every transaction of type KIT. A fixed column cannot also be a prompt.
+# "prompts" may be [] - the query then prints without asking anything.
+# A text or number prompt with "required": True must be answered: blank, or
+# nothing but *, is refused. Used where a whole table is too much to print
+# (every BOM report asks for its assembly).
+#
+# ZMRP picks the filter dialog from the kinds of the prompts, in order
+# (ReportFilterDialogs.FILTER_DIALOG_BY_PROMPTS); a number counts as text:
+#   [TEXT]                        one text box
+#   [TEXT, TEXT]                  two text boxes
+#   [DATE_RANGE]                  Start Date, End Date
+#   [TEXT, CHECKBOX, DATE_RANGE]  text box, checkbox, Start Date, End Date
+
+# Transaction Report: transaction type codes (transactionheader.transactiontype).
+#   KIT kit            DKT dekit              CMP work order completion
+#   UPR unplanned receipt                     UPL unplanned issue
+#   REL relocation     PIP physical inventory +   PIN physical inventory -
+#   SHP sales order shipment                  RMA sales order return
+#   POR purchase order receipt                RTV return to vendor
+_TRANSACTION_DATE = {"label": "Transaction Date", "column": "transactiondate", "kind": DATE_RANGE}
+
+_ASSEMBLY = [
+    {"label": "Query By Assembly",
+     "prompts": [{"label": "Assembly", "column": "assembly", "kind": TEXT, "required": True}]},
+]
+
 QUERIES: dict[tuple[str, str], list[dict]] = {
+    # Every BOM report must be narrowed to an assembly (wildcards allowed).
+    ("Products", "Bill of Materials"): _ASSEMBLY,
+    ("Products", "BOM with References"): _ASSEMBLY,
+    ("Products", "Costed Bill of Materials (Pending Cost)"): _ASSEMBLY,
+    ("Products", "Costed Bill of Materials (Standard Cost)"): _ASSEMBLY,
+    ("Products", "Indented BOM"): _ASSEMBLY,
+    ("Products", "Indented Costed BOM"): _ASSEMBLY,
+    # Where Used reads the BOM the other way round: which assemblies use a part.
+    ("Products", "Where Used"): [
+        {"label": "Query By Component",
+         "prompts": [{"label": "Component", "column": "component", "kind": TEXT, "required": True}]},
+    ],
     ("Products", "Part Cross Reference"): [
         {"label": "Query By Part Number",
          "prompts": [{"label": "Part Number", "column": "partnumber", "kind": TEXT}]},
         {"label": "Query By Cross Reference",
          "prompts": [{"label": "Cross Reference", "column": "partxreference", "kind": TEXT}]},
     ],
-    # Add the rest from the original's prompt dialogs (TODO.md item 13), e.g.
-    # ("Demand", "SO List by Customer"): [
-    #     {"label": "Query By Customer ID",
-    #      "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT},
-    #                  {"label": "Order Date", "column": "orderdate", "kind": DATE_RANGE}]},
-    # ],
+    ("Demand", "Acknowledgement"): [
+        {"label": "Query By Customer ID",
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]},
+        {"label": "Query By Order Date",
+         "prompts": [{"label": "Order Date", "column": "orderdate", "kind": DATE_RANGE}]},
+         {"label": "Query By SO Number",
+         "prompts": [{"label": "SO Number", "column": "sonumber", "kind": TEXT}]}
+    ],
+    # The two Past Due Shipments reports are one group (GROUPS), each with
+    # its own .rpt and one query.
+    ("Demand", "Past Due Shipments By Part Number"): [
+        {"label": "Query By Part Number",
+         "prompts": [{"label": "Part Number", "column": "partnumber", "kind": TEXT}]},
+    ],
+    ("Demand", "Past Due Shipments By Required Date"): [
+        {"label": "Query By Scheduled Ship Date",
+         "prompts": [{"label": "Scheduled Ship Date", "column": "scheduledshipdate", "kind": DATE_RANGE}]},
+    ],
+    ("Demand", "Pick List"): [
+        {"label": "Query By Customer ID",
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]},
+        {"label": "Query By Ship Date",
+         "prompts": [{"label": "Ship Date", "column": "scheduledshipdate", "kind": DATE_RANGE}]},
+         {"label": "Query By SO Number",
+         "prompts": [{"label": "SO Number", "column": "sonumber", "kind": TEXT}]}
+    ],
+    ("Demand", "Quotation"): [
+        {"label": "Query By Customer ID",
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]},
+         {"label": "Query By Quote Number",
+         "prompts": [{"label": "Quote Number", "column": "quotenumber", "kind": TEXT}]}
+    ],
+    ("Demand", "Sales Order"): [
+        {"label": "Query By Customer ID",
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]},
+        {"label": "Query By Order Date",
+         "prompts": [{"label": "Order Date", "column": "orderdate", "kind": DATE_RANGE}]},
+         {"label": "Query By SO Number",
+         "prompts": [{"label": "SO Number", "column": "sonumber", "kind": TEXT}]}
+    ],
+    ("Demand", "SO Totals Graph"): [
+        {"label": "Query By Customer ID",
+         "prompts": [{"label": "Customer ID", "column": "customerid", "kind": TEXT}]}
+    ],
+    ("Supply", "PO Totals Graph"): [
+        {"label": "Query By Supplier ID",
+         "prompts": [{"label": "Supplier ID", "column": "supplierid", "kind": TEXT}]}
+    ],
+    ("Inventory", "Transaction Report"): [
+        {"label": "Completions", "fixed": {"transactiontype": "CMP"}, "prompts": [_TRANSACTION_DATE]},
+        {"label": "Kitting", "fixed": {"transactiontype": "KIT"}, "prompts": [_TRANSACTION_DATE]},
+        {"label": "Receipts", "fixed": {"transactiontype": "POR"}, "prompts": [_TRANSACTION_DATE]},
+        {"label": "Shipments", "fixed": {"transactiontype": "SHP"}, "prompts": [_TRANSACTION_DATE]},
+        {"label": "Transaction Date", "prompts": [_TRANSACTION_DATE]},
+    ],
+    ("Shop", "Labor Utilization"): [
+        {"label": "Query by Employee ID",
+         "prompts": [{"label": "Employee ID", "column": "employeeid", "kind": TEXT}]},
+        {"label": "Query by WO Number",
+         "prompts": [{"label": "WO Number", "column": "wonumber", "kind": TEXT}]},
+    ],
 }
 
 
@@ -330,6 +435,7 @@ def query_filter(menu: str, name: str, query_label: str, values: dict) -> dict:
     number may also be sent as a number), CHECKBOX answers true/false, and
     a DATE_RANGE answer is {"from": "YYYY-MM-DD", "to": "YYYY-MM-DD"}
     (either key may be missing or blank). Unknown columns are an error.
+    The query's "fixed" values are added to the result as they are.
     """
     queries = queries_for(menu, name)
     query = next((q for q in queries if q["label"] == query_label), None)
@@ -347,6 +453,9 @@ def query_filter(menu: str, name: str, query_label: str, values: dict) -> dict:
     for prompt in query["prompts"]:
         column, kind, label = prompt["column"], prompt["kind"], prompt["label"]
         answer = values.get(column)
+        if kind in (TEXT, NUMBER) and prompt.get("required"):
+            if not str("" if answer is None else answer).strip().strip("*"):
+                raise QueryInputError(f"{label} is required.")
         if kind == TEXT:
             text = "" if answer is None else str(answer).strip()
             if text and text.strip("*"):
@@ -382,6 +491,7 @@ def query_filter(menu: str, name: str, query_label: str, values: dict) -> dict:
                 result[column] = prompt["unchecked"]
         else:
             raise QueryInputError(f"Prompt '{label}' has unknown kind '{kind}'.")
+    result.update(query.get("fixed", {}))
     return result
 
 
@@ -458,6 +568,9 @@ def validate(reports_dir: Path, sql_dir: Path) -> list[str]:
                 if prompt.get("kind") not in PROMPT_KINDS:
                     problems.append(f"QUERIES[{key!r}] '{query.get('label')}': prompt "
                                     f"'{prompt.get('label')}' has unknown kind {prompt.get('kind')!r}")
+                if prompt.get("column") in query.get("fixed", {}):
+                    problems.append(f"QUERIES[{key!r}] '{query.get('label')}': "
+                                    f"'{prompt.get('column')}' is both fixed and a prompt")
     return problems
 
 
